@@ -896,6 +896,24 @@ select:focus { background-color: white; }
   border-color: var(--primary);
 }
 .reveal-option-now:hover { background: var(--primary-hover); }
+.reveal-modal-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 10px;
+}
+.reveal-modal-divider::before,
+.reveal-modal-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.reveal-modal-divider-text {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
 .reveal-modal-cancel {
   width: 100%;
   background: transparent;

@@ -59,6 +59,11 @@ async function renderLobby(lobbyId) {
         <p class="reveal-modal-sub">Choose when to reveal <strong>${escHtml(wineLabel)}</strong></p>
         <div class="reveal-option-grid">
           <button class="btn reveal-option-btn reveal-option-now" data-minutes="0">Reveal Now</button>
+        </div>
+        <div class="reveal-modal-divider">
+          <span class="reveal-modal-divider-text">Or reveal after counting down from</span>
+        </div>
+        <div class="reveal-option-grid">
           <button class="btn reveal-option-btn" data-minutes="3">3 min</button>
           <button class="btn reveal-option-btn" data-minutes="5">5 min</button>
           <button class="btn reveal-option-btn" data-minutes="10">10 min</button>
