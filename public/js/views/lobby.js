@@ -136,6 +136,7 @@ async function renderLobby(lobbyId) {
         ? `<div class="wine-countdown" data-reveal-at="${wine.revealAt}">
              <span class="countdown-label">Reveals in</span>
              <span class="countdown-timer">--:--</span>
+             ${isHost ? `<button class="btn btn-xs btn-danger countdown-stop-btn" data-wine-id="${wine.id}">Stop</button>` : ''}
            </div>`
         : '';
 
@@ -350,6 +351,24 @@ async function renderLobby(lobbyId) {
       });
     });
 
+    // Stop countdown buttons (host only)
+    document.querySelectorAll('.countdown-stop-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        btn.disabled = true;
+        btn.textContent = '...';
+        try {
+          await API.cancelCountdown(lobbyId, btn.dataset.wineId);
+          await loadData(); render();
+          showToast('Countdown cancelled.');
+        } catch (err) {
+          showToast(err.error || 'Failed to cancel countdown.');
+          btn.disabled = false;
+          btn.textContent = 'Stop';
+        }
+      });
+    });
+
     // Start countdown tickers if any are active
     startCountdownTick();
 
@@ -398,6 +417,11 @@ async function renderLobby(lobbyId) {
     await loadData(); render();
     const minutes = Math.round((revealAt - Date.now()) / 60000);
     showToast(`Countdown started — wine reveals in ${minutes} min ⏱️`);
+  });
+  SocketManager.on('wine-countdown-stopped', async () => {
+    if (!onLobbyPage()) return;
+    await loadData(); render();
+    showToast('Countdown cancelled — wine is unrevealed again.');
   });
   SocketManager.on('guess-submitted', async () => {
     if (!onLobbyPage()) return;

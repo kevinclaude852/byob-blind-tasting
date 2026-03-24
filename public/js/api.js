@@ -68,6 +68,7 @@ const API = (() => {
 
     // Game
     revealWine: (lobbyId, wineId, delayMinutes = 0) => request('POST', `/api/lobby/${lobbyId}/reveal/${wineId}`, { delayMinutes }, lobbyId),
+    cancelCountdown: (lobbyId, wineId) => request('DELETE', `/api/lobby/${lobbyId}/reveal/${wineId}`, null, lobbyId),
     getScores: (lobbyId) => request('GET', `/api/lobby/${lobbyId}/scores`, null, lobbyId),
 
     // Reference

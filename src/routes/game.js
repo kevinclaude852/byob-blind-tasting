@@ -186,6 +186,37 @@ router.post('/reveal/:wineId', (req, res) => {
   res.json({ success: true });
 });
 
+// DELETE /api/lobby/:lobbyId/reveal/:wineId — host cancels an active countdown
+router.delete('/reveal/:wineId', (req, res) => {
+  const { lobbyId, wineId } = req.params;
+  const game = loadGame(lobbyId);
+  if (!game) return res.status(404).json({ error: 'Lobby not found.' });
+  if (!authHost(game, getToken(req))) return res.status(403).json({ error: 'Host only.' });
+
+  const found = findWine(game, wineId);
+  if (!found) return res.status(404).json({ error: 'Wine not found.' });
+  if (found.wine.revealed) return res.status(400).json({ error: 'Wine already revealed.' });
+  if (!found.wine.revealAt) return res.status(400).json({ error: 'No countdown active.' });
+
+  // Cancel the scheduled timer
+  const key = `${lobbyId}:${wineId}`;
+  if (pendingTimers.has(key)) {
+    clearTimeout(pendingTimers.get(key));
+    pendingTimers.delete(key);
+  }
+
+  const ownerPlayer = game.players[found.playerId];
+  const wineInData = ownerPlayer.wines.find(w => w.id === wineId);
+  wineInData.revealAt = null;
+  saveGame(lobbyId, game);
+
+  if (ioInstance) {
+    ioInstance.to(lobbyId).emit('wine-countdown-stopped', { wineId });
+  }
+
+  res.json({ success: true });
+});
+
 // GET /api/lobby/:lobbyId/scores
 router.get('/scores', (req, res) => {
   const game = loadGame(req.params.lobbyId);

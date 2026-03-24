@@ -945,6 +945,10 @@ select:focus { background-color: white; }
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.03em;
 }
+.countdown-stop-btn {
+  margin-left: 8px;
+  flex-shrink: 0;
+}
 
 /* ===== Spin ===== */
 .spin { animation: spin 1s linear infinite; display: inline-block; }
