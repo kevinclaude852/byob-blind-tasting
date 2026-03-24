@@ -1,0 +1,15 @@
+{
+  "USA": ["Napa Valley", "Sonoma County", "Willamette Valley", "Paso Robles", "Santa Barbara", "Santa Cruz Mountains", "Columbia Valley", "Finger Lakes"],
+  "France": ["Bordeaux", "Burgundy", "Northern Rhône", "Southern Rhône", "Champagne", "Loire Valley", "Languedoc Roussillon", "Alsace", "Provence", "Southwest", "Jura"],
+  "Italy": ["Tuscany", "Piedmont", "Veneto", "Sicily", "Puglia", "Campania", "Trentino-Alto Adige", "Umbria", "Abruzzo", "Friuli-Venezia Giulia"],
+  "Australia": ["Barossa Valley", "McLaren Vale", "Clare Valley", "Coonawarra", "Margaret River", "Yarra Valley", "Mornington Peninsula", "Rutherglen", "Hunter Valley", "Tasmania"],
+  "Spain": ["Rioja", "Ribera del Duero", "Priorat", "Toro", "Aragon", "Jumilla", "Bierzo", "Cava", "Rías Baixas", "Rueda", "Andalusia"],
+  "Germany": ["Mosel", "Nahe", "Rheinhessen", "Pfalz", "Rheingau", "Baden", "Franken", "Ahr"],
+  "Portugal": ["Douro Valley", "Vinho Verde", "Dão", "Alentejo", "Bairrada", "Madeira", "Lisboa"],
+  "Argentina": ["Mendoza", "Salta", "Patagonia", "San Juan"],
+  "South Africa": ["Stellenbosch", "Paarl", "Swartland", "Walker Bay", "Franschhoek", "Constantia", "Elgin"],
+  "New Zealand": ["Marlborough", "Central Otago", "Hawke's Bay", "Auckland", "Wairarapa"],
+  "Chile": ["Aconcagua Region", "Elqui / Limari Valley", "Maipo Valley", "Rapel Valley", "Curicó / Maule Valley", "South Region"],
+  "Austria": ["Niederösterreich", "Burgenland", "Steiermark"],
+  "Greece": ["Santorini", "Naoussa", "Nemea"]
+}
