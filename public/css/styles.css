@@ -506,6 +506,7 @@ select:focus { background-color: white; }
 .wine-guess-accordion.open { display: block; }
 .wine-guess-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 0.8rem; }
 .wine-guess-row:last-child { border-bottom: none; }
+.wine-guess-header { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); padding-bottom: 4px; }
 .wine-guess-avatar { font-size: 1rem; flex-shrink: 0; }
 .wine-guess-name { flex: 1; min-width: 0; font-family: -apple-system, system-ui, sans-serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wine-guess-check { flex-shrink: 0; font-size: 0.9rem; margin-left: auto; }

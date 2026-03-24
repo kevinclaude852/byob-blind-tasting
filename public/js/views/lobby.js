@@ -89,7 +89,6 @@ async function renderLobby(lobbyId) {
           await API.revealWine(lobbyId, wineId, minutes);
           // Always re-render so the host sees the countdown (or the reveal) immediately
           await loadData(); render();
-          if (lobby.revealOrder.length > 0) loadMiniScoreboard();
         } catch (err) {
           showToast(err.error || 'Failed to reveal.');
         }
@@ -209,7 +208,13 @@ async function renderLobby(lobbyId) {
           </div>
           ${countdownHtml}
           <div class="wine-guess-accordion" id="wine-guess-accord-${wine.id}">
-            ${guesserRows || '<div style="font-size:0.78rem;color:var(--text-muted);font-style:italic;padding:4px 0">No other players yet</div>'}
+            ${guesserRows
+              ? `<div class="wine-guess-row wine-guess-header">
+                   <span class="wine-guess-avatar"></span>
+                   <span class="wine-guess-name">Player</span>
+                   <span class="wine-guess-check">Guess made</span>
+                 </div>${guesserRows}`
+              : '<div style="font-size:0.78rem;color:var(--text-muted);font-style:italic;padding:4px 0">No other players yet</div>'}
           </div>
         </div>`;
     }).join('');
@@ -289,7 +294,6 @@ async function renderLobby(lobbyId) {
 
         <div class="players-grid" id="playersGrid">${playerCards}</div>
 
-        ${hasReveals ? `<div id="miniScoreboard" style="margin-top:16px"></div>` : ''}
       </div>
     `;
 
@@ -372,7 +376,6 @@ async function renderLobby(lobbyId) {
     // Start countdown tickers if any are active
     startCountdownTick();
 
-    if (hasReveals) loadMiniScoreboard();
   }
 
   async function loadMiniScoreboard() {
