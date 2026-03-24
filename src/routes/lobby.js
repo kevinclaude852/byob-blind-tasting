@@ -97,6 +97,7 @@ router.get('/:lobbyId', (req, res) => {
         id: w.id,
         emoji: w.emoji,
         revealed: w.revealed,
+        revealAt: w.revealAt || null,
         // Hide wine details (except name/emoji) for unrevealed wines not owned by current player
         name: (w.revealed || isSelf) ? w.name : null,
         vintage: (w.revealed || isSelf) ? w.vintage : null,

@@ -842,6 +842,92 @@ select:focus { background-color: white; }
 @keyframes toastIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
 @keyframes toastOut { from { opacity:1; } to { opacity:0; } }
 
+/* ===== Reveal Modal ===== */
+.reveal-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+.reveal-modal {
+  background: var(--card-bg);
+  border: 1px solid var(--border-strong);
+  padding: 28px 24px 20px;
+  max-width: 380px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+}
+.reveal-modal-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.reveal-modal-sub {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+.reveal-option-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.reveal-option-btn {
+  background: var(--bg-subtle);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-size: 0.85rem;
+  padding: 10px 6px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.reveal-option-btn:hover { background: var(--border); }
+.reveal-option-now {
+  grid-column: 1 / -1;
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.reveal-option-now:hover { background: var(--primary-hover); }
+.reveal-modal-cancel {
+  width: 100%;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  margin-top: 4px;
+  font-size: 0.85rem;
+}
+.reveal-modal-cancel:hover { color: var(--text); background: var(--bg-subtle); }
+
+/* ===== Countdown Timer ===== */
+.wine-countdown {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 2px;
+  flex-shrink: 0;
+}
+.countdown-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.countdown-timer {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #c0392b;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+}
+
 /* ===== Spin ===== */
 .spin { animation: spin 1s linear infinite; display: inline-block; }
 @keyframes spin { to { transform: rotate(360deg); } }

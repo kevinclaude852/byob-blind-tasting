@@ -67,7 +67,7 @@ const API = (() => {
     getGuess: (lobbyId, wineId) => request('GET', `/api/lobby/${lobbyId}/guess/${wineId}`, null, lobbyId),
 
     // Game
-    revealWine: (lobbyId, wineId) => request('POST', `/api/lobby/${lobbyId}/reveal/${wineId}`, {}, lobbyId),
+    revealWine: (lobbyId, wineId, delayMinutes = 0) => request('POST', `/api/lobby/${lobbyId}/reveal/${wineId}`, { delayMinutes }, lobbyId),
     getScores: (lobbyId) => request('GET', `/api/lobby/${lobbyId}/scores`, null, lobbyId),
 
     // Reference

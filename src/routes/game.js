@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true });
+const path = require('path');
+const fs = require('fs');
 const { loadGame, saveGame } = require('../services/persistenceService');
 const { calculateScore } = require('../services/scoringService');
 const { validateGuess } = require('../utils/validation');
@@ -8,11 +10,87 @@ const { authHost, getToken, findWine } = require('./lobby');
 let ioInstance = null;
 function setIo(io) { ioInstance = io; }
 
+// Active countdown timers: key = "lobbyId:wineId" -> NodeJS Timeout
+const pendingTimers = new Map();
+
 function getCurrentPlayer(game, token) {
   for (const [pid, p] of Object.entries(game.players)) {
     if (p.sessionToken === token) return pid;
   }
   return null;
+}
+
+// Core reveal logic — called both immediately and when a countdown fires
+function doReveal(lobbyId, wineId) {
+  const game = loadGame(lobbyId);
+  if (!game) return;
+
+  const found = findWine(game, wineId);
+  if (!found || found.wine.revealed) return;
+
+  const ownerPlayer = game.players[found.playerId];
+  const wineInData = ownerPlayer.wines.find(w => w.id === wineId);
+  wineInData.revealed = true;
+  wineInData.revealAt = null; // clear countdown marker
+  game.revealOrder.push(wineId);
+
+  // Calculate scores for all guessers
+  if (!game.scores[wineId]) game.scores[wineId] = {};
+  for (const [guesserId, theirGuesses] of Object.entries(game.guesses)) {
+    if (guesserId === found.playerId) continue;
+    const guess = (theirGuesses || {})[wineId] || null;
+    game.scores[wineId][guesserId] = calculateScore(wineInData, guess);
+  }
+
+  // Zero score for players who didn't guess (skip non-participating host)
+  for (const [playerId, player] of Object.entries(game.players)) {
+    if (playerId === found.playerId) continue;
+    if (player.participating === false) continue;
+    if (!game.scores[wineId][playerId]) {
+      game.scores[wineId][playerId] = { varietal: 0, country: 0, region: 0, vintage: 0, total: 0 };
+    }
+  }
+
+  saveGame(lobbyId, game, true);
+  pendingTimers.delete(`${lobbyId}:${wineId}`);
+
+  if (ioInstance) {
+    ioInstance.to(lobbyId).emit('wine-revealed', {
+      wineId,
+      playerId: found.playerId,
+      playerName: found.player.name,
+      wine: wineInData,
+      scores: game.scores[wineId]
+    });
+  }
+}
+
+// On server startup: re-schedule any countdowns that survived a restart
+function rescheduleTimers() {
+  const GAMES_DIR = path.join(__dirname, '../../data/games');
+  if (!fs.existsSync(GAMES_DIR)) return;
+  const files = fs.readdirSync(GAMES_DIR).filter(f => f.endsWith('.json'));
+  for (const file of files) {
+    try {
+      const lobbyId = file.replace('.json', '');
+      const game = loadGame(lobbyId);
+      if (!game) continue;
+      for (const player of Object.values(game.players)) {
+        for (const wine of (player.wines || [])) {
+          if (!wine.revealed && wine.revealAt) {
+            const ms = wine.revealAt - Date.now();
+            const key = `${lobbyId}:${wine.id}`;
+            if (ms <= 0) {
+              // Countdown already expired — reveal immediately
+              doReveal(lobbyId, wine.id);
+            } else if (!pendingTimers.has(key)) {
+              pendingTimers.set(key, setTimeout(() => doReveal(lobbyId, wine.id), ms));
+            }
+          }
+        }
+      }
+    } catch { /* skip corrupt game files */ }
+  }
 }
 
 // PUT /api/lobby/:lobbyId/guess/:wineId — submit/update guess
@@ -49,6 +127,11 @@ router.put('/guess/:wineId', (req, res) => {
   };
 
   saveGame(lobbyId, game);
+
+  if (ioInstance) {
+    ioInstance.to(lobbyId).emit('guess-submitted', { wineId, playerId: currentPlayerId });
+  }
+
   res.json({ success: true });
 });
 
@@ -65,7 +148,7 @@ router.get('/guess/:wineId', (req, res) => {
   res.json({ guess });
 });
 
-// POST /api/lobby/:lobbyId/reveal/:wineId — host reveals a wine
+// POST /api/lobby/:lobbyId/reveal/:wineId — host reveals a wine (immediately or after a countdown)
 router.post('/reveal/:wineId', (req, res) => {
   const { lobbyId, wineId } = req.params;
   const game = loadGame(lobbyId);
@@ -76,42 +159,31 @@ router.post('/reveal/:wineId', (req, res) => {
   if (!found) return res.status(404).json({ error: 'Wine not found.' });
   if (found.wine.revealed) return res.status(400).json({ error: 'Already revealed.' });
 
-  // Mark wine as revealed in the actual player data
-  const ownerPlayer = game.players[found.playerId];
-  const wineInData = ownerPlayer.wines.find(w => w.id === wineId);
-  wineInData.revealed = true;
-  game.revealOrder.push(wineId);
+  const delayMinutes = Number(req.body?.delayMinutes) || 0;
 
-  // Calculate scores for all guessers
-  if (!game.scores[wineId]) game.scores[wineId] = {};
-  for (const [guesserId, theirGuesses] of Object.entries(game.guesses)) {
-    if (guesserId === found.playerId) continue;
-    const guess = (theirGuesses || {})[wineId] || null;
-    game.scores[wineId][guesserId] = calculateScore(wineInData, guess);
-  }
+  if (delayMinutes > 0) {
+    // Countdown mode — store revealAt on wine and schedule server-side timer
+    const ownerPlayer = game.players[found.playerId];
+    const wineInData = ownerPlayer.wines.find(w => w.id === wineId);
+    const revealAt = Date.now() + delayMinutes * 60 * 1000;
+    wineInData.revealAt = revealAt;
+    saveGame(lobbyId, game);
 
-  // Zero score for players who didn't guess (skip non-participating host)
-  for (const [playerId, player] of Object.entries(game.players)) {
-    if (playerId === found.playerId) continue;
-    if (player.participating === false) continue;
-    if (!game.scores[wineId][playerId]) {
-      game.scores[wineId][playerId] = { varietal: 0, country: 0, region: 0, vintage: 0, total: 0 };
+    // Cancel any existing timer for this wine before setting a new one
+    const key = `${lobbyId}:${wineId}`;
+    if (pendingTimers.has(key)) clearTimeout(pendingTimers.get(key));
+    pendingTimers.set(key, setTimeout(() => doReveal(lobbyId, wineId), delayMinutes * 60 * 1000));
+
+    if (ioInstance) {
+      ioInstance.to(lobbyId).emit('wine-countdown-started', { wineId, revealAt });
     }
+
+    return res.json({ success: true, revealAt });
   }
 
-  saveGame(lobbyId, game, true);
-
-  if (ioInstance) {
-    ioInstance.to(lobbyId).emit('wine-revealed', {
-      wineId,
-      playerId: found.playerId,
-      playerName: found.player.name,
-      wine: wineInData,
-      scores: game.scores[wineId]
-    });
-  }
-
-  res.json({ success: true, scores: game.scores[wineId] });
+  // Immediate reveal
+  doReveal(lobbyId, wineId);
+  res.json({ success: true });
 });
 
 // GET /api/lobby/:lobbyId/scores
@@ -153,4 +225,4 @@ router.get('/scores', (req, res) => {
   });
 });
 
-module.exports = { router, setIo };
+module.exports = { router, setIo, rescheduleTimers };

@@ -16,7 +16,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Routes
 const { router: lobbyRouter } = require('./src/routes/lobby');
 const playerRouter = require('./src/routes/player');
-const { router: gameRouter, setIo } = require('./src/routes/game');
+const { router: gameRouter, setIo, rescheduleTimers } = require('./src/routes/game');
 const { grapes, countries, regions } = require('./src/utils/validation');
 const { setupSocketHandlers } = require('./src/socket/handler');
 
@@ -47,6 +47,9 @@ app.get('/{*path}', (req, res) => {
 });
 
 setupSocketHandlers(io);
+
+// Re-schedule any countdown timers that were active before a server restart
+rescheduleTimers();
 
 // Start server
 const PORT = process.env.PORT || 3000;

@@ -3,6 +3,7 @@ async function renderLobby(lobbyId) {
   app.innerHTML = `<div class="page"><div class="loading-screen"><div class="wine-glass">🍷</div><p>Loading...</p></div></div>`;
 
   let lobby, qrDataUrl = null;
+  let countdownInterval = null; // ticks every 500ms to refresh mm:ss displays
 
   async function loadData() {
     lobby = await API.getLobby(lobbyId);
@@ -23,6 +24,75 @@ async function renderLobby(lobbyId) {
     return;
   }
 
+  // ── Countdown tick ──────────────────────────────────────────────────────────
+  function startCountdownTick() {
+    if (countdownInterval) clearInterval(countdownInterval);
+    const displays = document.querySelectorAll('.wine-countdown');
+    if (!displays.length) return;
+
+    countdownInterval = setInterval(() => {
+      const now = Date.now();
+      document.querySelectorAll('.wine-countdown').forEach(el => {
+        const revealAt = Number(el.dataset.revealAt);
+        const remaining = Math.max(0, revealAt - now);
+        const timerEl = el.querySelector('.countdown-timer');
+        if (!timerEl) return;
+        const totalSec = Math.ceil(remaining / 1000);
+        const mm = String(Math.floor(totalSec / 60)).padStart(2, '0');
+        const ss = String(totalSec % 60).padStart(2, '0');
+        timerEl.textContent = `${mm}:${ss}`;
+      });
+    }, 500);
+  }
+
+  // ── Reveal modal ────────────────────────────────────────────────────────────
+  function showRevealModal(wineId, wineLabel) {
+    // Remove any existing modal
+    document.getElementById('revealModalOverlay')?.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'revealModalOverlay';
+    overlay.className = 'reveal-modal-overlay';
+    overlay.innerHTML = `
+      <div class="reveal-modal" role="dialog" aria-modal="true">
+        <h3 class="reveal-modal-title">Reveal Wine</h3>
+        <p class="reveal-modal-sub">Choose when to reveal <strong>${escHtml(wineLabel)}</strong></p>
+        <div class="reveal-option-grid">
+          <button class="btn reveal-option-btn reveal-option-now" data-minutes="0">Reveal Now</button>
+          <button class="btn reveal-option-btn" data-minutes="3">3 min</button>
+          <button class="btn reveal-option-btn" data-minutes="5">5 min</button>
+          <button class="btn reveal-option-btn" data-minutes="10">10 min</button>
+          <button class="btn reveal-option-btn" data-minutes="15">15 min</button>
+          <button class="btn reveal-option-btn" data-minutes="30">30 min</button>
+        </div>
+        <button class="btn btn-ghost reveal-modal-cancel" id="revealModalCancel">Cancel</button>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    // Cancel
+    overlay.querySelector('#revealModalCancel').addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+
+    // Option selected
+    overlay.querySelectorAll('.reveal-option-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const minutes = Number(btn.dataset.minutes);
+        btn.disabled = true;
+        btn.textContent = '...';
+        overlay.remove();
+        try {
+          await API.revealWine(lobbyId, wineId, minutes);
+          // Always re-render so the host sees the countdown (or the reveal) immediately
+          await loadData(); render();
+          if (lobby.revealOrder.length > 0) loadMiniScoreboard();
+        } catch (err) {
+          showToast(err.error || 'Failed to reveal.');
+        }
+      });
+    });
+  }
+
+  // ── Wine row builder ────────────────────────────────────────────────────────
   function buildWineRows(player) {
     const wines = player.wines || [];
     const currentPlayerId = lobby.currentPlayerId;
@@ -36,6 +106,7 @@ async function renderLobby(lobbyId) {
 
     return wines.map((wine, wineIndex) => {
       const isRevealed = wine.revealed;
+      const isPending = !isRevealed && !!wine.revealAt; // countdown active
       const myGuess = !isSelf ? lobby.myGuesses[wine.id] : null;
       const hasGuessed = !!myGuess;
       const myScore = isRevealed && !isSelf
@@ -55,10 +126,18 @@ async function renderLobby(lobbyId) {
         ? `<span class="score-pill" style="flex-shrink:0;margin-left:auto">${myScore.total}pts</span>`
         : '';
 
-      // Action buttons — Reveal only for host
+      // Countdown display (shown to everyone when a timed reveal is pending)
+      const countdownHtml = isPending
+        ? `<div class="wine-countdown" data-reveal-at="${wine.revealAt}">
+             <span class="countdown-label">Reveals in</span>
+             <span class="countdown-timer">--:--</span>
+           </div>`
+        : '';
+
+      // Action buttons
       let actionsHtml = '';
       if (isSelf) {
-        if (!isRevealed) {
+        if (!isRevealed && !isPending) {
           if (isHost) {
             actionsHtml += `<button class="btn btn-xs btn-gold reveal-btn" data-wine-id="${wine.id}">Reveal</button>`;
           }
@@ -69,7 +148,8 @@ async function renderLobby(lobbyId) {
           if (!isNonParticipatingHost) {
             actionsHtml += `<button class="btn btn-xs btn-danger guess-btn" data-wine-id="${wine.id}">${hasGuessed ? 'Change My Guess' : 'Guess'}</button>`;
           }
-          if (isHost) {
+          // Only show Reveal button if no countdown is already running
+          if (isHost && !isPending) {
             actionsHtml += `<button class="btn btn-xs btn-gold reveal-btn" data-wine-id="${wine.id}">Reveal</button>`;
           }
         }
@@ -118,6 +198,7 @@ async function renderLobby(lobbyId) {
             <span class="wine-emoji-badge">${wine.emoji}</span>
             <div class="wine-row-status">${statusHtml}</div>
             ${scorePillHtml}
+            ${countdownHtml}
             ${actionsHtml ? `<div class="wine-row-actions">${actionsHtml}</div>` : ''}
             <span class="wine-guess-chevron">›</span>
           </div>
@@ -128,7 +209,11 @@ async function renderLobby(lobbyId) {
     }).join('');
   }
 
+  // ── Main render ─────────────────────────────────────────────────────────────
   function render() {
+    // Stop any existing countdown tick before rebuilding DOM
+    if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+
     const currentPlayerId = lobby.currentPlayerId;
     const isHost = lobby.isHost;
     const joinUrl = `${location.protocol}//${location.host}/#/lobby/${lobbyId}`;
@@ -249,28 +334,19 @@ async function renderLobby(lobbyId) {
       });
     });
 
-    // Reveal buttons
+    // Reveal buttons — open timed reveal modal
     document.querySelectorAll('.reveal-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
         const wineId = btn.dataset.wineId;
         const wineInfo = lobby.wineMap[wineId];
         const label = wineInfo ? `${wineInfo.playerName}'s wine ${wineInfo.wineEmoji}` : 'this wine';
-        if (!confirm(`Reveal ${label}? Players can no longer change their guesses.`)) return;
-        btn.disabled = true;
-        btn.textContent = '...';
-        try {
-          await API.revealWine(lobbyId, wineId);
-          await loadData();
-          render();
-          if (lobby.revealOrder.length > 0) loadMiniScoreboard();
-        } catch (err) {
-          showToast(err.error || 'Failed to reveal.');
-          btn.disabled = false;
-          btn.textContent = 'Reveal';
-        }
+        showRevealModal(wineId, label);
       });
     });
+
+    // Start countdown tickers if any are active
+    startCountdownTick();
 
     if (hasReveals) loadMiniScoreboard();
   }
@@ -300,12 +376,26 @@ async function renderLobby(lobbyId) {
   SocketManager.connect(lobbyId, session?.playerId);
 
   // Only re-render if currently on the lobby page — prevents overwriting other pages
+  function onLobbyPage() {
+    return !!window.location.hash.match(new RegExp(`^#/lobby/${lobbyId}$`));
+  }
+
   SocketManager.on('player-joined', async () => {
-    if (!window.location.hash.match(new RegExp(`^#/lobby/${lobbyId}$`))) return;
+    if (!onLobbyPage()) return;
     await loadData(); render();
   });
   SocketManager.on('wine-revealed', async () => {
-    if (!window.location.hash.match(new RegExp(`^#/lobby/${lobbyId}$`))) return;
+    if (!onLobbyPage()) return;
     await loadData(); render(); showToast('A wine has been revealed! 🔓');
+  });
+  SocketManager.on('wine-countdown-started', async ({ wineId, revealAt }) => {
+    if (!onLobbyPage()) return;
+    await loadData(); render();
+    const minutes = Math.round((revealAt - Date.now()) / 60000);
+    showToast(`Countdown started — wine reveals in ${minutes} min ⏱️`);
+  });
+  SocketManager.on('guess-submitted', async () => {
+    if (!onLobbyPage()) return;
+    await loadData(); render();
   });
 }
