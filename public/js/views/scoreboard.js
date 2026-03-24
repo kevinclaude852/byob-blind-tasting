@@ -151,7 +151,7 @@ async function renderScoreboard(lobbyId) {
 
       <div class="page-header">
         <h1>Leaderboard</h1>
-        <p>${revealOrder.length} wine${revealOrder.length !== 1 ? 's' : ''} revealed</p>
+        <p>${revealOrder.length} out of ${Object.keys(wineMap).length} wine${Object.keys(wineMap).length !== 1 ? 's' : ''} revealed</p>
       </div>
 
       <div class="scoreboard" style="margin-bottom:24px">

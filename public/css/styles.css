@@ -975,6 +975,47 @@ select:focus { background-color: white; }
   flex-shrink: 0;
 }
 
+/* ===== Scoring Rules ===== */
+.scoring-rules {
+  margin-top: 28px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  padding: 16px 18px 14px;
+}
+.scoring-rules-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+.scoring-rules-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.scoring-rule-item {
+  display: grid;
+  grid-template-columns: 110px 80px 1fr;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.8rem;
+}
+.scoring-rule-item:last-child { border-bottom: none; }
+.scoring-rule-cat { font-weight: 600; }
+.scoring-rule-pts { font-weight: 700; color: var(--gold); font-size: 0.78rem; }
+.scoring-rule-desc { color: var(--text-muted); font-size: 0.76rem; }
+.scoring-rule-max {
+  margin-top: 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-align: right;
+}
+
 /* ===== Spin ===== */
 .spin { animation: spin 1s linear infinite; display: inline-block; }
 @keyframes spin { to { transform: rotate(360deg); } }

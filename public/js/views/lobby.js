@@ -289,10 +289,37 @@ async function renderLobby(lobbyId) {
             <h3>Players (${playerCount})</h3>
             <h3 style="margin-top:3px">Wines (${revealedWines} / ${totalWines})</h3>
           </div>
-          ${hasReveals ? `<a href="#/lobby/${lobbyId}/scores" class="btn btn-secondary btn-sm" style="width:auto">🏆 Scoreboard</a>` : ''}
+          ${hasReveals ? `<a href="#/lobby/${lobbyId}/scores" class="btn btn-secondary btn-sm" style="width:auto">🏆 Leaderboard</a>` : ''}
         </div>
 
         <div class="players-grid" id="playersGrid">${playerCards}</div>
+
+        <div class="scoring-rules">
+          <div class="scoring-rules-title">Scoring Rules</div>
+          <div class="scoring-rules-grid">
+            <div class="scoring-rule-item">
+              <span class="scoring-rule-cat">Grape Variety</span>
+              <span class="scoring-rule-pts">Up to 10 pts</span>
+              <span class="scoring-rule-desc">Pro-rated by % of correct varietals identified</span>
+            </div>
+            <div class="scoring-rule-item">
+              <span class="scoring-rule-cat">Country</span>
+              <span class="scoring-rule-pts">5 pts</span>
+              <span class="scoring-rule-desc">Exact match</span>
+            </div>
+            <div class="scoring-rule-item">
+              <span class="scoring-rule-cat">Region</span>
+              <span class="scoring-rule-pts">5 pts</span>
+              <span class="scoring-rule-desc">Exact match</span>
+            </div>
+            <div class="scoring-rule-item">
+              <span class="scoring-rule-cat">Vintage</span>
+              <span class="scoring-rule-pts">5 / 3 / 1 pts</span>
+              <span class="scoring-rule-desc">Exact / ±1 year / ±2 years</span>
+            </div>
+          </div>
+          <div class="scoring-rule-max">Maximum 25 pts per wine</div>
+        </div>
 
       </div>
     `;
