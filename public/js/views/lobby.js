@@ -204,10 +204,10 @@ async function renderLobby(lobbyId) {
             <span class="wine-emoji-badge">${wine.emoji}</span>
             <div class="wine-row-status">${statusHtml}</div>
             ${scorePillHtml}
-            ${countdownHtml}
             ${actionsHtml ? `<div class="wine-row-actions">${actionsHtml}</div>` : ''}
             <span class="wine-guess-chevron">›</span>
           </div>
+          ${countdownHtml}
           <div class="wine-guess-accordion" id="wine-guess-accord-${wine.id}">
             ${guesserRows || '<div style="font-size:0.78rem;color:var(--text-muted);font-style:italic;padding:4px 0">No other players yet</div>'}
           </div>
