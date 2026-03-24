@@ -146,8 +146,48 @@ function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], count
 
   const singleGrape = prefillVarietals[0] ? prefillVarietals[0].grape : '';
 
+  // Shared fragments
+  const countryField = `
+    <div class="form-group">
+      <label for="wineCountry">Country${isGuess ? '<span class="optional">(optional)</span>' : ''}</label>
+      <select id="wineCountry">
+        <option value="">-- Select Country --</option>
+        ${countries.map(c => `<option value="${c}" ${prefill && prefill.country === c ? 'selected' : ''}>${c}</option>`).join('')}
+      </select>
+    </div>`;
+
+  const regionField = `
+    <div class="form-group" id="regionGroup" style="${prefill && prefill.country ? '' : 'display:none'}">
+      <label for="wineRegion">Region <span class="optional">(optional)</span></label>
+      <select id="wineRegion">
+        <option value="">-- Select Region --</option>
+        ${prefill && prefill.country && regions[prefill.country]
+          ? regions[prefill.country].map(r => `<option value="${r}" ${prefill.region === r ? 'selected' : ''}>${r}</option>`).join('')
+          : ''}
+      </select>
+    </div>`;
+
+  const vintageField = `
+    <div class="form-group">
+      <label for="wineVintage">Vintage${isGuess ? '<span class="optional">(optional)</span>' : ''}</label>
+      <select id="wineVintage">${vintageOptions}</select>
+    </div>`;
+
+  // ── Guess form: Grape Variety → Country → Region → Vintage (no radio, single grape only)
+  if (isGuess) {
+    return `
+      <div class="form-group">
+        <label>Grape Variety <span class="optional">(optional)</span></label>
+        ${buildGrapeAutocomplete({ id: 'singleGrape', prefillValue: singleGrape, placeholder: 'Type to search grape...' })}
+      </div>
+      ${countryField}
+      ${regionField}
+      ${vintageField}
+    `;
+  }
+
+  // ── Wine registration form: Emoji → Name → Cépage radio → Variety/Blend → Country → Region → Vintage
   return `
-    ${!isGuess ? `
     <div class="form-group">
       <label>Wine Emoji</label>
       <div class="emoji-picker wine-emoji-picker" id="wineEmojiPicker">
@@ -158,15 +198,10 @@ function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], count
     <div class="form-group">
       <label for="wineName">Wine Name</label>
       <input type="text" id="wineName" placeholder="e.g. Château Margaux" value="${prefill ? escHtml(prefill.name || '') : ''}">
-    </div>` : ''}
-
-    <div class="form-group">
-      <label for="wineVintage">Vintage${isGuess ? '<span class="optional">(optional)</span>' : ''}</label>
-      <select id="wineVintage">${vintageOptions}</select>
     </div>
 
     <div class="form-group">
-      <label>Cépage${isGuess ? '<span class="optional">(optional)</span>' : ''}</label>
+      <label>Cépage</label>
       <div class="radio-group">
         <div class="radio-option">
           <input type="radio" name="wineType" id="typeSingle" value="single" ${prefillType !== 'blend' ? 'checked' : ''}>
@@ -181,36 +216,22 @@ function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], count
 
     <div id="singleVarietalSection" style="${prefillType === 'blend' ? 'display:none' : ''}">
       <div class="form-group">
-        <label>Grape Variety${isGuess ? '<span class="optional">(optional)</span>' : ''}</label>
+        <label>Grape Variety</label>
         ${buildGrapeAutocomplete({ id: 'singleGrape', prefillValue: singleGrape, placeholder: 'Type to search grape...' })}
       </div>
     </div>
 
     <div id="blendSection" style="${prefillType !== 'blend' ? 'display:none' : ''}">
       <div class="form-group">
-        <label>Grape Blend${isGuess ? '<span class="optional">(optional)</span>' : ''}${!isGuess ? ' <span class="optional">— percentages must total 100</span>' : ''}</label>
+        <label>Grape Blend <span class="optional">— percentages must total 100</span></label>
         ${blendRows}
-        ${!isGuess ? `<div class="pct-total" id="pctTotal">Total: 0%</div>` : ''}
+        <div class="pct-total" id="pctTotal">Total: 0%</div>
       </div>
     </div>
 
-    <div class="form-group">
-      <label for="wineCountry">Country${isGuess ? '<span class="optional">(optional)</span>' : ''}</label>
-      <select id="wineCountry">
-        <option value="">-- Select Country --</option>
-        ${countries.map(c => `<option value="${c}" ${prefill && prefill.country === c ? 'selected' : ''}>${c}</option>`).join('')}
-      </select>
-    </div>
-
-    <div class="form-group" id="regionGroup" style="${prefill && prefill.country ? '' : 'display:none'}">
-      <label for="wineRegion">Region <span class="optional">(optional)</span></label>
-      <select id="wineRegion">
-        <option value="">-- Select Region --</option>
-        ${prefill && prefill.country && regions[prefill.country]
-          ? regions[prefill.country].map(r => `<option value="${r}" ${prefill.region === r ? 'selected' : ''}>${r}</option>`).join('')
-          : ''}
-      </select>
-    </div>
+    ${countryField}
+    ${regionField}
+    ${vintageField}
   `;
 }
 
@@ -282,21 +303,31 @@ function updateRegionDropdown(country, regions, selectedRegion = '') {
 }
 
 function collectWineFormData(isGuess = false) {
-  const type = document.querySelector('input[name="wineType"]:checked')?.value || 'single';
   const varietals = [];
-  if (type === 'single') {
+  let type;
+
+  if (isGuess) {
+    // Guesses are always single-grape
+    type = 'single';
     const grape = document.getElementById('singleGrape')?.value;
     if (grape) varietals.push({ grape, percentage: 100 });
   } else {
-    document.querySelectorAll('.blend-grape').forEach((sel, i) => {
-      if (sel.value) {
-        const pctEl = document.querySelectorAll('.blend-pct')[i];
-        const entry = { grape: sel.value };
-        if (pctEl) entry.percentage = parseInt(pctEl.value, 10) || 0;
-        varietals.push(entry);
-      }
-    });
+    type = document.querySelector('input[name="wineType"]:checked')?.value || 'single';
+    if (type === 'single') {
+      const grape = document.getElementById('singleGrape')?.value;
+      if (grape) varietals.push({ grape, percentage: 100 });
+    } else {
+      document.querySelectorAll('.blend-grape').forEach((sel, i) => {
+        if (sel.value) {
+          const pctEl = document.querySelectorAll('.blend-pct')[i];
+          const entry = { grape: sel.value };
+          if (pctEl) entry.percentage = parseInt(pctEl.value, 10) || 0;
+          varietals.push(entry);
+        }
+      });
+    }
   }
+
   const data = {
     vintage: document.getElementById('wineVintage')?.value || null,
     type,

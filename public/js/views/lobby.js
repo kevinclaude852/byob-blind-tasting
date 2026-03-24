@@ -310,8 +310,8 @@ async function renderLobby(lobbyId) {
             </div>
             <div class="scoring-rule-item">
               <span class="scoring-rule-cat">Vintage</span>
-              <span class="scoring-rule-pts">5 / 3 / 1 pts</span>
-              <span class="scoring-rule-desc">Exact / ±1 year / ±2 years</span>
+              <span class="scoring-rule-pts">5 / 1 pts</span>
+              <span class="scoring-rule-desc">Exact / ±1 year</span>
             </div>
           </div>
           <div class="scoring-rule-max">Maximum 25 pts per wine</div>

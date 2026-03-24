@@ -64,8 +64,7 @@ function scoreVintage(actual, guess) {
 
   const diff = Math.abs(Number(actualVintage) - Number(guessVintage));
   if (diff === 0) return 5;
-  if (diff === 1) return 3;
-  if (diff === 2) return 1;
+  if (diff === 1) return 1;
   return 0;
 }
 
