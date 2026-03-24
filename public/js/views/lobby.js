@@ -263,12 +263,8 @@ async function renderLobby(lobbyId) {
 
     app.innerHTML = `
       <div class="page wide">
-        <div class="lobby-header">
-          ${isHost ? `
-            <div class="editable-name">
-              <input type="text" id="lobbyNameInput" value="${escHtml(lobby.lobbyName)}" placeholder="Lobby name">
-              <button class="edit-save-btn" id="saveLobbyName">Save</button>
-            </div>` : `<h2>${escHtml(lobby.lobbyName)}</h2>`}
+        <div class="page-header">
+          <h1>${escHtml(lobby.lobbyName)}</h1>
         </div>
 
         ${isHost ? `
@@ -324,14 +320,8 @@ async function renderLobby(lobbyId) {
       </div>
     `;
 
-    // Host: rename lobby
+    // Host: share link buttons
     if (isHost) {
-      document.getElementById('saveLobbyName')?.addEventListener('click', async () => {
-        const name = document.getElementById('lobbyNameInput').value.trim();
-        if (!name) return;
-        try { await API.renameLobby(lobbyId, name); lobby.lobbyName = name; showToast('Lobby renamed!'); } catch {}
-      });
-
       document.getElementById('copyUrlBtn')?.addEventListener('click', async () => {
         const ok = await API.copyToClipboard(joinUrl);
         showToast(ok ? 'Link copied! 📋' : 'Copy failed — please copy the link manually.');
