@@ -246,10 +246,22 @@ router.get('/scores', (req, res) => {
     }
   }
 
+  // Include actual guess content for revealed wines (shown on leaderboard)
+  const revealedGuesses = {};
+  for (const [guesserId, wineGuesses] of Object.entries(game.guesses)) {
+    for (const [wineId, guess] of Object.entries(wineGuesses)) {
+      if (game.revealOrder.includes(wineId)) {
+        if (!revealedGuesses[guesserId]) revealedGuesses[guesserId] = {};
+        revealedGuesses[guesserId][wineId] = guess;
+      }
+    }
+  }
+
   res.json({
     scores: totals,
     revealOrder: game.revealOrder,
     wineMap,
+    guesses: revealedGuesses,
     players: Object.fromEntries(
       Object.entries(game.players).map(([id, p]) => [id, { name: p.name, emoji: p.emoji, wines: p.wines }])
     )

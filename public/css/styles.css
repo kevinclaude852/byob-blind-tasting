@@ -509,7 +509,7 @@ select:focus { background-color: white; }
 .wine-guess-header { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); padding-bottom: 4px; }
 .wine-guess-avatar { font-size: 1rem; flex-shrink: 0; }
 .wine-guess-name { flex: 1; min-width: 0; font-family: -apple-system, system-ui, sans-serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.wine-guess-check { flex-shrink: 0; font-size: 0.9rem; margin-left: auto; }
+.wine-guess-check { flex-shrink: 0; font-size: 0.8rem; margin-left: auto; }
 
 /* White text on dark gold revealed rows */
 .wine-row--revealed .wine-name-pill { color: #fff; }
@@ -653,6 +653,28 @@ select:focus { background-color: white; }
   border-bottom: 1px solid var(--border);
 }
 .score-accordion-row:last-child { border-bottom: none; }
+.score-acc-wine-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.85rem; }
+.score-acc-pts { font-weight: 700; font-size: 0.85rem; flex-shrink: 0; }
+.score-wine-chevron { font-size: 1rem; color: var(--text-muted); transition: transform 0.2s ease; flex-shrink: 0; margin-left: 6px; }
+.score-wine-expandable { cursor: pointer; user-select: none; }
+.score-wine-expandable:hover { background: var(--bg-subtle); }
+
+/* Wine sub-accordion (guess vs wine) */
+.score-wine-accordion { display: none; background: var(--card-bg); border-bottom: 1px solid var(--border); padding: 10px 20px 10px 48px; }
+.score-wine-accordion.open { display: block; }
+.gvw-header-row, .gvw-attr-row {
+  display: grid;
+  grid-template-columns: 60px 1fr 1fr;
+  gap: 6px;
+  align-items: start;
+  padding: 4px 0;
+  font-size: 0.8rem;
+}
+.gvw-header-row { border-bottom: 1px solid var(--border); padding-bottom: 6px; margin-bottom: 2px; }
+.gvw-label { color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.03em; }
+.gvw-col-title { font-weight: 700; font-size: 0.78rem; }
+.gvw-guess-val { color: var(--text); }
+.gvw-wine-val { color: var(--text); font-weight: 600; }
 
 /* ===== Guess Page ===== */
 .wine-owner-header {
