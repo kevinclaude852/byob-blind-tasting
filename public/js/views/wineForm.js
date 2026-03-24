@@ -35,11 +35,16 @@ function attachGrapeAutocomplete(grapes) {
       if (active) active.scrollIntoView({ block: 'nearest' });
     }
 
+    // Strip diacritics for accent-insensitive matching (e.g. "Semi" matches "Sémillon")
+    function norm(s) {
+      return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    }
+
     function buildList(q) {
       if (!q) return grapes; // show full list when nothing typed
-      const ql = q.toLowerCase();
-      const starts   = grapes.filter(g =>  g.toLowerCase().startsWith(ql));
-      const contains = grapes.filter(g => !g.toLowerCase().startsWith(ql) && g.toLowerCase().includes(ql));
+      const ql = norm(q);
+      const starts   = grapes.filter(g =>  norm(g).startsWith(ql));
+      const contains = grapes.filter(g => !norm(g).startsWith(ql) && norm(g).includes(ql));
       return [...starts, ...contains];
     }
 
