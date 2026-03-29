@@ -40,8 +40,8 @@ function renderJoin(lobbyId, lobbyName) {
     const name = document.getElementById('playerName').value.trim();
     const errorEl = document.getElementById('joinError');
 
-    if (!name) { errorEl.innerHTML = '<div class="alert alert-error">Please enter your name.</div>'; return; }
-    if (!selectedEmoji) { errorEl.innerHTML = '<div class="alert alert-error">Please choose an avatar.</div>'; return; }
+    if (!name) { errorEl.innerHTML = `<div class="alert alert-error">${t('error.enterName')}</div>`; return; }
+    if (!selectedEmoji) { errorEl.innerHTML = `<div class="alert alert-error">${t('error.chooseAvatar')}</div>`; return; }
 
     const btn = document.getElementById('joinBtn');
     btn.disabled = true;

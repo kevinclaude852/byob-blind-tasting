@@ -60,11 +60,11 @@ function renderLanding() {
     const hostNotParticipating = document.getElementById('hostNotParticipating').checked;
     const errorEl = document.getElementById('landingError');
 
-    if (!lobbyName) { showError(errorEl, 'Please enter a lobby name.'); return; }
+    if (!lobbyName) { showError(errorEl, t('error.enterLobbyName')); return; }
     if (!hostNotParticipating) {
       const hostName = document.getElementById('hostName').value.trim();
-      if (!hostName) { showError(errorEl, 'Please enter your name.'); return; }
-      if (!selectedEmoji) { showError(errorEl, 'Please choose an avatar.'); return; }
+      if (!hostName) { showError(errorEl, t('error.enterName')); return; }
+      if (!selectedEmoji) { showError(errorEl, t('error.chooseAvatar')); return; }
     }
 
     const btn = document.getElementById('createBtn');

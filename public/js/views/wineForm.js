@@ -225,9 +225,9 @@ function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], count
 
     <div id="blendSection" style="${prefillType !== 'blend' ? 'display:none' : ''}">
       <div class="form-group">
-        <label>Grape Blend <span class="optional">— percentages must total 100</span></label>
+        <label>Grape Blend <span class="optional">${t('form.blendHint')}</span></label>
         ${blendRows}
-        <div class="pct-total" id="pctTotal">Total: 0%</div>
+        <div class="pct-total" id="pctTotal">${t('form.pctTotal')}: 0%</div>
       </div>
     </div>
 
@@ -285,7 +285,7 @@ function updatePctTotal() {
     const v = parseInt(inp.value, 10);
     if (!isNaN(v)) sum += v;
   });
-  totalEl.textContent = `Total: ${sum}%`;
+  totalEl.textContent = `${t('form.pctTotal')}: ${sum}%`;
   totalEl.className = `pct-total ${sum === 100 ? 'ok' : 'bad'}`;
 }
 
@@ -414,7 +414,8 @@ async function renderWineRegistration(lobbyId, wineId = null) {
         await renderWineRegistration(lobbyId, null);
       }
     } catch (err) {
-      const msgs = err.errors ? err.errors : [err.error || 'Failed to save wine.'];
+      const raw = err.errors ? err.errors : [err.error || 'Failed to save wine.'];
+      const msgs = translateServerErrors(raw);
       errorEl.innerHTML = `<div class="alert alert-error"><ul>${msgs.map(m => `<li>${escHtml(m)}</li>`).join('')}</ul></div>`;
       btn.disabled = false;
       btn.innerHTML = submitLabel;

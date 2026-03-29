@@ -61,6 +61,32 @@ const TRANSLATIONS = {
     'form.optional':          '(optional)',
     'form.selectRegion':      '-- Select Region --',
     'form.selectVintage':     '-- Select --',
+    'form.blendHint':         '— percentages must total 100',
+    'form.pctTotal':          'Total',
+    // Validation errors (client-side)
+    'error.enterLobbyName':   'Please enter a lobby name.',
+    'error.enterName':        'Please enter your name.',
+    'error.chooseAvatar':     'Please choose an avatar.',
+    // Lobby wine row buttons & countdown
+    'lobby.editBtn':          'Edit',
+    'lobby.revealBtn':        'Reveal',
+    'lobby.revealsIn':        'Reveals in',
+    'lobby.stopBtn':          'Stop',
+    // Reveal modal
+    'modal.revealWine':       'Reveal Wine',
+    'modal.revealSubPre':     'Choose when to reveal ',
+    'modal.revealSubPost':    '',
+    'modal.revealNow':        'Reveal Now',
+    'modal.orCountdown':      'Or reveal after counting down from',
+    'modal.minUnit':          ' min',
+    'modal.cancel':           'Cancel',
+    // Server-side wine validation errors
+    'serverErr.wineName':     'Wine name is required.',
+    'serverErr.blend2':       'A blend must have at least 2 grape varieties.',
+    'serverErr.blendPct':     'Each varietal percentage must be an integer between 1 and 99.',
+    'serverErr.vintage':      'Vintage is required.',
+    'serverErr.grape':        'At least one grape variety is required.',
+    'serverErr.country':      'Country is required.',
   },
   hk: {
     // Landing
@@ -93,7 +119,7 @@ const TRANSLATIONS = {
     'lobby.scoringRules':     '計分準則',
     'lobby.grapeVariety':     '提子品種',
     'lobby.upTo10pts':        '最多 10 分',
-    'lobby.grapeDesc':        'Pro-rated by % of correct varietals identified',
+    'lobby.grapeDesc':        '按估中嘅提子所佔比例計分',
     'lobby.5pts':             '5 分',
     'lobby.exactMatch':       '啱晒先計',
     'lobby.vintageScore':     '5 / 1 分',
@@ -123,6 +149,32 @@ const TRANSLATIONS = {
     'form.optional':          '(可以唔填)',
     'form.selectRegion':      '揀產區',
     'form.selectVintage':     '揀年份',
+    'form.blendHint':         '- 總共一定要100%',
+    'form.pctTotal':          '總共',
+    // Validation errors (client-side)
+    'error.enterLobbyName':   '唔該入返個大廳名',
+    'error.enterName':        '唔起朵，冇人識你喎',
+    'error.chooseAvatar':     '揀返個嘜頭',
+    // Lobby wine row buttons & countdown
+    'lobby.editBtn':          '修改',
+    'lobby.revealBtn':        '開估',
+    'lobby.revealsIn':        '倒數完開估',
+    'lobby.stopBtn':          '停止',
+    // Reveal modal
+    'modal.revealWine':       '開估支酒',
+    'modal.revealSubPre':     '擇個時辰幾時開',
+    'modal.revealSubPost':    '支酒',
+    'modal.revealNow':        '即刻開估',
+    'modal.orCountdown':      '或者揀倒數幾耐再開估',
+    'modal.minUnit':          '分鐘',
+    'modal.cancel':           '取消',
+    // Server-side wine validation errors
+    'serverErr.wineName':     '唔該入返支酒嘅名',
+    'serverErr.blend2':       '叫得做溝，起碼要兩隻提子',
+    'serverErr.blendPct':     '每隻提子最少1%最多99%',
+    'serverErr.vintage':      '唔該填番年份',
+    'serverErr.grape':        '最少揀一隻提子',
+    'serverErr.country':      '唔該揀返國家',
   }
 };
 
@@ -192,4 +244,18 @@ function initLangToggle() {
 function updateBtnStyle(btn, active) {
   btn.style.background = active ? 'var(--wine,#722F37)' : 'transparent';
   btn.style.color       = active ? '#fff' : 'var(--text-muted,#888)';
+}
+
+// Map known server error strings to translation keys
+const SERVER_ERROR_MAP = {
+  'Wine name is required.':                                              'serverErr.wineName',
+  'A blend must have at least 2 grape varieties.':                      'serverErr.blend2',
+  'Each varietal percentage must be an integer between 1 and 99.':      'serverErr.blendPct',
+  'Vintage is required.':                                               'serverErr.vintage',
+  'At least one grape variety is required.':                            'serverErr.grape',
+  'Country is required.':                                               'serverErr.country',
+};
+
+function translateServerErrors(msgs) {
+  return msgs.map(m => t(SERVER_ERROR_MAP[m] || m) || m);
 }

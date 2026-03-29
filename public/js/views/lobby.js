@@ -55,22 +55,18 @@ async function renderLobby(lobbyId) {
     overlay.className = 'reveal-modal-overlay';
     overlay.innerHTML = `
       <div class="reveal-modal" role="dialog" aria-modal="true">
-        <h3 class="reveal-modal-title">Reveal Wine</h3>
-        <p class="reveal-modal-sub">Choose when to reveal <strong>${escHtml(wineLabel)}</strong></p>
+        <h3 class="reveal-modal-title">${t('modal.revealWine')}</h3>
+        <p class="reveal-modal-sub">${t('modal.revealSubPre')}<strong>${escHtml(wineLabel)}</strong>${t('modal.revealSubPost')}</p>
         <div class="reveal-option-grid">
-          <button class="btn reveal-option-btn reveal-option-now" data-minutes="0">Reveal Now</button>
+          <button class="btn reveal-option-btn reveal-option-now" data-minutes="0">${t('modal.revealNow')}</button>
         </div>
         <div class="reveal-modal-divider">
-          <span class="reveal-modal-divider-text">Or reveal after counting down from</span>
+          <span class="reveal-modal-divider-text">${t('modal.orCountdown')}</span>
         </div>
         <div class="reveal-option-grid">
-          <button class="btn reveal-option-btn" data-minutes="3">3 min</button>
-          <button class="btn reveal-option-btn" data-minutes="5">5 min</button>
-          <button class="btn reveal-option-btn" data-minutes="10">10 min</button>
-          <button class="btn reveal-option-btn" data-minutes="15">15 min</button>
-          <button class="btn reveal-option-btn" data-minutes="30">30 min</button>
+          ${[3,5,10,15,30].map(m => `<button class="btn reveal-option-btn" data-minutes="${m}">${m}${t('modal.minUnit')}</button>`).join('')}
         </div>
-        <button class="btn btn-ghost reveal-modal-cancel" id="revealModalCancel">Cancel</button>
+        <button class="btn btn-ghost reveal-modal-cancel" id="revealModalCancel">${t('modal.cancel')}</button>
       </div>`;
     document.body.appendChild(overlay);
 
@@ -133,9 +129,9 @@ async function renderLobby(lobbyId) {
       // Countdown display (shown to everyone when a timed reveal is pending)
       const countdownHtml = isPending
         ? `<div class="wine-countdown" data-reveal-at="${wine.revealAt}">
-             <span class="countdown-label">Reveals in</span>
+             <span class="countdown-label">${t('lobby.revealsIn')}</span>
              <span class="countdown-timer">--:--</span>
-             ${isHost ? `<button class="btn btn-xs btn-danger countdown-stop-btn" data-wine-id="${wine.id}">Stop</button>` : ''}
+             ${isHost ? `<button class="btn btn-xs btn-danger countdown-stop-btn" data-wine-id="${wine.id}">${t('lobby.stopBtn')}</button>` : ''}
            </div>`
         : '';
 
@@ -144,9 +140,9 @@ async function renderLobby(lobbyId) {
       if (isSelf) {
         if (!isRevealed && !isPending) {
           if (isHost) {
-            actionsHtml += `<button class="btn btn-xs btn-gold reveal-btn" data-wine-id="${wine.id}">Reveal</button>`;
+            actionsHtml += `<button class="btn btn-xs btn-gold reveal-btn" data-wine-id="${wine.id}">${t('lobby.revealBtn')}</button>`;
           }
-          actionsHtml += `<a href="#/lobby/${lobbyId}/wine/${wine.id}" class="btn btn-xs btn-secondary" style="text-decoration:none">Edit</a>`;
+          actionsHtml += `<a href="#/lobby/${lobbyId}/wine/${wine.id}" class="btn btn-xs btn-secondary" style="text-decoration:none">${t('lobby.editBtn')}</a>`;
         }
       } else {
         if (!isRevealed) {
@@ -155,7 +151,7 @@ async function renderLobby(lobbyId) {
           }
           // Only show Reveal button if no countdown is already running
           if (isHost && !isPending) {
-            actionsHtml += `<button class="btn btn-xs btn-gold reveal-btn" data-wine-id="${wine.id}">Reveal</button>`;
+            actionsHtml += `<button class="btn btn-xs btn-gold reveal-btn" data-wine-id="${wine.id}">${t('lobby.revealBtn')}</button>`;
           }
         }
       }
