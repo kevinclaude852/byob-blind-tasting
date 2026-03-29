@@ -225,7 +225,7 @@ function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], count
 
     <div id="blendSection" style="${prefillType !== 'blend' ? 'display:none' : ''}">
       <div class="form-group">
-        <label>Grape Blend <span class="optional">${t('form.blendHint')}</span></label>
+        <label>${t('form.grapeBlend')} <span class="optional">${t('form.blendHint')}</span></label>
         ${blendRows}
         <div class="pct-total" id="pctTotal">${t('form.pctTotal')}: 0%</div>
       </div>
@@ -397,7 +397,7 @@ async function renderWineRegistration(lobbyId, wineId = null) {
     const errorEl = document.getElementById('wineError');
     const btn = document.getElementById('wineSubmitBtn');
     btn.disabled = true;
-    btn.innerHTML = '<span class="spin">⏳</span> Saving...';
+    btn.innerHTML = `<span class="spin">⏳</span> ${t('wine.saving')}`;
     errorEl.innerHTML = '';
 
     try {
@@ -410,7 +410,7 @@ async function renderWineRegistration(lobbyId, wineId = null) {
         window.location.hash = `#/lobby/${lobbyId}`;
       } else {
         // Reset form for another wine
-        showToast('Wine added!');
+        showToast(t('wine.added'));
         await renderWineRegistration(lobbyId, null);
       }
     } catch (err) {
@@ -426,16 +426,16 @@ async function renderWineRegistration(lobbyId, wineId = null) {
 
   if (isEditing) {
     document.getElementById('removeWineBtn')?.addEventListener('click', async () => {
-      if (!confirm('Remove this wine? All guesses for it will be lost.')) return;
+      if (!confirm(t('wine.removeConfirm'))) return;
       const btn = document.getElementById('removeWineBtn');
       btn.disabled = true;
-      btn.textContent = 'Removing...';
+      btn.textContent = t('wine.removing');
       try {
         await API.removeWine(lobbyId, session.playerId, wineId);
-        showToast('Wine removed.');
+        showToast(t('wine.removed'));
         window.location.hash = `#/lobby/${lobbyId}`;
       } catch (err) {
-        showToast(err.error || 'Failed to remove wine.');
+        showToast(err.error || t('wine.removeFailed'));
         btn.disabled = false;
         btn.textContent = t('wine.removeBtn');
       }

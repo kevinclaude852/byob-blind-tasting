@@ -45,7 +45,7 @@ function renderJoin(lobbyId, lobbyName) {
 
     const btn = document.getElementById('joinBtn');
     btn.disabled = true;
-    btn.innerHTML = '<span class="spin">⏳</span> Joining...';
+    btn.innerHTML = `<span class="spin">⏳</span> ${t('join.joining')}`;
 
     try {
       const data = await API.joinLobby(lobbyId, { name, emoji: selectedEmoji });
@@ -54,7 +54,7 @@ function renderJoin(lobbyId, lobbyName) {
     } catch (err) {
       errorEl.innerHTML = `<div class="alert alert-error">${escHtml(err.error || 'Failed to join.')}</div>`;
       btn.disabled = false;
-      btn.innerHTML = 'Join Tasting';
+      btn.innerHTML = t('join.joinBtn');
     }
   });
 }

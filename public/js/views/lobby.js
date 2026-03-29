@@ -1,6 +1,6 @@
 async function renderLobby(lobbyId) {
   const app = document.getElementById('app');
-  app.innerHTML = `<div class="page"><div class="loading-screen"><div class="wine-glass">🍷</div><p>Loading...</p></div></div>`;
+  app.innerHTML = `<div class="page"><div class="loading-screen"><div class="wine-glass">🍷</div><p>${t('app.loading')}</p></div></div>`;
 
   let lobby, qrDataUrl = null;
   let countdownInterval = null; // ticks every 500ms to refresh mm:ss displays
@@ -20,7 +20,7 @@ async function renderLobby(lobbyId) {
   try {
     await Promise.all([loadData(), loadQR()]);
   } catch (err) {
-    app.innerHTML = `<div class="page"><div class="alert alert-error">Failed to load lobby. ${escHtml(err.error || '')}</div></div>`;
+    app.innerHTML = `<div class="page"><div class="alert alert-error">${t('lobby.failedLoad')} ${escHtml(err.error || '')}</div></div>`;
     return;
   }
 
@@ -177,7 +177,7 @@ async function renderLobby(lobbyId) {
               <span class="wine-row-chevron">›</span>
             </div>
             <div class="wine-reveal-accordion" id="wine-accord-${wine.id}">
-              ${detailRows || '<div style="color:var(--text-muted);font-size:0.8rem;font-style:italic">No details available</div>'}
+              ${detailRows || `<div style="color:var(--text-muted);font-size:0.8rem;font-style:italic">${t('lobby.noDetails')}</div>`}
             </div>
           </div>`;
       }
@@ -209,10 +209,10 @@ async function renderLobby(lobbyId) {
             ${guesserRows
               ? `<div class="wine-guess-row wine-guess-header">
                    <span class="wine-guess-avatar"></span>
-                   <span class="wine-guess-name">Player</span>
-                   <span class="wine-guess-check">Guess made</span>
+                   <span class="wine-guess-name">${t('lb.player')}</span>
+                   <span class="wine-guess-check">${t('lobby.guessMade')}</span>
                  </div>${guesserRows}`
-              : '<div style="font-size:0.78rem;color:var(--text-muted);font-style:italic;padding:4px 0">No other players yet</div>'}
+              : `<div style="font-size:0.78rem;color:var(--text-muted);font-style:italic;padding:4px 0">${t('lobby.noOtherPlayers')}</div>`}
           </div>
         </div>`;
     }).join('');
@@ -325,7 +325,7 @@ async function renderLobby(lobbyId) {
     if (isHost) {
       document.getElementById('copyUrlBtn')?.addEventListener('click', async () => {
         const ok = await API.copyToClipboard(joinUrl);
-        showToast(ok ? 'Link copied! 📋' : 'Copy failed — please copy the link manually.');
+        showToast(ok ? t('lobby.linkCopied') : t('lobby.copyFailed'));
       });
 
       document.getElementById('toggleQrBtn')?.addEventListener('click', () => {
@@ -368,7 +368,9 @@ async function renderLobby(lobbyId) {
         e.stopPropagation();
         const wineId = btn.dataset.wineId;
         const wineInfo = lobby.wineMap[wineId];
-        const label = wineInfo ? `${wineInfo.playerName}'s wine ${wineInfo.wineEmoji}` : 'this wine';
+        const label = wineInfo
+          ? (getLocale() === 'hk' ? `${wineInfo.playerName}支酒 ${wineInfo.wineEmoji}` : `${wineInfo.playerName}'s wine ${wineInfo.wineEmoji}`)
+          : (getLocale() === 'hk' ? '呢支酒' : 'this wine');
         showRevealModal(wineId, label);
       });
     });
@@ -382,11 +384,11 @@ async function renderLobby(lobbyId) {
         try {
           await API.cancelCountdown(lobbyId, btn.dataset.wineId);
           await loadData(); render();
-          showToast('Countdown cancelled.');
+          showToast(t('lobby.countdownCancelled'));
         } catch (err) {
-          showToast(err.error || 'Failed to cancel countdown.');
+          showToast(err.error || t('lobby.countdownCancelled'));
           btn.disabled = false;
-          btn.textContent = 'Stop';
+          btn.textContent = t('lobby.stopBtn');
         }
       });
     });
@@ -431,18 +433,20 @@ async function renderLobby(lobbyId) {
   });
   SocketManager.on('wine-revealed', async () => {
     if (!onLobbyPage()) return;
-    await loadData(); render(); showToast('A wine has been revealed! 🔓');
+    await loadData(); render(); showToast(t('lobby.wineRevealed'));
   });
   SocketManager.on('wine-countdown-started', async ({ wineId, revealAt }) => {
     if (!onLobbyPage()) return;
     await loadData(); render();
     const minutes = Math.round((revealAt - Date.now()) / 60000);
-    showToast(`Countdown started — wine reveals in ${minutes} min ⏱️`);
+    showToast(getLocale() === 'hk'
+      ? `倒數開始，支酒會喺 ${minutes} 分鐘後開估`
+      : `Countdown started — wine reveals in ${minutes} min ⏱️`);
   });
   SocketManager.on('wine-countdown-stopped', async () => {
     if (!onLobbyPage()) return;
     await loadData(); render();
-    showToast('Countdown cancelled — wine is unrevealed again.');
+    showToast(t('lobby.countdownStopped'));
   });
   SocketManager.on('guess-submitted', async () => {
     if (!onLobbyPage()) return;

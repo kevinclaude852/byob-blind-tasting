@@ -69,7 +69,7 @@ function renderLanding() {
 
     const btn = document.getElementById('createBtn');
     btn.disabled = true;
-    btn.innerHTML = '<span class="spin">⏳</span> Creating...';
+    btn.innerHTML = `<span class="spin">⏳</span> ${t('landing.creating')}`;
     errorEl.innerHTML = '';
 
     try {
@@ -81,7 +81,7 @@ function renderLanding() {
     } catch (err) {
       showError(errorEl, err.error || 'Failed to create lobby.');
       btn.disabled = false;
-      btn.innerHTML = 'Create Lobby';
+      btn.innerHTML = t('landing.createLobby');
     }
   });
 }
