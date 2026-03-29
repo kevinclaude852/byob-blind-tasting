@@ -125,7 +125,7 @@ function attachGrapeAutocomplete(grapes) {
 // Shared wine form builder used by both registration and guessing
 function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], countries = [], regions = {}, wineIndex = 0 } = {}) {
   const currentYear = new Date().getFullYear();
-  const vintageOptions = `<option value="">-- Select --</option>
+  const vintageOptions = `<option value="">${t('form.selectVintage')}</option>
     <option value="NV" ${prefill && prefill.vintage === 'NV' ? 'selected' : ''}>NV (Non-Vintage)</option>
     ${Array.from({ length: 51 }, (_, i) => currentYear - i)
       .map(y => `<option value="${y}" ${prefill && String(prefill.vintage) === String(y) ? 'selected' : ''}>${y}</option>`)
@@ -139,7 +139,7 @@ function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], count
     const v = prefillVarietals[i] || {};
     const pctField = isGuess ? '' : `<input type="number" class="blend-pct" min="1" max="99" placeholder="%" value="${v.percentage || ''}">`;
     return `<div class="blend-row">
-      ${buildGrapeAutocomplete({ extraClass: 'blend-grape', prefillValue: v.grape || '', placeholder: 'Select Grape Variety' })}
+      ${buildGrapeAutocomplete({ extraClass: 'blend-grape', prefillValue: v.grape || '', placeholder: t('form.selectGrape') })}
       ${pctField}
     </div>`;
   }).join('');
@@ -147,20 +147,22 @@ function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], count
   const singleGrape = prefillVarietals[0] ? prefillVarietals[0].grape : '';
 
   // Shared fragments
+  const opt = `<span class="optional">${t('form.optional')}</span>`;
+
   const countryField = `
     <div class="form-group">
-      <label for="wineCountry">Country${isGuess ? '<span class="optional">(optional)</span>' : ''}</label>
+      <label for="wineCountry">${t('lobby.country')}${isGuess ? opt : ''}</label>
       <select id="wineCountry">
-        <option value="">-- Select Country --</option>
+        <option value="">${t('form.selectCountry')}</option>
         ${countries.map(c => `<option value="${c}" ${prefill && prefill.country === c ? 'selected' : ''}>${c}</option>`).join('')}
       </select>
     </div>`;
 
   const regionField = `
     <div class="form-group" id="regionGroup" style="${prefill && prefill.country ? '' : 'display:none'}">
-      <label for="wineRegion">Region <span class="optional">(optional)</span></label>
+      <label for="wineRegion">${t('lobby.region')} ${opt}</label>
       <select id="wineRegion">
-        <option value="">-- Select Region --</option>
+        <option value="">${t('form.selectRegion')}</option>
         ${prefill && prefill.country && regions[prefill.country]
           ? regions[prefill.country].map(r => `<option value="${r}" ${prefill.region === r ? 'selected' : ''}>${r}</option>`).join('')
           : ''}
@@ -169,7 +171,7 @@ function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], count
 
   const vintageField = `
     <div class="form-group">
-      <label for="wineVintage">Vintage${isGuess ? '<span class="optional">(optional)</span>' : ''}</label>
+      <label for="wineVintage">${t('lobby.vintage')}${isGuess ? opt : ''}</label>
       <select id="wineVintage">${vintageOptions}</select>
     </div>`;
 
@@ -177,8 +179,8 @@ function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], count
   if (isGuess) {
     return `
       <div class="form-group">
-        <label>Grape Variety <span class="optional">(optional)</span></label>
-        ${buildGrapeAutocomplete({ id: 'singleGrape', prefillValue: singleGrape, placeholder: 'Type to search grape...' })}
+        <label>${t('lobby.grapeVariety')} ${opt}</label>
+        ${buildGrapeAutocomplete({ id: 'singleGrape', prefillValue: singleGrape, placeholder: t('form.searchGrape') })}
       </div>
       ${countryField}
       ${regionField}
@@ -189,35 +191,35 @@ function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], count
   // ── Wine registration form: Emoji → Name → Cépage radio → Variety/Blend → Country → Region → Vintage
   return `
     <div class="form-group">
-      <label>Wine Emoji</label>
+      <label>${t('form.wineEmoji')}</label>
       <div class="emoji-picker wine-emoji-picker" id="wineEmojiPicker">
         ${WINE_EMOJIS.map(e => `<button type="button" class="emoji-btn${e === defaultEmoji ? ' selected' : ''}" data-emoji="${e}"><span>${e}</span></button>`).join('')}
       </div>
       <input type="hidden" id="selectedWineEmoji" value="${defaultEmoji}">
     </div>
     <div class="form-group">
-      <label for="wineName">Wine Name</label>
+      <label for="wineName">${t('form.wineName')}</label>
       <input type="text" id="wineName" placeholder="e.g. Château Margaux" value="${prefill ? escHtml(prefill.name || '') : ''}">
     </div>
 
     <div class="form-group">
-      <label>Cépage</label>
+      <label>${t('form.cepage')}</label>
       <div class="radio-group">
         <div class="radio-option">
           <input type="radio" name="wineType" id="typeSingle" value="single" ${prefillType !== 'blend' ? 'checked' : ''}>
-          <label for="typeSingle" style="font-family:-apple-system,system-ui,sans-serif;font-style:normal">Single Varietal</label>
+          <label for="typeSingle" style="font-family:-apple-system,system-ui,sans-serif;font-style:normal">${t('form.singleVarietal')}</label>
         </div>
         <div class="radio-option">
           <input type="radio" name="wineType" id="typeBlend" value="blend" ${prefillType === 'blend' ? 'checked' : ''}>
-          <label for="typeBlend" style="font-family:-apple-system,system-ui,sans-serif;font-style:normal">Blend</label>
+          <label for="typeBlend" style="font-family:-apple-system,system-ui,sans-serif;font-style:normal">${t('form.blend')}</label>
         </div>
       </div>
     </div>
 
     <div id="singleVarietalSection" style="${prefillType === 'blend' ? 'display:none' : ''}">
       <div class="form-group">
-        <label>Grape Variety</label>
-        ${buildGrapeAutocomplete({ id: 'singleGrape', prefillValue: singleGrape, placeholder: 'Type to search grape...' })}
+        <label>${t('lobby.grapeVariety')}</label>
+        ${buildGrapeAutocomplete({ id: 'singleGrape', prefillValue: singleGrape, placeholder: t('form.searchGrape') })}
       </div>
     </div>
 
@@ -298,7 +300,7 @@ function updateRegionDropdown(country, regions, selectedRegion = '') {
     return;
   }
   regionGroup.style.display = '';
-  regionSelect.innerHTML = `<option value="">-- Select Region --</option>` +
+  regionSelect.innerHTML = `<option value="">${t('form.selectRegion')}</option>` +
     list.map(r => `<option value="${r}" ${r === selectedRegion ? 'selected' : ''}>${r}</option>`).join('');
 }
 
@@ -365,13 +367,13 @@ async function renderWineRegistration(lobbyId, wineId = null) {
   const prefill = isEditing ? (player.wines || []).find(w => w.id === wineId) : null;
   const wineIndex = isEditing ? (player.wines || []).findIndex(w => w.id === wineId) : (player.wines || []).length;
 
-  const submitLabel = isEditing ? 'Save My Wine & Return to Lobby' : 'Add Wine & Enter Lobby';
+  const submitLabel = isEditing ? 'Save My Wine & Return to Lobby' : t('wine.submitNew');
 
   app.innerHTML = `
     <div class="page">
       <div class="page-header">
-        <h1>${isEditing ? 'Edit Wine' : 'Register Your Wine'}</h1>
-        <p>${isEditing ? 'Update your wine details' : 'Tell us about the wine you\'re bringing'}</p>
+        <h1>${isEditing ? 'Edit Wine' : t('wine.pageTitle')}</h1>
+        <p>${isEditing ? 'Update your wine details' : t('wine.pageSubtitle')}</p>
       </div>
       <div class="card">
         ${buildWineFormHTML({ isGuess: false, prefill, grapes, countries, regions, wineIndex })}
@@ -382,7 +384,7 @@ async function renderWineRegistration(lobbyId, wineId = null) {
           <button class="btn btn-danger" id="removeWineBtn">Remove This Wine</button>
         </div>` : `
         <div style="margin-top:10px">
-          <button class="btn btn-skip" id="skipWineBtn">I Brought No Wine — Go to Lobby</button>
+          <button class="btn btn-skip" id="skipWineBtn">${t('wine.skip')}</button>
         </div>`}
       </div>
     </div>

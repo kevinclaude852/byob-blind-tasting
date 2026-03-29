@@ -105,7 +105,7 @@ async function renderLobby(lobbyId) {
     const isSelf = player.id === currentPlayerId;
 
     if (wines.length === 0) {
-      return `<div class="player-status">⏳ No wines yet</div>`;
+      return `<div class="player-status">${t('lobby.noWinesYet')}</div>`;
     }
 
     return wines.map((wine, wineIndex) => {

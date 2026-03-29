@@ -37,6 +37,30 @@ const TRANSLATIONS = {
     'lobby.vintageScore':     '5 / 1 pts',
     'lobby.vintageDesc':      'Exact / ±1 year',
     'lobby.maxPts':           'Maximum 25 pts per wine',
+    'lobby.noWinesYet':       '⏳ No wines yet',
+    // Join page
+    'join.subtitle':          "You've been invited to a blind tasting!",
+    'join.yourName':          'Your Name',
+    'join.namePlaceholder':   'Enter your name',
+    'join.yourAvatar':        'Your Avatar',
+    'join.joinBtn':           'Join Tasting',
+    // Wine registration page
+    'wine.pageTitle':         'Register Your Wine',
+    'wine.pageSubtitle':      "Tell us about the wine you're bringing",
+    'wine.submitNew':         'Add Wine & Enter Lobby',
+    'wine.skip':              'I Brought No Wine — Go to Lobby',
+    // Shared form fields
+    'form.wineEmoji':         'Wine Emoji',
+    'form.wineName':          'Wine Name',
+    'form.cepage':            'Cépage',
+    'form.singleVarietal':    'Single Varietal',
+    'form.blend':             'Blend',
+    'form.searchGrape':       'Type to search grape...',
+    'form.selectGrape':       'Select Grape Variety',
+    'form.selectCountry':     '-- Select Country --',
+    'form.optional':          '(optional)',
+    'form.selectRegion':      '-- Select Region --',
+    'form.selectVintage':     '-- Select --',
   },
   hk: {
     // Landing
@@ -75,6 +99,30 @@ const TRANSLATIONS = {
     'lobby.vintageScore':     '5 / 1 分',
     'lobby.vintageDesc':      '啱晒 / ±1 年',
     'lobby.maxPts':           '每支酒最多 25 分',
+    'lobby.noWinesYet':       '⏳ 未有酒喎',
+    // Join page
+    'join.subtitle':          '有人水咗你嚟玩Blind Tasting!',
+    'join.yourName':          '專姓大名',
+    'join.namePlaceholder':   '起返個朵',
+    'join.yourAvatar':        '揀個嘜頭',
+    'join.joinBtn':           '進入大廳',
+    // Wine registration page
+    'wine.pageTitle':         '帶咗酒嚟？登記返',
+    'wine.pageSubtitle':      '話畀我知你帶咗啲乜嘢',
+    'wine.submitNew':         'Save低支酒進入大廳',
+    'wine.skip':              '我冇帶酒嚟，直入大廳',
+    // Shared form fields
+    'form.wineEmoji':         '支酒個icon',
+    'form.wineName':          '酒名',
+    'form.cepage':            '咩提子',
+    'form.singleVarietal':    '單一提子',
+    'form.blend':             '溝',
+    'form.searchGrape':       '打字就會搵到',
+    'form.selectGrape':       '提子品種',
+    'form.selectCountry':     '揀國家',
+    'form.optional':          '(可以唔填)',
+    'form.selectRegion':      '揀產區',
+    'form.selectVintage':     '揀年份',
   }
 };
 

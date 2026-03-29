@@ -6,22 +6,22 @@ function renderJoin(lobbyId, lobbyName) {
     <div class="page">
       <div class="page-header">
         <h1>${escHtml(lobbyName)}</h1>
-        <p>You've been invited to a blind tasting!</p>
+        <p>${t('join.subtitle')}</p>
       </div>
 
       <div class="card">
         <div class="form-group">
-          <label for="playerName">Your Name</label>
-          <input type="text" id="playerName" placeholder="Enter your name" autofocus>
+          <label for="playerName">${t('join.yourName')}</label>
+          <input type="text" id="playerName" placeholder="${t('join.namePlaceholder')}" autofocus>
         </div>
         <div class="form-group">
-          <label>Your Avatar</label>
+          <label>${t('join.yourAvatar')}</label>
           <div class="emoji-picker" id="emojiPicker">
             ${AVATARS.map(e => `<button class="emoji-btn" data-emoji="${e}"><span>${e}</span></button>`).join('')}
           </div>
         </div>
         <div id="joinError"></div>
-        <button class="btn btn-primary" id="joinBtn">Join Tasting</button>
+        <button class="btn btn-primary" id="joinBtn">${t('join.joinBtn')}</button>
       </div>
     </div>
   `;
