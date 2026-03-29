@@ -25,13 +25,13 @@ async function renderGuess(lobbyId, wineId) {
 
   app.innerHTML = `
     <div class="page">
-      <button class="btn btn-secondary btn-sm" id="backBtn" style="width:auto;margin-bottom:16px">← Back to Lobby</button>
+      <button class="btn btn-secondary btn-sm" id="backBtn" style="width:auto;margin-bottom:16px">${t('nav.backToLobby')}</button>
 
       <div class="wine-owner-header">
         <div class="owner-emoji">${wineInfo.playerEmoji}</div>
         <div>
           <h2>${escHtml(wineInfo.playerName)}'s Wine ${wineInfo.wineEmoji}</h2>
-          <p>${isRevealed ? 'Revealed — see the results below' : 'Make your guess — all fields are optional'}</p>
+          <p>${isRevealed ? 'Revealed — see the results below' : t('guess.subtitle')}</p>
         </div>
       </div>
 
@@ -62,7 +62,7 @@ async function renderGuess(lobbyId, wineId) {
         const msgs = err.errors ? err.errors : [err.error || 'Failed to save guess.'];
         errorEl.innerHTML = `<div class="alert alert-error"><ul>${msgs.map(m => `<li>${escHtml(m)}</li>`).join('')}</ul></div>`;
         btn.disabled = false;
-        btn.innerHTML = 'Save My Guess';
+        btn.innerHTML = t('guess.saveBtn');
       }
     });
   }
@@ -73,7 +73,7 @@ function renderGuessForm(grapes, countries, regions, prefill) {
     <div class="card">
       ${buildWineFormHTML({ isGuess: true, prefill, grapes, countries, regions })}
       <div id="guessError"></div>
-      <button class="btn btn-primary" id="guessSubmitBtn">Save My Guess</button>
+      <button class="btn btn-primary" id="guessSubmitBtn">${t('guess.saveBtn')}</button>
     </div>
   `;
 }
@@ -95,10 +95,10 @@ function renderRevealedView(wineInfo, myGuess, lobby, wineId) {
     <div class="revealed-wine">
       <h3>${escHtml(wine.name || '—')}</h3>
       <div class="wine-detail">
-        <div class="wine-detail-row"><span class="wine-detail-label">Vintage</span><span class="wine-detail-value">${wine.vintage || '—'}</span></div>
-        <div class="wine-detail-row"><span class="wine-detail-label">Varietal</span><span class="wine-detail-value">${escHtml(varietalStr)}</span></div>
-        <div class="wine-detail-row"><span class="wine-detail-label">Country</span><span class="wine-detail-value">${escHtml(wine.country || '—')}</span></div>
-        <div class="wine-detail-row"><span class="wine-detail-label">Region</span><span class="wine-detail-value">${escHtml(wine.region || '—')}</span></div>
+        <div class="wine-detail-row"><span class="wine-detail-label">${t('lb.vintage')}</span><span class="wine-detail-value">${wine.vintage || '—'}</span></div>
+        <div class="wine-detail-row"><span class="wine-detail-label">${t('lb.varietal')}</span><span class="wine-detail-value">${escHtml(varietalStr)}</span></div>
+        <div class="wine-detail-row"><span class="wine-detail-label">${t('lb.country')}</span><span class="wine-detail-value">${escHtml(wine.country || '—')}</span></div>
+        <div class="wine-detail-row"><span class="wine-detail-label">${t('lb.region')}</span><span class="wine-detail-value">${escHtml(wine.region || '—')}</span></div>
       </div>
     </div>
 
@@ -106,21 +106,21 @@ function renderRevealedView(wineInfo, myGuess, lobby, wineId) {
     <div class="card">
       <h3 style="margin-bottom:12px;font-size:0.95rem;color:var(--text-muted)">Your Guess</h3>
       <div class="wine-detail">
-        <div class="wine-detail-row"><span class="wine-detail-label">Vintage</span><span class="wine-detail-value">${myGuess.vintage || '—'}</span></div>
-        <div class="wine-detail-row"><span class="wine-detail-label">Varietal</span><span class="wine-detail-value">${escHtml(guessVarietalStr)}</span></div>
-        <div class="wine-detail-row"><span class="wine-detail-label">Country</span><span class="wine-detail-value">${escHtml(myGuess.country || '—')}</span></div>
-        <div class="wine-detail-row"><span class="wine-detail-label">Region</span><span class="wine-detail-value">${escHtml(myGuess.region || '—')}</span></div>
+        <div class="wine-detail-row"><span class="wine-detail-label">${t('lb.vintage')}</span><span class="wine-detail-value">${myGuess.vintage || '—'}</span></div>
+        <div class="wine-detail-row"><span class="wine-detail-label">${t('lb.varietal')}</span><span class="wine-detail-value">${escHtml(guessVarietalStr)}</span></div>
+        <div class="wine-detail-row"><span class="wine-detail-label">${t('lb.country')}</span><span class="wine-detail-value">${escHtml(myGuess.country || '—')}</span></div>
+        <div class="wine-detail-row"><span class="wine-detail-label">${t('lb.region')}</span><span class="wine-detail-value">${escHtml(myGuess.region || '—')}</span></div>
       </div>
       ${myScore ? `
       <div class="score-breakdown">
         <h4>Your Score</h4>
         <div class="score-items">
-          <div class="score-item"><div class="si-label">Varietal</div><div class="si-value">${myScore.varietal}</div><div class="si-max">/ 10</div></div>
-          <div class="score-item"><div class="si-label">Country</div><div class="si-value">${myScore.country}</div><div class="si-max">/ 5</div></div>
-          <div class="score-item"><div class="si-label">Region</div><div class="si-value">${myScore.region}</div><div class="si-max">/ 5</div></div>
-          <div class="score-item"><div class="si-label">Vintage</div><div class="si-value">${myScore.vintage}</div><div class="si-max">/ 5</div></div>
+          <div class="score-item"><div class="si-label">${t('lb.varietal')}</div><div class="si-value">${myScore.varietal}</div><div class="si-max">/ 10</div></div>
+          <div class="score-item"><div class="si-label">${t('lb.country')}</div><div class="si-value">${myScore.country}</div><div class="si-max">/ 5</div></div>
+          <div class="score-item"><div class="si-label">${t('lb.region')}</div><div class="si-value">${myScore.region}</div><div class="si-max">/ 5</div></div>
+          <div class="score-item"><div class="si-label">${t('lb.vintage')}</div><div class="si-value">${myScore.vintage}</div><div class="si-max">/ 5</div></div>
         </div>
-        <div style="text-align:center;margin-top:16px;font-size:2rem;font-weight:700;color:var(--wine)">${myScore.total} pts</div>
+        <div style="text-align:center;margin-top:16px;font-size:2rem;font-weight:700;color:var(--wine)">${myScore.total} ${t('lb.pts')}</div>
       </div>` : ''}
     </div>` : `<div class="alert alert-warning">You didn't submit a guess for this wine.</div>`}
   `;

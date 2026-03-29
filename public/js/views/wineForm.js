@@ -367,13 +367,13 @@ async function renderWineRegistration(lobbyId, wineId = null) {
   const prefill = isEditing ? (player.wines || []).find(w => w.id === wineId) : null;
   const wineIndex = isEditing ? (player.wines || []).findIndex(w => w.id === wineId) : (player.wines || []).length;
 
-  const submitLabel = isEditing ? 'Save My Wine & Return to Lobby' : t('wine.submitNew');
+  const submitLabel = isEditing ? t('wine.saveEdit') : t('wine.submitNew');
 
   app.innerHTML = `
     <div class="page">
       <div class="page-header">
-        <h1>${isEditing ? 'Edit Wine' : t('wine.pageTitle')}</h1>
-        <p>${isEditing ? 'Update your wine details' : t('wine.pageSubtitle')}</p>
+        <h1>${isEditing ? t('wine.editTitle') : t('wine.pageTitle')}</h1>
+        <p>${isEditing ? t('wine.editSubtitle') : t('wine.pageSubtitle')}</p>
       </div>
       <div class="card">
         ${buildWineFormHTML({ isGuess: false, prefill, grapes, countries, regions, wineIndex })}
@@ -381,7 +381,7 @@ async function renderWineRegistration(lobbyId, wineId = null) {
         <button class="btn btn-primary" id="wineSubmitBtn">${submitLabel}</button>
         ${isEditing ? `
         <div style="margin-top:10px">
-          <button class="btn btn-danger" id="removeWineBtn">Remove This Wine</button>
+          <button class="btn btn-danger" id="removeWineBtn">${t('wine.removeBtn')}</button>
         </div>` : `
         <div style="margin-top:10px">
           <button class="btn btn-skip" id="skipWineBtn">${t('wine.skip')}</button>
@@ -437,7 +437,7 @@ async function renderWineRegistration(lobbyId, wineId = null) {
       } catch (err) {
         showToast(err.error || 'Failed to remove wine.');
         btn.disabled = false;
-        btn.textContent = 'Remove This Wine';
+        btn.textContent = t('wine.removeBtn');
       }
     });
   } else {

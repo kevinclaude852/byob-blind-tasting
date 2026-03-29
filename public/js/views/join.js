@@ -5,7 +5,7 @@ function renderJoin(lobbyId, lobbyName) {
   app.innerHTML = `
     <div class="page">
       <div class="page-header">
-        <h1>${escHtml(lobbyName)}</h1>
+        <h1>${t('app.title')} — ${escHtml(lobbyName)}</h1>
         <p>${t('join.subtitle')}</p>
       </div>
 

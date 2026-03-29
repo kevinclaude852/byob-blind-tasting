@@ -49,6 +49,10 @@ const TRANSLATIONS = {
     'wine.pageSubtitle':      "Tell us about the wine you're bringing",
     'wine.submitNew':         'Add Wine & Enter Lobby',
     'wine.skip':              'I Brought No Wine — Go to Lobby',
+    'wine.editTitle':         'Edit Wine',
+    'wine.editSubtitle':      'Update your wine details',
+    'wine.saveEdit':          'Save My Wine & Return to Lobby',
+    'wine.removeBtn':         'Remove This Wine',
     // Shared form fields
     'form.wineEmoji':         'Wine Emoji',
     'form.wineName':          'Wine Name',
@@ -87,10 +91,43 @@ const TRANSLATIONS = {
     'serverErr.vintage':      'Vintage is required.',
     'serverErr.grape':        'At least one grape variety is required.',
     'serverErr.country':      'Country is required.',
+    // Shared nav
+    'nav.backToLobby':        '← Back to Lobby',
+    // Lobby guess buttons
+    'lobby.guessBtn':         'Guess',
+    'lobby.changeGuessBtn':   'Change My Guess',
+    // Guess page
+    'guess.subtitle':         'Make your guess — all fields are optional',
+    'guess.saveBtn':          'Save My Guess',
+    // Leaderboard page
+    'lb.title':               'Leaderboard',
+    'lb.overallRankings':     '🏆 Overall Rankings',
+    'lb.pts':                 'pts',
+    'lb.noGuesses':           'No guesses submitted',
+    'lb.wineBreakdown':       'Wine Breakdown',
+    'lb.theGuess':            'The Guess',
+    'lb.theWine':             'The Wine',
+    'lb.varietal':            'Varietal',
+    'lb.country':             'Country',
+    'lb.region':              'Region',
+    'lb.vintage':             'Vintage',
+    'lb.player':              'Player',
+    'lb.points':              'Points',
+    // My Guesses page
+    'mg.title':               'My Guesses',
+    'mg.totalScore':          'Total Score',
+    'mg.pts':                 'pts',
+    'mg.myGuess':             'My Guess',
+    'mg.theWine':             'The Wine',
+    'mg.grapeVariety':        'Grape Variety',
+    'mg.country':             'Country',
+    'mg.region':              'Region',
+    'mg.vintage':             'Vintage',
+    'mg.variety':             'Variety',
   },
   hk: {
     // Landing
-    'app.title':                    '段鳩估冇痛苦',
+    'app.title':                    'Blind Tasting斷鳩估冇痛苦',
     'app.subtitle':                 '開個大廳搵埋啲friend',
     'landing.lobbyName':            '大廳叫咩名',
     'landing.lobbyNamePlaceholder': 'e.g. Yellowtail 垂直品鑑會',
@@ -137,6 +174,10 @@ const TRANSLATIONS = {
     'wine.pageSubtitle':      '話畀我知你帶咗啲乜嘢',
     'wine.submitNew':         'Save低支酒進入大廳',
     'wine.skip':              '我冇帶酒嚟，直入大廳',
+    'wine.editTitle':         '修改支酒',
+    'wine.editSubtitle':      '改下支酒嘅資料',
+    'wine.saveEdit':          'Save低支酒返大廳',
+    'wine.removeBtn':         '移除支酒',
     // Shared form fields
     'form.wineEmoji':         '支酒個icon',
     'form.wineName':          '酒名',
@@ -175,6 +216,39 @@ const TRANSLATIONS = {
     'serverErr.vintage':      '唔該填番年份',
     'serverErr.grape':        '最少揀一隻提子',
     'serverErr.country':      '唔該揀返國家',
+    // Shared nav
+    'nav.backToLobby':        '返大廳',
+    // Lobby guess buttons
+    'lobby.guessBtn':         '估酒',
+    'lobby.changeGuessBtn':   '轉軚',
+    // Guess page
+    'guess.subtitle':         '估下支酒係乜，冇強迫你估晒㗎',
+    'guess.saveBtn':          'Save低先',
+    // Leaderboard page
+    'lb.title':               '龍虎榜',
+    'lb.overallRankings':     '🏆 總體排名',
+    'lb.pts':                 '分數',
+    'lb.noGuesses':           '條友係站長，仲未估',
+    'lb.wineBreakdown':       '逐支酒睇',
+    'lb.theGuess':            '估',
+    'lb.theWine':             '答案',
+    'lb.varietal':            '提子',
+    'lb.country':             '國家',
+    'lb.region':              '產區',
+    'lb.vintage':             '年份',
+    'lb.player':              '參加者',
+    'lb.points':              '分數',
+    // My Guesses page
+    'mg.title':               '我估咗啲乜',
+    'mg.totalScore':          '總分',
+    'mg.pts':                 '分',
+    'mg.myGuess':             '我估',
+    'mg.theWine':             '答案',
+    'mg.grapeVariety':        '提子',
+    'mg.country':             '國家',
+    'mg.region':              '產區',
+    'mg.vintage':             '年份',
+    'mg.variety':             '提子',
   }
 };
 

@@ -39,10 +39,10 @@ async function renderScoreboard(lobbyId) {
 
         // Guess vs Wine attribute rows
         const attrs = [
-          { label: 'Variety',  guessVal: formatVarietal(guess),        wineVal: formatVarietal(wine) },
-          { label: 'Country',  guessVal: guess?.country  || '—',       wineVal: wine?.country  || '—' },
-          { label: 'Region',   guessVal: guess?.region   || '—',       wineVal: wine?.region   || '—' },
-          { label: 'Vintage',  guessVal: guess?.vintage  ? String(guess.vintage) : '—', wineVal: wine?.vintage ? String(wine.vintage) : '—' },
+          { label: t('lb.varietal'), guessVal: formatVarietal(guess),        wineVal: formatVarietal(wine) },
+          { label: t('lb.country'), guessVal: guess?.country  || '—',       wineVal: wine?.country  || '—' },
+          { label: t('lb.region'),  guessVal: guess?.region   || '—',       wineVal: wine?.region   || '—' },
+          { label: t('lb.vintage'), guessVal: guess?.vintage  ? String(guess.vintage) : '—', wineVal: wine?.vintage ? String(wine.vintage) : '—' },
         ];
         const attrRows = attrs.map(({ label, guessVal, wineVal }) => `
           <div class="gvw-attr-row">
@@ -55,14 +55,14 @@ async function renderScoreboard(lobbyId) {
           <div class="score-accordion-row score-wine-expandable" data-acc="${accId}">
             <span style="font-size:1.2rem;flex-shrink:0">${info.playerEmoji}</span>
             <span class="score-acc-wine-name">${escHtml(info.wine?.name || info.playerName)}</span>
-            <span class="score-acc-pts">${score.total} pts</span>
+            <span class="score-acc-pts">${score.total} ${t('lb.pts')}</span>
             <span class="score-wine-chevron">›</span>
           </div>
           <div class="score-wine-accordion" id="${accId}">
             <div class="gvw-header-row">
               <span class="gvw-label"></span>
-              <span class="gvw-col-title">The Guess</span>
-              <span class="gvw-col-title">The Wine</span>
+              <span class="gvw-col-title">${t('lb.theGuess')}</span>
+              <span class="gvw-col-title">${t('lb.theWine')}</span>
             </div>
             ${attrRows}
           </div>`;
@@ -73,11 +73,11 @@ async function renderScoreboard(lobbyId) {
         <div class="score-rank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${medals[i] || `${i+1}.`}</div>
         <div class="score-emoji">${s.emoji}</div>
         <div class="score-name">${escHtml(s.name)}</div>
-        <div class="score-total">${s.total} pts</div>
+        <div class="score-total">${s.total} ${t('lb.pts')}</div>
         <div class="score-chevron">›</div>
       </div>
       <div class="score-accordion" id="accordion-${pid}">
-        ${wineRows || `<div style="padding:10px 20px;font-size:0.82rem;color:var(--text-muted);font-style:italic">No guesses submitted</div>`}
+        ${wineRows || `<div style="padding:10px 20px;font-size:0.82rem;color:var(--text-muted);font-style:italic">${t('lb.noGuesses')}</div>`}
       </div>`;
   }).join('');
 
@@ -110,20 +110,20 @@ async function renderScoreboard(lobbyId) {
           </div>
         </div>
         <div style="font-size:0.8rem;display:flex;flex-direction:column;gap:4px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)">
-          <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Vintage</span><span style="font-weight:600">${wine.vintage}</span></div>
-          <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Varietal</span><span style="font-weight:600;text-align:right;max-width:65%">${escHtml(varietalStr)}</span></div>
-          <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Country</span><span style="font-weight:600">${escHtml(wine.country || '—')}</span></div>
-          <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Region</span><span style="font-weight:600">${escHtml(wine.region || '—')}</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">${t('lb.vintage')}</span><span style="font-weight:600">${wine.vintage}</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">${t('lb.varietal')}</span><span style="font-weight:600;text-align:right;max-width:65%">${escHtml(varietalStr)}</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">${t('lb.country')}</span><span style="font-weight:600">${escHtml(wine.country || '—')}</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">${t('lb.region')}</span><span style="font-weight:600">${escHtml(wine.region || '—')}</span></div>
         </div>
         <table style="width:100%;border-collapse:collapse;font-size:0.78rem">
           <thead>
             <tr style="border-bottom:1px solid var(--border);color:var(--text-muted)">
-              <th style="text-align:left;padding:4px 0;font-weight:600">Player</th>
-              <th style="text-align:center;padding:4px 2px;font-weight:600">Variety</th>
-              <th style="text-align:center;padding:4px 2px;font-weight:600">Country</th>
-              <th style="text-align:center;padding:4px 2px;font-weight:600">Region</th>
-              <th style="text-align:center;padding:4px 2px;font-weight:600">Vintage</th>
-              <th style="text-align:right;padding:4px 0;font-weight:600">Points</th>
+              <th style="text-align:left;padding:4px 0;font-weight:600">${t('lb.player')}</th>
+              <th style="text-align:center;padding:4px 2px;font-weight:600">${t('lb.varietal')}</th>
+              <th style="text-align:center;padding:4px 2px;font-weight:600">${t('lb.country')}</th>
+              <th style="text-align:center;padding:4px 2px;font-weight:600">${t('lb.region')}</th>
+              <th style="text-align:center;padding:4px 2px;font-weight:600">${t('lb.vintage')}</th>
+              <th style="text-align:right;padding:4px 0;font-weight:600">${t('lb.points')}</th>
             </tr>
           </thead>
           <tbody>
@@ -138,7 +138,7 @@ async function renderScoreboard(lobbyId) {
               </tr>`).join('')}
           </tbody>
         </table>
-        ${wineScores.length === 0 ? '<div style="color:var(--text-muted);font-size:0.85rem;text-align:center;padding:8px 0">No guesses submitted</div>' : ''}
+        ${wineScores.length === 0 ? `<div style="color:var(--text-muted);font-size:0.85rem;text-align:center;padding:8px 0">${t('lb.noGuesses')}</div>` : ''}
       </div>`;
   }).join('');
 
@@ -147,20 +147,22 @@ async function renderScoreboard(lobbyId) {
   // ── Render ────────────────────────────────────────────────────────────────
   app.innerHTML = `
     <div class="page wide">
-      <button class="btn btn-secondary btn-sm" id="backBtn" style="width:auto;margin-bottom:16px">← Back to Lobby</button>
+      <button class="btn btn-secondary btn-sm" id="backBtn" style="width:auto;margin-bottom:16px">${t('nav.backToLobby')}</button>
 
       <div class="page-header">
-        <h1>Leaderboard</h1>
-        <p>${revealOrder.length} out of ${Object.keys(wineMap).length} wine${Object.keys(wineMap).length !== 1 ? 's' : ''} revealed</p>
+        <h1>${t('lb.title')}</h1>
+        <p>${getLocale() === 'hk'
+          ? `${Object.keys(wineMap).length}支酒開估咗${revealOrder.length}支`
+          : `${revealOrder.length} out of ${Object.keys(wineMap).length} wine${Object.keys(wineMap).length !== 1 ? 's' : ''} revealed`}</p>
       </div>
 
       <div class="scoreboard" style="margin-bottom:24px">
-        <div class="scoreboard-title">🏆 Overall Rankings</div>
+        <div class="scoreboard-title">${t('lb.overallRankings')}</div>
         ${rankingRows}
       </div>
 
       ${sortedRevealOrder.length > 0 ? `
-      <div class="section-header"><h3>Wine Breakdown</h3></div>
+      <div class="section-header"><h3>${t('lb.wineBreakdown')}</h3></div>
       <div class="wine-swipe-container" id="wineSwipe">${wineCards}</div>
       ${showDots ? `<div class="swipe-dots" id="swipeDots">
         ${sortedRevealOrder.map((_, i) => `<span class="swipe-dot${i===0?' active':''}" data-index="${i}"></span>`).join('')}

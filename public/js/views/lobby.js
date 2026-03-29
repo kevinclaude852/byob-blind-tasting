@@ -120,7 +120,9 @@ async function renderLobby(lobbyId) {
           statusHtml += `<span class="wine-name-pill" title="${escHtml(wine.name)}">${escHtml(wine.name)}</span>`;
         }
       } else {
-        statusHtml += `<span style="font-size:0.75rem;color:var(--text-muted)">${escHtml(player.name)}'s wine ${wineIndex + 1}</span>`;
+        statusHtml += getLocale() === 'hk'
+          ? `<span style="font-size:0.75rem;color:var(--text-muted)">${escHtml(player.name)}第${wineIndex + 1}支酒</span>`
+          : `<span style="font-size:0.75rem;color:var(--text-muted)">${escHtml(player.name)}'s wine ${wineIndex + 1}</span>`;
       }
       const scorePillHtml = myScore !== null
         ? `<span class="score-pill" style="flex-shrink:0;margin-left:auto">${myScore.total}${t('lobby.pts')}</span>`
@@ -147,7 +149,7 @@ async function renderLobby(lobbyId) {
       } else {
         if (!isRevealed) {
           if (!isNonParticipatingHost) {
-            actionsHtml += `<button class="btn btn-xs btn-danger guess-btn" data-wine-id="${wine.id}">${hasGuessed ? 'Change My Guess' : 'Guess'}</button>`;
+            actionsHtml += `<button class="btn btn-xs btn-danger guess-btn" data-wine-id="${wine.id}">${hasGuessed ? t('lobby.changeGuessBtn') : t('lobby.guessBtn')}</button>`;
           }
           // Only show Reveal button if no countdown is already running
           if (isHost && !isPending) {

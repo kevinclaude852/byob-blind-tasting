@@ -63,10 +63,10 @@ async function renderMyGuesses(lobbyId) {
       : `${info.playerName}'s Wine ${info.wineEmoji}`;
 
     const attrs = [
-      { label: 'Grape Variety', guessVal: guess ? formatVarietal(guess) : '—',                     wineVal: wine ? formatVarietal(wine) : '—' },
-      { label: 'Country',       guessVal: guess?.country  || '—',                                   wineVal: wine?.country  || '—' },
-      { label: 'Region',        guessVal: guess?.region   || '—',                                   wineVal: wine?.region   || '—' },
-      { label: 'Vintage',       guessVal: guess?.vintage  ? String(guess.vintage) : '—',            wineVal: wine?.vintage  ? String(wine.vintage) : '—' },
+      { label: t('mg.grapeVariety'), guessVal: guess ? formatVarietal(guess) : '—',                     wineVal: wine ? formatVarietal(wine) : '—' },
+      { label: t('mg.country'),       guessVal: guess?.country  || '—',                                   wineVal: wine?.country  || '—' },
+      { label: t('mg.region'),        guessVal: guess?.region   || '—',                                   wineVal: wine?.region   || '—' },
+      { label: t('mg.vintage'),       guessVal: guess?.vintage  ? String(guess.vintage) : '—',            wineVal: wine?.vintage  ? String(wine.vintage) : '—' },
     ];
 
     let attributeSection;
@@ -81,8 +81,8 @@ async function renderMyGuesses(lobbyId) {
         attributeSection = `
           <div class="gvw-header-row">
             <span class="gvw-label"></span>
-            <span class="gvw-col-title">My Guess</span>
-            <span class="gvw-col-title">The Wine</span>
+            <span class="gvw-col-title">${t('mg.myGuess')}</span>
+            <span class="gvw-col-title">${t('mg.theWine')}</span>
           </div>
           ${attrRows}`;
       } else {
@@ -94,19 +94,19 @@ async function renderMyGuesses(lobbyId) {
         attributeSection = `<div class="wine-detail">${attrRows}</div>`;
       }
     } else {
-      attributeSection = `<div style="color:var(--text-muted);font-style:italic;font-size:0.85rem">No guess submitted</div>`;
+      attributeSection = `<div style="color:var(--text-muted);font-style:italic;font-size:0.85rem">${t('lb.noGuesses')}</div>`;
     }
 
     const scoreBadge = isRevealed && score !== null
-      ? `<span class="score-pill" style="flex-shrink:0">${score.total} pts</span>`
-      : `<span style="font-size:0.72rem;color:var(--text-muted);flex-shrink:0;white-space:nowrap">Not revealed</span>`;
+      ? `<span class="score-pill" style="flex-shrink:0">${score.total} ${t('mg.pts')}</span>`
+      : `<span style="font-size:0.72rem;color:var(--text-muted);flex-shrink:0;white-space:nowrap">${getLocale() === 'hk' ? '仲未開估' : 'Not revealed'}</span>`;
 
     const scoreBreakdown = isRevealed && score ? `
       <div style="display:flex;justify-content:center;gap:16px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:0.78rem;color:var(--text-muted)">
-        <span>Variety <strong style="color:var(--text)">${score.varietal}</strong></span>
-        <span>Country <strong style="color:var(--text)">${score.country}</strong></span>
-        <span>Region <strong style="color:var(--text)">${score.region}</strong></span>
-        <span>Vintage <strong style="color:var(--text)">${score.vintage}</strong></span>
+        <span>${t('mg.variety')} <strong style="color:var(--text)">${score.varietal}</strong></span>
+        <span>${t('mg.country')} <strong style="color:var(--text)">${score.country}</strong></span>
+        <span>${t('mg.region')} <strong style="color:var(--text)">${score.region}</strong></span>
+        <span>${t('mg.vintage')} <strong style="color:var(--text)">${score.vintage}</strong></span>
       </div>` : '';
 
     return `
@@ -127,20 +127,22 @@ async function renderMyGuesses(lobbyId) {
   app.innerHTML = `
     <div class="page">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <button class="btn btn-secondary btn-sm" id="backBtn" style="width:auto">← Back to Lobby</button>
+        <button class="btn btn-secondary btn-sm" id="backBtn" style="width:auto">${t('nav.backToLobby')}</button>
         <div style="text-align:right">
-          <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:2px">Total Score</div>
-          <div style="font-size:1.4rem;font-weight:700;color:var(--wine)">${totalScore} pts</div>
+          <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:2px">${t('mg.totalScore')}</div>
+          <div style="font-size:1.4rem;font-weight:700;color:var(--wine)">${totalScore} ${t('mg.pts')}</div>
         </div>
       </div>
 
       <div class="page-header" style="margin-bottom:20px">
-        <h1>My Guesses</h1>
-        <p>${guessedCount} of ${wineItems.length} wine${wineItems.length !== 1 ? 's' : ''} guessed</p>
+        <h1>${t('mg.title')}</h1>
+        <p>${getLocale() === 'hk'
+          ? `總共${wineItems.length}支我估咗${guessedCount}支`
+          : `${guessedCount} of ${wineItems.length} wine${wineItems.length !== 1 ? 's' : ''} guessed`}</p>
       </div>
 
       ${wineItems.length === 0
-        ? `<div class="alert alert-warning">No wines to guess yet.</div>`
+        ? `<div class="alert alert-warning">${getLocale() === 'hk' ? '未有酒可以估' : 'No wines to guess yet.'}</div>`
         : wineCards}
     </div>
   `;
