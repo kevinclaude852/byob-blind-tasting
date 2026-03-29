@@ -5,28 +5,28 @@ function renderLanding() {
   app.innerHTML = `
     <div class="page">
       <div class="page-header">
-        <h1>BYOB Blind Tasting Game</h1>
-        <p>Create a lobby and invite your friends</p>
+        <h1>${t('app.title')}</h1>
+        <p>${t('app.subtitle')}</p>
       </div>
 
       <div class="card">
         <div class="form-group">
-          <label for="lobbyName">Lobby Name</label>
-          <input type="text" id="lobbyName" placeholder="e.g. Friday Night Tasting" value="" required>
+          <label for="lobbyName">${t('landing.lobbyName')}</label>
+          <input type="text" id="lobbyName" placeholder="${t('landing.lobbyNamePlaceholder')}" value="" required>
         </div>
         <div class="form-group">
           <label class="checkbox-label">
             <input type="checkbox" id="hostNotParticipating">
-            Host is not participating (organizer only)
+            ${t('landing.hostNotParticipating')}
           </label>
         </div>
         <div id="hostFields">
           <div class="form-group">
-            <label for="hostName">Your Name</label>
-            <input type="text" id="hostName" placeholder="Enter your name">
+            <label for="hostName">${t('landing.yourName')}</label>
+            <input type="text" id="hostName" placeholder="${t('landing.yourNamePlaceholder')}">
           </div>
           <div class="form-group">
-            <label>Your Avatar</label>
+            <label>${t('landing.yourAvatar')}</label>
             <div class="emoji-picker" id="emojiPicker">
               ${AVATARS.map(e => `<button class="emoji-btn" data-emoji="${e}"><span>${e}</span></button>`).join('')}
             </div>
@@ -35,7 +35,7 @@ function renderLanding() {
         </div>
         <div id="landingError"></div>
         <button class="btn btn-primary" id="createBtn">
-          Create Lobby
+          ${t('landing.createLobby')}
         </button>
       </div>
     </div>

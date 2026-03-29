@@ -251,7 +251,7 @@ async function renderLobby(lobbyId) {
             <div class="player-emoji">${player.emoji}</div>
             <div class="player-card-info">
               <div class="player-name">${escHtml(player.name)}</div>
-              ${isSelf ? `<span class="badge badge-you">You</span>` : ''}
+              ${isSelf ? `<span class="badge badge-you">${t('lobby.you')}</span>` : ''}
             </div>
           </div>
           <div class="player-wines-section">
@@ -269,12 +269,12 @@ async function renderLobby(lobbyId) {
 
         ${isHost ? `
         <div class="share-box">
-          <h3>Share Link</h3>
+          <h3>${t('lobby.shareLink')}</h3>
           <div class="share-link-row">
             <div class="share-url">${escHtml(joinUrl)}</div>
             <div class="share-actions">
-              <button class="btn" id="copyUrlBtn">📋 Copy Link</button>
-              ${qrDataUrl ? `<button class="btn" id="toggleQrBtn">QR Code</button>` : ''}
+              <button class="btn" id="copyUrlBtn">${t('lobby.copyLink')}</button>
+              ${qrDataUrl ? `<button class="btn" id="toggleQrBtn">${t('lobby.qrCode')}</button>` : ''}
             </div>
           </div>
           ${qrDataUrl ? `<div class="qr-container" id="qrContainer" style="display:none"><img src="${qrDataUrl}" alt="QR Code"></div>` : ''}
@@ -282,8 +282,8 @@ async function renderLobby(lobbyId) {
 
         <div class="section-header">
           <div>
-            <h3>Players (${playerCount})</h3>
-            <h3 style="margin-top:3px">Wines (${revealedWines} / ${totalWines})</h3>
+            <h3>${t('lobby.players')} (${playerCount})</h3>
+            <h3 style="margin-top:3px">${t('lobby.wines')} (${revealedWines} / ${totalWines})</h3>
           </div>
           <div style="display:flex;gap:8px">
             <a href="#/lobby/${lobbyId}/myguesses" class="btn btn-secondary btn-sm" style="width:auto">📋 My Guesses</a>

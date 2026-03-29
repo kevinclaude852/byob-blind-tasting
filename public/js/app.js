@@ -89,4 +89,4 @@ async function route() {
 }
 
 window.addEventListener('hashchange', route);
-window.addEventListener('load', route);
+window.addEventListener('load', () => { initLangToggle(); route(); });
