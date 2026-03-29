@@ -51,6 +51,12 @@ async function route() {
     return renderScoreboard(scoresMatch[1]);
   }
 
+  // #/lobby/:id/myguesses
+  const myGuessesMatch = hash.match(/^#\/lobby\/([a-f0-9]+)\/myguesses$/);
+  if (myGuessesMatch) {
+    return renderMyGuesses(myGuessesMatch[1]);
+  }
+
   // #/lobby/:id — main lobby (or join page)
   const lobbyMatch = hash.match(/^#\/lobby\/([a-f0-9]+)$/);
   if (lobbyMatch) {

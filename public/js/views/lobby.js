@@ -285,7 +285,10 @@ async function renderLobby(lobbyId) {
             <h3>Players (${playerCount})</h3>
             <h3 style="margin-top:3px">Wines (${revealedWines} / ${totalWines})</h3>
           </div>
-          ${hasReveals ? `<a href="#/lobby/${lobbyId}/scores" class="btn btn-secondary btn-sm" style="width:auto">🏆 Leaderboard</a>` : ''}
+          <div style="display:flex;gap:8px">
+            <a href="#/lobby/${lobbyId}/myguesses" class="btn btn-secondary btn-sm" style="width:auto">📋 My Guesses</a>
+            ${hasReveals ? `<a href="#/lobby/${lobbyId}/scores" class="btn btn-secondary btn-sm" style="width:auto">🏆 Leaderboard</a>` : ''}
+          </div>
         </div>
 
         <div class="players-grid" id="playersGrid">${playerCards}</div>
