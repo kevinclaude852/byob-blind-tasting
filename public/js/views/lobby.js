@@ -127,7 +127,7 @@ async function renderLobby(lobbyId) {
         statusHtml += `<span style="font-size:0.75rem;color:var(--text-muted)">${escHtml(player.name)}'s wine ${wineIndex + 1}</span>`;
       }
       const scorePillHtml = myScore !== null
-        ? `<span class="score-pill" style="flex-shrink:0;margin-left:auto">${myScore.total}pts</span>`
+        ? `<span class="score-pill" style="flex-shrink:0;margin-left:auto">${myScore.total}${t('lobby.pts')}</span>`
         : '';
 
       // Countdown display (shown to everyone when a timed reveal is pending)
@@ -165,10 +165,10 @@ async function renderLobby(lobbyId) {
           ? (wine.varietals || []).filter(v => v.grape).map(v => `${v.grape} ${v.percentage}%`).join(' — ')
           : wine.varietals?.[0]?.grape || null;
         const detailRows = [
-          wine.country ? `<div class="wine-reveal-row"><span>Country</span><span>${escHtml(wine.country)}</span></div>` : '',
-          wine.region  ? `<div class="wine-reveal-row"><span>Region</span><span>${escHtml(wine.region)}</span></div>`  : '',
-          varietalStr  ? `<div class="wine-reveal-row"><span>Variety</span><span>${escHtml(varietalStr)}</span></div>`  : '',
-          wine.vintage ? `<div class="wine-reveal-row"><span>Vintage</span><span>${wine.vintage}</span></div>`          : '',
+          wine.country ? `<div class="wine-reveal-row"><span>${t('lobby.country')}</span><span>${escHtml(wine.country)}</span></div>` : '',
+          wine.region  ? `<div class="wine-reveal-row"><span>${t('lobby.region')}</span><span>${escHtml(wine.region)}</span></div>`  : '',
+          varietalStr  ? `<div class="wine-reveal-row"><span>${t('lobby.variety')}</span><span>${escHtml(varietalStr)}</span></div>`  : '',
+          wine.vintage ? `<div class="wine-reveal-row"><span>${t('lobby.vintage')}</span><span>${wine.vintage}</span></div>`          : '',
         ].filter(Boolean).join('');
         return `
           <div class="wine-row-wrap">
@@ -257,7 +257,7 @@ async function renderLobby(lobbyId) {
           <div class="player-wines-section">
             ${buildWineRows(player)}
           </div>
-          ${isSelf && !(isHost && lobby.hostParticipating === false) ? `<div style="margin-top:8px"><a href="#/lobby/${lobbyId}/wine" class="btn btn-sm btn-primary" style="width:100%;text-decoration:none;text-align:center;display:block">+ Add Wine</a></div>` : ''}
+          ${isSelf && !(isHost && lobby.hostParticipating === false) ? `<div style="margin-top:8px"><a href="#/lobby/${lobbyId}/wine" class="btn btn-sm btn-primary" style="width:100%;text-decoration:none;text-align:center;display:block">${t('lobby.addWine')}</a></div>` : ''}
         </div>`;
     }).join('');
 
@@ -286,38 +286,38 @@ async function renderLobby(lobbyId) {
             <h3 style="margin-top:3px">${t('lobby.wines')} (${revealedWines} / ${totalWines})</h3>
           </div>
           <div style="display:flex;gap:8px">
-            <a href="#/lobby/${lobbyId}/myguesses" class="btn btn-secondary btn-sm" style="width:auto">📋 My Guesses</a>
-            ${hasReveals ? `<a href="#/lobby/${lobbyId}/scores" class="btn btn-secondary btn-sm" style="width:auto">🏆 Leaderboard</a>` : ''}
+            <a href="#/lobby/${lobbyId}/myguesses" class="btn btn-secondary btn-sm" style="width:auto">${t('lobby.myGuesses')}</a>
+            ${hasReveals ? `<a href="#/lobby/${lobbyId}/scores" class="btn btn-secondary btn-sm" style="width:auto">${t('lobby.leaderboard')}</a>` : ''}
           </div>
         </div>
 
         <div class="players-grid" id="playersGrid">${playerCards}</div>
 
         <div class="scoring-rules">
-          <div class="scoring-rules-title">Scoring Rules</div>
+          <div class="scoring-rules-title">${t('lobby.scoringRules')}</div>
           <div class="scoring-rules-grid">
             <div class="scoring-rule-item">
-              <span class="scoring-rule-cat">Grape Variety</span>
-              <span class="scoring-rule-pts">Up to 10 pts</span>
-              <span class="scoring-rule-desc">Pro-rated by % of correct varietals identified</span>
+              <span class="scoring-rule-cat">${t('lobby.grapeVariety')}</span>
+              <span class="scoring-rule-pts">${t('lobby.upTo10pts')}</span>
+              <span class="scoring-rule-desc">${t('lobby.grapeDesc')}</span>
             </div>
             <div class="scoring-rule-item">
-              <span class="scoring-rule-cat">Country</span>
-              <span class="scoring-rule-pts">5 pts</span>
-              <span class="scoring-rule-desc">Exact match</span>
+              <span class="scoring-rule-cat">${t('lobby.country')}</span>
+              <span class="scoring-rule-pts">${t('lobby.5pts')}</span>
+              <span class="scoring-rule-desc">${t('lobby.exactMatch')}</span>
             </div>
             <div class="scoring-rule-item">
-              <span class="scoring-rule-cat">Region</span>
-              <span class="scoring-rule-pts">5 pts</span>
-              <span class="scoring-rule-desc">Exact match</span>
+              <span class="scoring-rule-cat">${t('lobby.region')}</span>
+              <span class="scoring-rule-pts">${t('lobby.5pts')}</span>
+              <span class="scoring-rule-desc">${t('lobby.exactMatch')}</span>
             </div>
             <div class="scoring-rule-item">
-              <span class="scoring-rule-cat">Vintage</span>
-              <span class="scoring-rule-pts">5 / 1 pts</span>
-              <span class="scoring-rule-desc">Exact / ±1 year</span>
+              <span class="scoring-rule-cat">${t('lobby.vintage')}</span>
+              <span class="scoring-rule-pts">${t('lobby.vintageScore')}</span>
+              <span class="scoring-rule-desc">${t('lobby.vintageDesc')}</span>
             </div>
           </div>
-          <div class="scoring-rule-max">Maximum 25 pts per wine</div>
+          <div class="scoring-rule-max">${t('lobby.maxPts')}</div>
         </div>
 
       </div>
