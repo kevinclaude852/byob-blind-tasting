@@ -15,7 +15,15 @@ async function renderScoreboard(lobbyId) {
   const currentPlayerId = session?.playerId;
 
   const sorted = Object.entries(scores).sort((a, b) => b[1].total - a[1].total);
-  const medals = ['🥇','🥈','🥉'];
+
+  // Dense ranking: tied scores share the same rank, next rank is +1 (not +n)
+  const denseRanks = [];
+  for (let i = 0; i < sorted.length; i++) {
+    if (i === 0) denseRanks.push(1);
+    else if (sorted[i][1].total === sorted[i - 1][1].total) denseRanks.push(denseRanks[i - 1]);
+    else denseRanks.push(denseRanks[i - 1] + 1);
+  }
+  const rankMedals = { 1: '🥇', 2: '🥈', 3: '🥉' };
 
   // Helper: format varietals from a wine or guess object
   function formatVarietal(obj) {
@@ -28,6 +36,7 @@ async function renderScoreboard(lobbyId) {
 
   // ── Overall Rankings ──────────────────────────────────────────────────────
   const rankingRows = sorted.map(([pid, s], i) => {
+    const rank = denseRanks[i];
     const wineRows = revealOrder
       .filter(wineId => wineMap[wineId] && wineMap[wineId].playerId !== pid && s.breakdown?.[wineId])
       .map(wineId => {
@@ -70,7 +79,7 @@ async function renderScoreboard(lobbyId) {
 
     return `
       <div class="score-row score-row-expandable" data-pid="${pid}">
-        <div class="score-rank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${medals[i] || `${i+1}.`}</div>
+        <div class="score-rank ${rank===1?'gold':rank===2?'silver':rank===3?'bronze':''}">${rankMedals[rank] || `${rank}.`}</div>
         <div class="score-emoji">${s.emoji}</div>
         <div class="score-name">${escHtml(s.name)}</div>
         <div class="score-total">${s.total} ${t('lb.pts')}</div>

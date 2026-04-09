@@ -18,6 +18,22 @@ function escHtml(str) {
   return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// Dummy lobby setup (UAT testing)
+async function renderDummyLobby() {
+  const app = document.getElementById('app');
+  app.innerHTML = `<div class="page"><div class="loading-screen"><div class="wine-glass">🍷</div><p>Setting up test lobby…</p></div></div>`;
+  try {
+    const res = await fetch('/api/dummy', { method: 'POST' });
+    if (!res.ok) throw new Error();
+    const { lobbyId, playerId, sessionToken } = await res.json();
+    API.saveSession(lobbyId, { playerId, sessionToken });
+    window.location.hash = `#/lobby/${lobbyId}`;
+  } catch {
+    document.getElementById('app').innerHTML =
+      `<div class="page"><div class="alert alert-error">Failed to set up test lobby.</div></div>`;
+  }
+}
+
 // Router
 async function route() {
   const hash = window.location.hash || '#/';
@@ -61,6 +77,11 @@ async function route() {
   const myGuessesMatch = hash.match(/^#\/lobby\/([a-f0-9]+)\/myguesses$/);
   if (myGuessesMatch) {
     return renderMyGuesses(myGuessesMatch[1]);
+  }
+
+  // #/lobby/dummy — UAT test lobby
+  if (hash === '#/lobby/dummy' || hash === '#/lobby/dummy/') {
+    return renderDummyLobby();
   }
 
   // #/lobby/:id — main lobby (or join page)
