@@ -118,10 +118,13 @@ async function renderShareGuess(lobbyId, wineId) {
       captionBottom = 536;
     }
 
-    // Sub-caption: wine name
+    // Sub-caption: "<owner>'s <wine name>" / "<owner>支 <wine name>"
+    const subCaption = isHK
+      ? `${wineInfo.playerName}支 ${wineName}`
+      : `${wineInfo.playerName}'s ${wineName}`;
     ctx.fillStyle = SUBCAPTION;
     ctx.font = `bold 44px Georgia,"Times New Roman",serif`;
-    ctx.fillText(ssTruncate(ctx, wineName, W - PAD * 2 - 40), W / 2, captionBottom + 70);
+    ctx.fillText(ssTruncate(ctx, subCaption, W - PAD * 2 - 40), W / 2, captionBottom + 70);
     captionBottom += 70;
 
     // Divider
