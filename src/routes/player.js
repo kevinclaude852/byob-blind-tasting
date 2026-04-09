@@ -68,11 +68,6 @@ router.put('/:playerId/wines/:wineId', (req, res) => {
   const errors = validateWine(wine);
   if (errors.length) return res.status(400).json({ errors });
 
-  // Clear guesses for this wine (fairness)
-  for (const guesserId of Object.keys(game.guesses)) {
-    if (game.guesses[guesserId][wineId]) delete game.guesses[guesserId][wineId];
-  }
-
   player.wines[wineIndex] = {
     ...player.wines[wineIndex],
     emoji: wine.emoji || player.wines[wineIndex].emoji,
