@@ -164,13 +164,18 @@ async function renderShareGuess(lobbyId, wineId) {
       ctx.textAlign = 'left';
       ctx.fillText(label, PAD + 18, textY);
 
-      // Guess value — gold if points earned, muted if 0 or no guess submitted
+      // Guess value — gold if points earned, muted if 0 or no guess submitted; wraps if long
       const pts = score?.[scoreKey];
       const guessColor = pts != null && pts > 0 ? GOLD : MUTED;
       ctx.fillStyle = guessColor;
       ctx.font = `bold 34px Georgia,serif`;
       ctx.textAlign = 'center';
-      ctx.fillText(ssTruncate(ctx, guessVal, colValMaxW), col1Center, textY);
+      const guessLines = sgWrapText(ctx, guessVal, colValMaxW);
+      const guessLineH = 42;
+      const guessStartY = textY - ((guessLines.length - 1) * guessLineH) / 2;
+      guessLines.forEach((line, li) => {
+        ctx.fillText(line, col1Center, guessStartY + li * guessLineH);
+      });
 
       // Wine value
       ctx.fillStyle = WHITE;
