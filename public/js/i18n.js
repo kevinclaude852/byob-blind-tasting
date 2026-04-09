@@ -140,7 +140,6 @@ const TRANSLATIONS = {
     'share.subtitle':         'Save as an Instagram story',
     'share.addBg':            'Add a background photo below',
     'share.takePhoto':        'Take Photo as Background',
-    'share.cameraRoll':       'Take Photo as Background',
     'share.download':         'Save Image',
     'share.shareBtn':         '↗ Share',
     // My Guesses page
@@ -295,7 +294,6 @@ const TRANSLATIONS = {
     'share.subtitle':         'Instagram故事專用',
     'share.addBg':            '揀張相做背景',
     'share.takePhoto':        '影相做背景',
-    'share.cameraRoll':       '影相做背景',
     'share.download':         '儲圖',
     'share.shareBtn':         '↗ 分享',
     // My Guesses page

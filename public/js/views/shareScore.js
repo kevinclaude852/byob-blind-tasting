@@ -2,19 +2,25 @@ async function renderShareScore(lobbyId) {
   const app = document.getElementById('app');
   app.innerHTML = `<div class="page"><div class="loading-screen"><div class="wine-glass">🍷</div><p>${t('app.loading')}</p></div></div>`;
 
-  let data;
+  let data, lobbyData;
   try {
-    data = await API.getScores(lobbyId);
+    [data, lobbyData] = await Promise.all([
+      API.getScores(lobbyId),
+      API.getLobby(lobbyId).catch(() => null),
+    ]);
   } catch (err) {
     app.innerHTML = `<div class="page"><div class="alert alert-error">${escHtml(err.error || t('app.failedLoad'))}</div></div>`;
     return;
   }
 
-  const { scores, revealOrder, wineMap } = data;
+  const { scores, revealOrder } = data;
+  const lobbyName = lobbyData?.lobbyName || '';
   const session = API.getSession(lobbyId);
   const currentPlayerId = session?.playerId;
   const sorted = Object.entries(scores).sort((a, b) => b[1].total - a[1].total);
   const isHK = getLocale() === 'hk';
+
+  const takePhotoLabel = isHK ? t('share.takePhoto') : 'Take Photo as<br>Background';
 
   app.innerHTML = `
     <div class="page">
@@ -22,15 +28,13 @@ async function renderShareScore(lobbyId) {
 
       <div class="page-header">
         <h1>${t('share.title')}</h1>
-        <p>${t('share.subtitle')}</p>
       </div>
 
       <div class="story-photo-btns">
-        <label class="btn btn-secondary">
-          ${t('share.takePhoto')}
+        <label class="btn btn-secondary" style="line-height:1.3;text-align:center">
+          ${takePhotoLabel}
           <input type="file" accept="image/*" id="bgInput" style="display:none">
         </label>
-        <button class="btn btn-secondary" id="downloadBtn">${t('share.download')}</button>
         ${navigator.share ? `<button class="btn" id="shareApiBtn" style="background:#000;color:#fff;font-weight:700;border:none">${t('share.shareBtn')}</button>` : ''}
       </div>
 
@@ -77,30 +81,39 @@ async function renderShareScore(lobbyId) {
     const MUTED = 'rgba(255,255,255,0.52)';
     const PAD   = 80;
 
-    // ── Title ────────────────────────────────────────────────────────────────
+    // ── Title (extra top padding) ─────────────────────────────────────────────
     ctx.fillStyle = GOLD;
-    ctx.font = `bold 64px Georgia,"Times New Roman",serif`;
+    ctx.font = `bold 68px Georgia,"Times New Roman",serif`;
     ctx.textAlign = 'center';
-    ctx.fillText(isHK ? 'BLIND TASTING' : 'BLIND WINE TASTING', W / 2, 120);
+    ctx.fillText(isHK ? '盲品挑戰' : 'BLIND TASTING CHALLENGE', W / 2, 178);
+
+    // Sub-caption: lobby name
+    if (lobbyName) {
+      ctx.fillStyle = 'rgba(255,255,255,0.45)';
+      ctx.font = `bold 46px Georgia,"Times New Roman",serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(lobbyName, W / 2, 238);
+    }
 
     // Divider
     ctx.strokeStyle = 'rgba(212,175,55,0.38)';
     ctx.lineWidth = 1.5;
+    const dividerY = lobbyName ? 274 : 228;
     ctx.beginPath();
-    ctx.moveTo(PAD, 158);
-    ctx.lineTo(W - PAD, 158);
+    ctx.moveTo(PAD, dividerY);
+    ctx.lineTo(W - PAD, dividerY);
     ctx.stroke();
 
     // Section label — centred
     ctx.fillStyle = 'rgba(212,175,55,0.72)';
     ctx.font = `bold 28px -apple-system,"Helvetica Neue",sans-serif`;
     ctx.textAlign = 'center';
-    ctx.fillText(isHK ? 'LEADERBOARD 龍虎榜' : 'LEADERBOARD', W / 2, 202);
+    ctx.fillText(isHK ? 'LEADERBOARD 龍虎榜' : 'LEADERBOARD', W / 2, dividerY + 44);
 
     // ── Player rows ──────────────────────────────────────────────────────────
-    const ROW_H     = 118;
-    const ROW_START = 232;
-    const MAX_ROWS  = Math.min(sorted.length, Math.floor((H - ROW_START - 260) / ROW_H));
+    const ROW_H     = 130;
+    const ROW_START = dividerY + 74;
+    const MAX_ROWS  = Math.min(sorted.length, Math.floor((H - ROW_START - 270) / ROW_H));
     const medals    = ['🥇', '🥈', '🥉'];
 
     for (let i = 0; i < MAX_ROWS; i++) {
@@ -125,66 +138,70 @@ async function renderShareScore(lobbyId) {
 
       // Medal / rank number
       if (medals[i]) {
-        ctx.font = `50px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",serif`;
+        ctx.font = `56px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",serif`;
         ctx.textAlign = 'center';
         ctx.fillStyle = WHITE;
-        ctx.fillText(medals[i], PAD + 48, y + 63);
+        ctx.fillText(medals[i], PAD + 52, y + 72);
       } else {
         ctx.fillStyle = MUTED;
-        ctx.font = `bold 34px -apple-system,sans-serif`;
+        ctx.font = `bold 38px -apple-system,sans-serif`;
         ctx.textAlign = 'center';
-        ctx.fillText(`${i + 1}`, PAD + 48, y + 65);
+        ctx.fillText(`${i + 1}`, PAD + 52, y + 74);
       }
 
       // Player emoji
-      ctx.font = `50px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",serif`;
+      ctx.font = `56px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",serif`;
       ctx.textAlign = 'center';
       ctx.fillStyle = WHITE;
-      ctx.fillText(s.emoji, PAD + 118, y + 63);
+      ctx.fillText(s.emoji, PAD + 124, y + 72);
 
-      // Name (truncated to fit)
-      const nameMaxW = rowW - 270;
-      ctx.font = isMe ? `bold 42px Georgia,serif` : `42px Georgia,serif`;
+      // Points string (measure width first to determine name max width)
+      const ptsStr = `${s.total} ${isHK ? '分' : 'pts'}`;
+      const ptsFontStr = isMe ? `bold 52px Georgia,serif` : `52px Georgia,serif`;
+      ctx.font = ptsFontStr;
+      const ptsWidth = ctx.measureText(ptsStr).width;
+
+      // Name (truncated to avoid overlap with points)
+      const nameX    = PAD + 170;
+      const ptsX     = W - PAD - 14;
+      const nameMaxW = ptsX - nameX - ptsWidth - 36;
+      ctx.font = isMe ? `bold 50px Georgia,serif` : `50px Georgia,serif`;
       ctx.textAlign = 'left';
       ctx.fillStyle = isMe ? GOLD : WHITE;
       const displayName = ssTruncate(ctx, s.name, nameMaxW);
-      ctx.fillText(displayName, PAD + 162, y + 63);
+      ctx.fillText(displayName, nameX, y + 72);
 
       // "YOU" sub-label for highlighted row
       if (isMe) {
         ctx.fillStyle = 'rgba(212,175,55,0.72)';
-        ctx.font = `bold 24px -apple-system,sans-serif`;
-        ctx.fillText(isHK ? '← 你' : '← YOU', PAD + 162, y + 94);
+        ctx.font = `bold 26px -apple-system,sans-serif`;
+        ctx.fillText(isHK ? '← 你' : '← YOU', nameX, y + 108);
       }
 
-      // Points (right-aligned)
+      // Points — same line, same font as number
       ctx.fillStyle = isMe ? GOLD : MUTED;
-      ctx.font = isMe ? `bold 44px Georgia,serif` : `44px Georgia,serif`;
+      ctx.font = ptsFontStr;
       ctx.textAlign = 'right';
-      ctx.fillText(`${s.total}`, W - PAD - 14, y + 63);
-
-      ctx.fillStyle = 'rgba(255,255,255,0.3)';
-      ctx.font = `26px -apple-system,sans-serif`;
-      ctx.fillText(isHK ? '分' : 'pts', W - PAD - 14, y + 92);
+      ctx.fillText(ptsStr, ptsX, y + 72);
     }
 
     // "+N more players" if list was capped
     if (sorted.length > MAX_ROWS) {
-      const y = ROW_START + MAX_ROWS * ROW_H + 14;
+      const y = ROW_START + MAX_ROWS * ROW_H + 16;
       ctx.fillStyle = MUTED;
       ctx.font = `30px Georgia,serif`;
       ctx.textAlign = 'center';
       ctx.fillText(
         isHK
-          ? `+${sorted.length - MAX_ROWS} 人未顯示`
-          : `+${sorted.length - MAX_ROWS} more player${sorted.length - MAX_ROWS !== 1 ? 's' : ''}`,
+          ? `+${sorted.length - MAX_ROWS} 位挑戰者未顯示`
+          : `+${sorted.length - MAX_ROWS} more challenger${sorted.length - MAX_ROWS !== 1 ? 's' : ''}`,
         W / 2, y
       );
     }
 
-    // ── Bottom: player/wine count ─────────────────────────────────────────────
-    const wineCount   = revealOrder.length;
-    const playerCount = sorted.length;
+    // ── Bottom: challenger/wine count ─────────────────────────────────────────
+    const wineCount       = revealOrder.length;
+    const challengerCount = sorted.length;
 
     ctx.strokeStyle = 'rgba(212,175,55,0.25)';
     ctx.lineWidth = 1;
@@ -198,8 +215,8 @@ async function renderShareScore(lobbyId) {
     ctx.textAlign = 'center';
     ctx.fillText(
       isHK
-        ? `${playerCount}人 · ${wineCount}支酒`
-        : `${playerCount} player${playerCount !== 1 ? 's' : ''} · ${wineCount} wine${wineCount !== 1 ? 's' : ''}`,
+        ? `${challengerCount}位挑戰者 · ${wineCount}支酒`
+        : `${challengerCount} challenger${challengerCount !== 1 ? 's' : ''} · ${wineCount} wine${wineCount !== 1 ? 's' : ''}`,
       W / 2, H - 118
     );
 
@@ -228,13 +245,6 @@ async function renderShareScore(lobbyId) {
   }
 
   document.getElementById('bgInput').addEventListener('change', e => handleFileInput(e.target.files[0]));
-
-  document.getElementById('downloadBtn').addEventListener('click', () => {
-    const link = document.createElement('a');
-    link.download = 'blind-tasting-score.png';
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-  });
 
   const shareApiBtn = document.getElementById('shareApiBtn');
   if (shareApiBtn) {
