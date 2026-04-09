@@ -100,25 +100,26 @@ async function renderShareGuess(lobbyId, wineId) {
     const MUTED = 'rgba(255,255,255,0.52)';
     const PAD   = 80;
 
-    // ── Wine name title (wrappable) ───────────────────────────────────────────
+    // ── Title ────────────────────────────────────────────────────────────────
     ctx.textAlign = 'center';
     ctx.fillStyle = WHITE;
-    ctx.font = `bold 64px Georgia,"Times New Roman",serif`;
-    const titleLines = sgWrapText(ctx, wineName, W - PAD * 2);
-    let captionBottom = 210;
-    for (const line of titleLines) {
-      ctx.fillText(line, W / 2, captionBottom);
-      captionBottom += 84;
-    }
-    captionBottom -= 20; // trim trailing gap
+    ctx.font = `bold 68px Georgia,"Times New Roman",serif`;
 
-    // Sub-caption: lobby name
-    if (lobbyName) {
-      ctx.fillStyle = 'rgba(255,255,255,0.45)';
-      ctx.font = `bold 44px Georgia,"Times New Roman",serif`;
-      ctx.fillText(lobbyName, W / 2, captionBottom + 70);
-      captionBottom += 70;
+    let captionBottom;
+    if (isHK) {
+      ctx.fillText('盲品挑戰', W / 2, 450);
+      captionBottom = 450;
+    } else {
+      ctx.fillText('BLIND TASTING', W / 2, 450);
+      ctx.fillText('CHALLENGE', W / 2, 536);
+      captionBottom = 536;
     }
+
+    // Sub-caption: wine name
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.font = `bold 44px Georgia,"Times New Roman",serif`;
+    ctx.fillText(ssTruncate(ctx, wineName, W - PAD * 2 - 40), W / 2, captionBottom + 70);
+    captionBottom += 70;
 
     // Divider
     const dividerY = captionBottom + 52;
@@ -163,9 +164,9 @@ async function renderShareGuess(lobbyId, wineId) {
       ctx.textAlign = 'left';
       ctx.fillText(label, PAD + 18, textY);
 
-      // Guess value — gold if points earned, white if 0, muted if no guess submitted
+      // Guess value — gold if points earned, muted if 0 or no guess submitted
       const pts = score?.[scoreKey];
-      const guessColor = pts == null ? MUTED : (pts > 0 ? GOLD : WHITE);
+      const guessColor = pts != null && pts > 0 ? GOLD : MUTED;
       ctx.fillStyle = guessColor;
       ctx.font = `bold 34px Georgia,serif`;
       ctx.textAlign = 'center';
@@ -173,7 +174,7 @@ async function renderShareGuess(lobbyId, wineId) {
 
       // Wine value
       ctx.fillStyle = WHITE;
-      ctx.font = `34px Georgia,serif`;
+      ctx.font = `bold 34px Georgia,serif`;
       ctx.textAlign = 'center';
       ctx.fillText(ssTruncate(ctx, wineVal, colValMaxW), col2Center, textY);
     }
@@ -190,9 +191,9 @@ async function renderShareGuess(lobbyId, wineId) {
       ctx.lineTo(W - PAD, tableBottom + 28);
       ctx.stroke();
 
-      // 4 category chips
-      const CHIP_GAP = 20;
-      const CHIP_W   = Math.floor((W - PAD * 2 - CHIP_GAP * 3) / 4);
+      // 5 chips: 4 categories + total (evenly distributed, total on right)
+      const CHIP_GAP = 16;
+      const CHIP_W   = Math.floor((W - PAD * 2 - CHIP_GAP * 4) / 5);
       const CHIP_H   = 100;
       const CHIP_TOP = tableBottom + 68;
 
@@ -201,6 +202,7 @@ async function renderShareGuess(lobbyId, wineId) {
         { label: isHK ? '國家' : 'Country',  val: score.country  },
         { label: isHK ? '產區' : 'Region',   val: score.region   },
         { label: isHK ? '年份' : 'Vintage',  val: score.vintage  },
+        { label: isHK ? '總分' : 'Total',    val: score.total    },
       ];
 
       chips.forEach(({ label, val }, ci) => {
@@ -220,17 +222,6 @@ async function renderShareGuess(lobbyId, wineId) {
         ctx.font = `bold 40px Georgia,serif`;
         ctx.fillText(String(val), cxc, CHIP_TOP + 80);
       });
-
-      // Large total score
-      const totalNumY = CHIP_TOP + CHIP_H + 140;
-      ctx.fillStyle = GOLD;
-      ctx.font = `bold 130px Georgia,serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText(String(score.total), W / 2, totalNumY);
-
-      ctx.fillStyle = MUTED;
-      ctx.font = `bold 42px Georgia,serif`;
-      ctx.fillText(isHK ? '分' : 'pts', W / 2, totalNumY + 56);
     }
 
     // ── Bottom divider & footer ───────────────────────────────────────────────
