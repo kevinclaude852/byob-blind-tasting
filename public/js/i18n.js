@@ -134,6 +134,15 @@ const TRANSLATIONS = {
     'lb.vintage':             'Vintage',
     'lb.player':              'Player',
     'lb.points':              'Points',
+    // Share My Score page
+    'share.btn':              '📸 Share My Score',
+    'share.title':            'Share My Score',
+    'share.subtitle':         'Save as an Instagram story',
+    'share.addBg':            'Add a background photo below',
+    'share.takePhoto':        '📷 Take Photo',
+    'share.cameraRoll':       '🖼 Camera Roll',
+    'share.download':         '⬇ Save Image',
+    'share.shareBtn':         '↗ Share',
     // My Guesses page
     'mg.title':               'My Guesses',
     'mg.totalScore':          'Total Score',
@@ -280,6 +289,15 @@ const TRANSLATIONS = {
     'lb.vintage':             '年份',
     'lb.player':              '參加者',
     'lb.points':              '分數',
+    // Share My Score page
+    'share.btn':              '📸 分享我嘅成績',
+    'share.title':            '分享成績',
+    'share.subtitle':         'Instagram故事專用',
+    'share.addBg':            '揀張相做背景',
+    'share.takePhoto':        '📷 影相',
+    'share.cameraRoll':       '🖼 相機相簿',
+    'share.download':         '⬇ 儲圖',
+    'share.shareBtn':         '↗ 分享',
     // My Guesses page
     'mg.title':               '我估咗啲乜',
     'mg.totalScore':          '總分',

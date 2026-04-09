@@ -45,6 +45,12 @@ async function route() {
     return renderGuess(guessMatch[1], guessMatch[2]);
   }
 
+  // #/lobby/:id/share-score
+  const shareScoreMatch = hash.match(/^#\/lobby\/([a-f0-9]+)\/share-score$/);
+  if (shareScoreMatch) {
+    return renderShareScore(shareScoreMatch[1]);
+  }
+
   // #/lobby/:id/scores
   const scoresMatch = hash.match(/^#\/lobby\/([a-f0-9]+)\/scores$/);
   if (scoresMatch) {

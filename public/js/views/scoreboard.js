@@ -147,7 +147,10 @@ async function renderScoreboard(lobbyId) {
   // ── Render ────────────────────────────────────────────────────────────────
   app.innerHTML = `
     <div class="page wide">
-      <button class="btn btn-secondary btn-sm" id="backBtn" style="width:auto;margin-bottom:16px">${t('nav.backToLobby')}</button>
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-secondary btn-sm" id="backBtn" style="width:auto">${t('nav.backToLobby')}</button>
+        <button class="btn btn-primary btn-sm" id="shareScoreBtn" style="width:auto;margin-left:auto">${t('share.btn')}</button>
+      </div>
 
       <div class="page-header">
         <h1>${t('lb.title')}</h1>
@@ -173,6 +176,10 @@ async function renderScoreboard(lobbyId) {
 
   document.getElementById('backBtn').addEventListener('click', () => {
     window.location.hash = `#/lobby/${lobbyId}`;
+  });
+
+  document.getElementById('shareScoreBtn').addEventListener('click', () => {
+    window.location.hash = `#/lobby/${lobbyId}/share-score`;
   });
 
   // Player row accordion toggle
