@@ -65,13 +65,12 @@ async function renderShareScore(lobbyId) {
       const sw = bgImage.naturalWidth * scale;
       const sh = bgImage.naturalHeight * scale;
       ctx.drawImage(bgImage, (W - sw) / 2, (H - sh) / 2, sw, sh);
-      ctx.fillStyle = 'rgba(8, 3, 15, 0.68)';
+      ctx.fillStyle = 'rgba(6, 9, 13, 0.45)';
       ctx.fillRect(0, 0, W, H);
     } else {
-      const grad = ctx.createLinearGradient(0, 0, W * 0.4, H);
-      grad.addColorStop(0, '#1c0a14');
-      grad.addColorStop(0.55, '#0f0610');
-      grad.addColorStop(1, '#07040a');
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, '#112133');
+      grad.addColorStop(1, '#050a0f');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, W, H);
     }
@@ -81,24 +80,33 @@ async function renderShareScore(lobbyId) {
     const MUTED = 'rgba(255,255,255,0.52)';
     const PAD   = 80;
 
-    // ── Title (extra top padding) ─────────────────────────────────────────────
-    ctx.fillStyle = GOLD;
+    // ── Title ────────────────────────────────────────────────────────────────
+    ctx.fillStyle = WHITE;
     ctx.font = `bold 68px Georgia,"Times New Roman",serif`;
     ctx.textAlign = 'center';
-    ctx.fillText(isHK ? '盲品挑戰' : 'BLIND TASTING CHALLENGE', W / 2, 178);
+
+    let captionBottom;
+    if (isHK) {
+      ctx.fillText('盲品挑戰', W / 2, 210);
+      captionBottom = 210;
+    } else {
+      ctx.fillText('BLIND TASTING', W / 2, 210);
+      ctx.fillText('CHALLENGE', W / 2, 296);
+      captionBottom = 296;
+    }
 
     // Sub-caption: lobby name
     if (lobbyName) {
       ctx.fillStyle = 'rgba(255,255,255,0.45)';
       ctx.font = `bold 46px Georgia,"Times New Roman",serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText(lobbyName, W / 2, 238);
+      ctx.fillText(lobbyName, W / 2, captionBottom + 72);
+      captionBottom = captionBottom + 72;
     }
 
     // Divider
+    const dividerY = captionBottom + 52;
     ctx.strokeStyle = 'rgba(212,175,55,0.38)';
     ctx.lineWidth = 1.5;
-    const dividerY = lobbyName ? 274 : 228;
     ctx.beginPath();
     ctx.moveTo(PAD, dividerY);
     ctx.lineTo(W - PAD, dividerY);
@@ -112,9 +120,11 @@ async function renderShareScore(lobbyId) {
 
     // ── Player rows ──────────────────────────────────────────────────────────
     const ROW_H     = 130;
-    const ROW_START = dividerY + 74;
-    const MAX_ROWS  = Math.min(sorted.length, Math.floor((H - ROW_START - 270) / ROW_H));
+    const ROW_START = dividerY + 76;
+    const MAX_ROWS  = Math.min(sorted.length, Math.floor((H - ROW_START - 290) / ROW_H));
     const medals    = ['🥇', '🥈', '🥉'];
+    const youTagStr = isHK ? ' ← 你' : ' ← YOU';
+    const youFontStr = `bold 34px -apple-system,sans-serif`;
 
     for (let i = 0; i < MAX_ROWS; i++) {
       const [pid, s] = sorted[i];
@@ -155,27 +165,37 @@ async function renderShareScore(lobbyId) {
       ctx.fillStyle = WHITE;
       ctx.fillText(s.emoji, PAD + 124, y + 72);
 
-      // Points string (measure width first to determine name max width)
+      // Pre-measure points and YOU tag to determine name max width
       const ptsStr = `${s.total} ${isHK ? '分' : 'pts'}`;
       const ptsFontStr = isMe ? `bold 52px Georgia,serif` : `52px Georgia,serif`;
       ctx.font = ptsFontStr;
       const ptsWidth = ctx.measureText(ptsStr).width;
 
-      // Name (truncated to avoid overlap with points)
+      let youTagWidth = 0;
+      if (isMe) {
+        ctx.font = youFontStr;
+        youTagWidth = ctx.measureText(youTagStr).width;
+      }
+
       const nameX    = PAD + 170;
       const ptsX     = W - PAD - 14;
-      const nameMaxW = ptsX - nameX - ptsWidth - 36;
-      ctx.font = isMe ? `bold 50px Georgia,serif` : `50px Georgia,serif`;
+      const nameMaxW = ptsX - nameX - ptsWidth - youTagWidth - 40;
+
+      // Draw name
+      const nameFontStr = isMe ? `bold 50px Georgia,serif` : `50px Georgia,serif`;
+      ctx.font = nameFontStr;
       ctx.textAlign = 'left';
       ctx.fillStyle = isMe ? GOLD : WHITE;
       const displayName = ssTruncate(ctx, s.name, nameMaxW);
       ctx.fillText(displayName, nameX, y + 72);
 
-      // "YOU" sub-label for highlighted row
+      // YOU tag on the same line, right after the name
       if (isMe) {
-        ctx.fillStyle = 'rgba(212,175,55,0.72)';
-        ctx.font = `bold 26px -apple-system,sans-serif`;
-        ctx.fillText(isHK ? '← 你' : '← YOU', nameX, y + 108);
+        const nameActualW = ctx.measureText(displayName).width;
+        ctx.fillStyle = GOLD;
+        ctx.font = youFontStr;
+        ctx.textAlign = 'left';
+        ctx.fillText(youTagStr, nameX + nameActualW, y + 72);
       }
 
       // Points — same line, same font as number
@@ -185,7 +205,7 @@ async function renderShareScore(lobbyId) {
       ctx.fillText(ptsStr, ptsX, y + 72);
     }
 
-    // "+N more players" if list was capped
+    // "+N more challengers" if list was capped
     if (sorted.length > MAX_ROWS) {
       const y = ROW_START + MAX_ROWS * ROW_H + 16;
       ctx.fillStyle = MUTED;
@@ -199,15 +219,15 @@ async function renderShareScore(lobbyId) {
       );
     }
 
-    // ── Bottom: challenger/wine count ─────────────────────────────────────────
+    // ── Bottom: challenger / wine count ──────────────────────────────────────
     const wineCount       = revealOrder.length;
     const challengerCount = sorted.length;
 
     ctx.strokeStyle = 'rgba(212,175,55,0.25)';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(PAD, H - 168);
-    ctx.lineTo(W - PAD, H - 168);
+    ctx.moveTo(PAD, H - 196);
+    ctx.lineTo(W - PAD, H - 196);
     ctx.stroke();
 
     ctx.fillStyle = MUTED;
@@ -217,14 +237,14 @@ async function renderShareScore(lobbyId) {
       isHK
         ? `${challengerCount}位挑戰者 · ${wineCount}支酒`
         : `${challengerCount} challenger${challengerCount !== 1 ? 's' : ''} · ${wineCount} wine${wineCount !== 1 ? 's' : ''}`,
-      W / 2, H - 118
+      W / 2, H - 148
     );
 
     // ── Footer ───────────────────────────────────────────────────────────────
     ctx.fillStyle = 'rgba(255,255,255,0.2)';
     ctx.font = `28px -apple-system,sans-serif`;
     ctx.textAlign = 'center';
-    ctx.fillText('App developed by oenophilia.hk', W / 2, H - 68);
+    ctx.fillText('App developed by oenophilia.hk', W / 2, H - 100);
   }
 
   // Initial render
