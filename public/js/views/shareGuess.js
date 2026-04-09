@@ -181,7 +181,11 @@ async function renderShareGuess(lobbyId, wineId) {
       ctx.fillStyle = WHITE;
       ctx.font = `bold 34px Georgia,serif`;
       ctx.textAlign = 'center';
-      ctx.fillText(ssTruncate(ctx, wineVal, colValMaxW), col2Center, textY);
+      const wineLines = sgWrapText(ctx, wineVal, colValMaxW);
+      const wineStartY = textY - ((wineLines.length - 1) * guessLineH) / 2;
+      wineLines.forEach((line, li) => {
+        ctx.fillText(line, col2Center, wineStartY + li * guessLineH);
+      });
     }
 
     const tableBottom = TABLE_TOP + compareRows.length * ROW_H;
