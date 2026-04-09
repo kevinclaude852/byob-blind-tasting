@@ -39,7 +39,7 @@ async function renderShareScore(lobbyId) {
       </div>
 
       <div class="story-card-wrap">
-        <canvas id="storyCanvas"></canvas>
+        <canvas id="storyCanvas" style="cursor:grab"></canvas>
       </div>
     </div>
   `;
@@ -53,6 +53,10 @@ async function renderShareScore(lobbyId) {
   canvas.width = W;
   canvas.height = H;
 
+  // Scroll state — shared between drawCard and event handlers
+  let playerScrollPx = 0;
+  let listAreaH = 0;
+  let listTotalH = 0;
   let bgImage = null;
 
   function drawCard() {
@@ -118,31 +122,52 @@ async function renderShareScore(lobbyId) {
     ctx.textAlign = 'center';
     ctx.fillText(isHK ? 'LEADERBOARD 龍虎榜' : 'LEADERBOARD', W / 2, dividerY + 44);
 
-    // ── Player rows ──────────────────────────────────────────────────────────
-    const ROW_H     = 130;
-    const ROW_START = dividerY + 76;
-    const MAX_ROWS  = Math.min(sorted.length, Math.floor((H - ROW_START - 290) / ROW_H));
+    // ── Scrollable player list ────────────────────────────────────────────────
+    const ROWS_VISIBLE  = 9;
+    const LIST_TOP      = dividerY + 76;
+    const LIST_BOTTOM   = H - 285;
+    const AREA_H        = LIST_BOTTOM - LIST_TOP;
+    const ROW_H         = Math.min(130, Math.floor(AREA_H / ROWS_VISIBLE));
+
+    // Update shared scroll state
+    listAreaH  = AREA_H;
+    listTotalH = sorted.length * ROW_H;
+    const maxScroll = Math.max(0, listTotalH - listAreaH);
+    playerScrollPx = Math.max(0, Math.min(playerScrollPx, maxScroll));
+
+    // Clip to list area, draw all rows (only visible ones render)
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, LIST_TOP, W, AREA_H);
+    ctx.clip();
+
     const medals    = ['🥇', '🥈', '🥉'];
     const youTagStr = isHK ? ' ← 你' : ' ← YOU';
     const youFontStr = `bold 34px -apple-system,sans-serif`;
 
-    for (let i = 0; i < MAX_ROWS; i++) {
+    for (let i = 0; i < sorted.length; i++) {
       const [pid, s] = sorted[i];
       const isMe = pid === currentPlayerId;
-      const y    = ROW_START + i * ROW_H;
-      const rowW = W - PAD * 2;
+      const y    = LIST_TOP + i * ROW_H - playerScrollPx;
+
+      // Skip rows fully outside the clip (tiny optimisation)
+      if (y + ROW_H <= LIST_TOP) continue;
+      if (y >= LIST_BOTTOM) break;
+
+      const rowW   = W - PAD * 2;
+      const textY  = y + Math.round(ROW_H * 0.56);
 
       // Row background
       ctx.fillStyle = isMe
         ? 'rgba(212,175,55,0.18)'
         : (i % 2 === 0 ? 'rgba(255,255,255,0.055)' : 'rgba(255,255,255,0.03)');
-      ssRoundRect(ctx, PAD, y, rowW, ROW_H - 10, 10);
+      ssRoundRect(ctx, PAD, y + 2, rowW, ROW_H - 8, 10);
       ctx.fill();
 
       if (isMe) {
         ctx.strokeStyle = GOLD;
         ctx.lineWidth = 2.5;
-        ssRoundRect(ctx, PAD, y, rowW, ROW_H - 10, 10);
+        ssRoundRect(ctx, PAD, y + 2, rowW, ROW_H - 8, 10);
         ctx.stroke();
       }
 
@@ -151,22 +176,22 @@ async function renderShareScore(lobbyId) {
         ctx.font = `56px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",serif`;
         ctx.textAlign = 'center';
         ctx.fillStyle = WHITE;
-        ctx.fillText(medals[i], PAD + 52, y + 72);
+        ctx.fillText(medals[i], PAD + 52, textY);
       } else {
         ctx.fillStyle = MUTED;
         ctx.font = `bold 38px -apple-system,sans-serif`;
         ctx.textAlign = 'center';
-        ctx.fillText(`${i + 1}`, PAD + 52, y + 74);
+        ctx.fillText(`${i + 1}`, PAD + 52, textY);
       }
 
       // Player emoji
       ctx.font = `56px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",serif`;
       ctx.textAlign = 'center';
       ctx.fillStyle = WHITE;
-      ctx.fillText(s.emoji, PAD + 124, y + 72);
+      ctx.fillText(s.emoji, PAD + 124, textY);
 
       // Pre-measure points and YOU tag to determine name max width
-      const ptsStr = `${s.total} ${isHK ? '分' : 'pts'}`;
+      const ptsStr    = `${s.total} ${isHK ? '分' : 'pts'}`;
       const ptsFontStr = isMe ? `bold 52px Georgia,serif` : `52px Georgia,serif`;
       ctx.font = ptsFontStr;
       const ptsWidth = ctx.measureText(ptsStr).width;
@@ -181,42 +206,48 @@ async function renderShareScore(lobbyId) {
       const ptsX     = W - PAD - 14;
       const nameMaxW = ptsX - nameX - ptsWidth - youTagWidth - 40;
 
-      // Draw name
+      // Name
       const nameFontStr = isMe ? `bold 50px Georgia,serif` : `50px Georgia,serif`;
       ctx.font = nameFontStr;
       ctx.textAlign = 'left';
       ctx.fillStyle = isMe ? GOLD : WHITE;
       const displayName = ssTruncate(ctx, s.name, nameMaxW);
-      ctx.fillText(displayName, nameX, y + 72);
+      ctx.fillText(displayName, nameX, textY);
 
-      // YOU tag on the same line, right after the name
+      // YOU tag immediately after name, same line
       if (isMe) {
         const nameActualW = ctx.measureText(displayName).width;
         ctx.fillStyle = GOLD;
         ctx.font = youFontStr;
-        ctx.textAlign = 'left';
-        ctx.fillText(youTagStr, nameX + nameActualW, y + 72);
+        ctx.fillText(youTagStr, nameX + nameActualW, textY);
       }
 
-      // Points — same line, same font as number
+      // Points
       ctx.fillStyle = isMe ? GOLD : MUTED;
       ctx.font = ptsFontStr;
       ctx.textAlign = 'right';
-      ctx.fillText(ptsStr, ptsX, y + 72);
+      ctx.fillText(ptsStr, ptsX, textY);
     }
 
-    // "+N more challengers" if list was capped
-    if (sorted.length > MAX_ROWS) {
-      const y = ROW_START + MAX_ROWS * ROW_H + 16;
-      ctx.fillStyle = MUTED;
-      ctx.font = `30px Georgia,serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText(
-        isHK
-          ? `+${sorted.length - MAX_ROWS} 位挑戰者未顯示`
-          : `+${sorted.length - MAX_ROWS} more challenger${sorted.length - MAX_ROWS !== 1 ? 's' : ''}`,
-        W / 2, y
-      );
+    ctx.restore();
+
+    // Fade edges of list area (top & bottom) to hint scrollability
+    if (listTotalH > listAreaH) {
+      const fadeH = ROW_H * 0.6;
+      if (playerScrollPx > 0) {
+        const topFade = ctx.createLinearGradient(0, LIST_TOP, 0, LIST_TOP + fadeH);
+        topFade.addColorStop(0, bgImage ? 'rgba(6,9,13,0.55)' : 'rgba(8,16,30,0.85)');
+        topFade.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = topFade;
+        ctx.fillRect(0, LIST_TOP, W, fadeH);
+      }
+      if (playerScrollPx < maxScroll) {
+        const botFade = ctx.createLinearGradient(0, LIST_BOTTOM - fadeH, 0, LIST_BOTTOM);
+        botFade.addColorStop(0, 'rgba(0,0,0,0)');
+        botFade.addColorStop(1, bgImage ? 'rgba(6,9,13,0.55)' : 'rgba(8,16,30,0.85)');
+        ctx.fillStyle = botFade;
+        ctx.fillRect(0, LIST_BOTTOM - fadeH, W, fadeH);
+      }
     }
 
     // ── Bottom: challenger / wine count ──────────────────────────────────────
@@ -247,25 +278,77 @@ async function renderShareScore(lobbyId) {
     ctx.fillText('App developed by oenophilia.hk', W / 2, H - 100);
   }
 
-  // Initial render
+  // Initial render then auto-scroll to put current player near centre
   drawCard();
 
+  const myIndex = sorted.findIndex(([pid]) => pid === currentPlayerId);
+  if (myIndex > 0 && listTotalH > listAreaH) {
+    const rowH = listTotalH / sorted.length;
+    const targetScroll = myIndex * rowH - listAreaH / 2 + rowH / 2;
+    playerScrollPx = Math.max(0, Math.min(Math.max(0, listTotalH - listAreaH), targetScroll));
+    drawCard();
+  }
+
+  // ── Background photo input ────────────────────────────────────────────────
   function handleFileInput(file) {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = e => {
       const img = new Image();
-      img.onload = () => {
-        bgImage = img;
-        drawCard();
-      };
+      img.onload = () => { bgImage = img; drawCard(); };
       img.src = e.target.result;
     };
     reader.readAsDataURL(file);
   }
-
   document.getElementById('bgInput').addEventListener('change', e => handleFileInput(e.target.files[0]));
 
+  // ── Touch scrolling ───────────────────────────────────────────────────────
+  let lastPointerY = null;
+
+  function canvasPixelDelta(clientDelta) {
+    return clientDelta * (H / canvas.getBoundingClientRect().height);
+  }
+
+  function applyScroll(canvasDy) {
+    const maxScroll = Math.max(0, listTotalH - listAreaH);
+    playerScrollPx = Math.max(0, Math.min(maxScroll, playerScrollPx + canvasDy));
+    drawCard();
+  }
+
+  canvas.addEventListener('touchstart', e => {
+    lastPointerY = e.touches[0].clientY;
+    canvas.style.cursor = 'grabbing';
+    e.preventDefault();
+  }, { passive: false });
+
+  canvas.addEventListener('touchmove', e => {
+    if (lastPointerY === null) return;
+    applyScroll(canvasPixelDelta(lastPointerY - e.touches[0].clientY));
+    lastPointerY = e.touches[0].clientY;
+    e.preventDefault();
+  }, { passive: false });
+
+  canvas.addEventListener('touchend', () => {
+    lastPointerY = null;
+    canvas.style.cursor = 'grab';
+  });
+
+  // ── Mouse scrolling (desktop) ─────────────────────────────────────────────
+  canvas.addEventListener('mousedown', e => {
+    lastPointerY = e.clientY;
+    canvas.style.cursor = 'grabbing';
+  });
+
+  canvas.addEventListener('mousemove', e => {
+    if (lastPointerY === null) return;
+    applyScroll(canvasPixelDelta(lastPointerY - e.clientY));
+    lastPointerY = e.clientY;
+  });
+
+  canvas.addEventListener('mouseup',    () => { lastPointerY = null; canvas.style.cursor = 'grab'; });
+  canvas.addEventListener('mouseleave', () => { lastPointerY = null; canvas.style.cursor = 'grab'; });
+
+  // ── Share via Web Share API ───────────────────────────────────────────────
   const shareApiBtn = document.getElementById('shareApiBtn');
   if (shareApiBtn) {
     shareApiBtn.addEventListener('click', () => {
