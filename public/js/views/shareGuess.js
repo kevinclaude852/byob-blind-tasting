@@ -97,8 +97,11 @@ async function renderShareGuess(lobbyId, wineId) {
 
     const GOLD  = '#d4af37';
     const WHITE = '#ffffff';
-    const MUTED = 'rgba(255,255,255,0.52)';
-    const PAD   = 80;
+    // When a photo is behind the card, bump semi-transparent colours to 0.75 so they remain legible
+    const MUTED      = bgImage ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.52)';
+    const SUBCAPTION = bgImage ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.45)';
+    const COLHDR     = bgImage ? 'rgba(212,175,55,0.90)'  : 'rgba(212,175,55,0.72)';
+    const PAD        = 80;
 
     // ── Title ────────────────────────────────────────────────────────────────
     ctx.textAlign = 'center';
@@ -116,7 +119,7 @@ async function renderShareGuess(lobbyId, wineId) {
     }
 
     // Sub-caption: wine name
-    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.fillStyle = SUBCAPTION;
     ctx.font = `bold 44px Georgia,"Times New Roman",serif`;
     ctx.fillText(ssTruncate(ctx, wineName, W - PAD * 2 - 40), W / 2, captionBottom + 70);
     captionBottom += 70;
@@ -139,7 +142,7 @@ async function renderShareGuess(lobbyId, wineId) {
 
     // Column headers
     const hdrY = dividerY + 50;
-    ctx.fillStyle = 'rgba(212,175,55,0.72)';
+    ctx.fillStyle = COLHDR;
     ctx.font = `bold 28px -apple-system,"Helvetica Neue",sans-serif`;
     ctx.textAlign = 'center';
     ctx.fillText(isHK ? '我估' : 'MY GUESS',  col1Center, hdrY);
