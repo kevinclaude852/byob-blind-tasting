@@ -25,25 +25,17 @@ async function renderShareScore(lobbyId) {
         <p>${t('share.subtitle')}</p>
       </div>
 
-      <div class="story-card-wrap">
-        <canvas id="storyCanvas"></canvas>
-      </div>
-      <p class="story-hint" id="storyHint">${t('share.addBg')}</p>
-
       <div class="story-photo-btns">
         <label class="btn btn-secondary">
           ${t('share.takePhoto')}
-          <input type="file" accept="image/*" capture="environment" id="cameraInput" style="display:none">
+          <input type="file" accept="image/*" id="bgInput" style="display:none">
         </label>
-        <label class="btn btn-secondary">
-          ${t('share.cameraRoll')}
-          <input type="file" accept="image/*" id="rollInput" style="display:none">
-        </label>
+        <button class="btn btn-secondary" id="downloadBtn">${t('share.download')}</button>
+        ${navigator.share ? `<button class="btn" id="shareApiBtn" style="background:#000;color:#fff;font-weight:700;border:none">${t('share.shareBtn')}</button>` : ''}
       </div>
 
-      <div class="story-export-btns" id="exportBtns" style="display:none">
-        <button class="btn btn-primary" id="downloadBtn">${t('share.download')}</button>
-        ${navigator.share ? `<button class="btn btn-secondary" id="shareApiBtn">${t('share.shareBtn')}</button>` : ''}
+      <div class="story-card-wrap">
+        <canvas id="storyCanvas"></canvas>
       </div>
     </div>
   `;
@@ -69,7 +61,6 @@ async function renderShareScore(lobbyId) {
       const sw = bgImage.naturalWidth * scale;
       const sh = bgImage.naturalHeight * scale;
       ctx.drawImage(bgImage, (W - sw) / 2, (H - sh) / 2, sw, sh);
-      // Dark semi-transparent overlay so text stays readable
       ctx.fillStyle = 'rgba(8, 3, 15, 0.68)';
       ctx.fillRect(0, 0, W, H);
     } else {
@@ -86,47 +77,31 @@ async function renderShareScore(lobbyId) {
     const MUTED = 'rgba(255,255,255,0.52)';
     const PAD   = 80;
 
-    // ── Header ───────────────────────────────────────────────────────────────
-    ctx.font = `100px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",serif`;
-    ctx.textAlign = 'center';
-    ctx.fillStyle = WHITE;
-    ctx.fillText('🍷', W / 2, 188);
-
+    // ── Title ────────────────────────────────────────────────────────────────
     ctx.fillStyle = GOLD;
     ctx.font = `bold 64px Georgia,"Times New Roman",serif`;
     ctx.textAlign = 'center';
-    ctx.fillText(isHK ? 'BLIND TASTING' : 'BLIND WINE TASTING', W / 2, 298);
-
-    const wineCount   = revealOrder.length;
-    const playerCount = sorted.length;
-    ctx.fillStyle = MUTED;
-    ctx.font = `36px Georgia,serif`;
-    ctx.fillText(
-      isHK
-        ? `${playerCount}人 · ${wineCount}支酒`
-        : `${playerCount} player${playerCount !== 1 ? 's' : ''} · ${wineCount} wine${wineCount !== 1 ? 's' : ''}`,
-      W / 2, 358
-    );
+    ctx.fillText(isHK ? 'BLIND TASTING' : 'BLIND WINE TASTING', W / 2, 120);
 
     // Divider
     ctx.strokeStyle = 'rgba(212,175,55,0.38)';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(PAD, 394);
-    ctx.lineTo(W - PAD, 394);
+    ctx.moveTo(PAD, 158);
+    ctx.lineTo(W - PAD, 158);
     ctx.stroke();
 
-    // Section label
+    // Section label — centred
     ctx.fillStyle = 'rgba(212,175,55,0.72)';
     ctx.font = `bold 28px -apple-system,"Helvetica Neue",sans-serif`;
-    ctx.textAlign = 'left';
-    ctx.fillText(isHK ? 'LEADERBOARD 龍虎榜' : 'LEADERBOARD', PAD, 436);
+    ctx.textAlign = 'center';
+    ctx.fillText(isHK ? 'LEADERBOARD 龍虎榜' : 'LEADERBOARD', W / 2, 202);
 
     // ── Player rows ──────────────────────────────────────────────────────────
-    const ROW_H    = 118;
-    const ROW_START = 464;
-    const MAX_ROWS = Math.min(sorted.length, Math.floor((H - ROW_START - 200) / ROW_H));
-    const medals   = ['🥇', '🥈', '🥉'];
+    const ROW_H     = 118;
+    const ROW_START = 232;
+    const MAX_ROWS  = Math.min(sorted.length, Math.floor((H - ROW_START - 260) / ROW_H));
+    const medals    = ['🥇', '🥈', '🥉'];
 
     for (let i = 0; i < MAX_ROWS; i++) {
       const [pid, s] = sorted[i];
@@ -207,14 +182,35 @@ async function renderShareScore(lobbyId) {
       );
     }
 
+    // ── Bottom: player/wine count ─────────────────────────────────────────────
+    const wineCount   = revealOrder.length;
+    const playerCount = sorted.length;
+
+    ctx.strokeStyle = 'rgba(212,175,55,0.25)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(PAD, H - 168);
+    ctx.lineTo(W - PAD, H - 168);
+    ctx.stroke();
+
+    ctx.fillStyle = MUTED;
+    ctx.font = `36px Georgia,serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(
+      isHK
+        ? `${playerCount}人 · ${wineCount}支酒`
+        : `${playerCount} player${playerCount !== 1 ? 's' : ''} · ${wineCount} wine${wineCount !== 1 ? 's' : ''}`,
+      W / 2, H - 118
+    );
+
     // ── Footer ───────────────────────────────────────────────────────────────
     ctx.fillStyle = 'rgba(255,255,255,0.2)';
     ctx.font = `28px -apple-system,sans-serif`;
     ctx.textAlign = 'center';
-    ctx.fillText('Blind Wine Tasting Game', W / 2, H - 88);
+    ctx.fillText('App developed by oenophilia.hk', W / 2, H - 68);
   }
 
-  // Initial render (no background photo yet)
+  // Initial render
   drawCard();
 
   function handleFileInput(file) {
@@ -224,8 +220,6 @@ async function renderShareScore(lobbyId) {
       const img = new Image();
       img.onload = () => {
         bgImage = img;
-        document.getElementById('storyHint').style.display = 'none';
-        document.getElementById('exportBtns').style.display = 'flex';
         drawCard();
       };
       img.src = e.target.result;
@@ -233,8 +227,7 @@ async function renderShareScore(lobbyId) {
     reader.readAsDataURL(file);
   }
 
-  document.getElementById('cameraInput').addEventListener('change', e => handleFileInput(e.target.files[0]));
-  document.getElementById('rollInput').addEventListener('change', e => handleFileInput(e.target.files[0]));
+  document.getElementById('bgInput').addEventListener('change', e => handleFileInput(e.target.files[0]));
 
   document.getElementById('downloadBtn').addEventListener('click', () => {
     const link = document.createElement('a');
