@@ -1016,6 +1016,47 @@ select:focus { background-color: white; }
   text-align: right;
 }
 
+/* ===== Share Score Page ===== */
+.story-card-wrap {
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto 10px;
+  background: #1c0a14;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.story-card-wrap canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.story-hint {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-style: italic;
+  margin: 0 0 16px;
+  font-family: Georgia, serif;
+}
+.story-photo-btns {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.story-photo-btns label {
+  flex: 1;
+  text-align: center;
+  cursor: pointer;
+  justify-content: center;
+}
+.story-export-btns {
+  gap: 10px;
+  margin-top: 4px;
+}
+.story-export-btns .btn {
+  flex: 1;
+}
+
 /* ===== Spin ===== */
 .spin { animation: spin 1s linear infinite; display: inline-block; }
 @keyframes spin { to { transform: rotate(360deg); } }
