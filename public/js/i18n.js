@@ -192,7 +192,7 @@ const TRANSLATIONS = {
   },
   hk: {
     // Landing
-    'app.title':                    'Blind Tasting Challenge 斷鳩估冇痛苦',
+    'app.title':                    'Blind Tasting Challenge 盲品挑戰',
     'app.subtitle':                 '開個大廳搵埋啲friend',
     'landing.lobbyName':            '大廳叫咩名',
     'landing.lobbyNamePlaceholder': 'e.g. Yellow Tail 垂直品鑑會',
