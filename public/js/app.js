@@ -45,6 +45,12 @@ async function route() {
     return renderGuess(guessMatch[1], guessMatch[2]);
   }
 
+  // #/lobby/:id/guess-share/:wineId
+  const guessShareMatch = hash.match(/^#\/lobby\/([a-f0-9]+)\/guess-share\/(w_[a-z0-9]+)$/);
+  if (guessShareMatch) {
+    return renderShareGuess(guessShareMatch[1], guessShareMatch[2]);
+  }
+
   // #/lobby/:id/share-score
   const shareScoreMatch = hash.match(/^#\/lobby\/([a-f0-9]+)\/share-score$/);
   if (shareScoreMatch) {
