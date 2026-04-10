@@ -123,9 +123,6 @@ async function renderMyGuesses(lobbyId) {
         </div>
         ${attributeSection}
         ${scoreBreakdown}
-        ${isRevealed && guess ? `<div style="margin-top:12px;text-align:center">
-          <a href="#/lobby/${lobbyId}/share-guess/${wineId}" class="btn btn-secondary btn-sm" style="width:auto;text-decoration:none">📸 ${getLocale() === 'hk' ? '分享我嘅答案' : 'Share My Guess'}</a>
-        </div>` : ''}
       </div>`;
   }).join('');
 

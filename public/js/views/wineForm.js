@@ -170,7 +170,7 @@ function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], count
   const showCountry = isGuess
     ? (r.country.enabled || r.region.enabled)
     : (r.country.enabled || r.oldWorld.enabled || r.region.enabled);
-  const countryOptional = isGuess || !r.country.enabled;
+  const countryOptional = isGuess || (!r.country.enabled && !r.oldWorld.enabled);
 
   const countryField = showCountry ? `
     <div class="form-group">

@@ -52,7 +52,7 @@ function getDefaultRulesClient() {
     oldWorld: { enabled: false, score: 5  },
     country:  { enabled: true,  score: 5  },
     region:   { enabled: true,  score: 5  },
-    vintage:  { enabled: true,  mode: 'plusOne', scoreExact: 5, scorePlusOne: 1, scorePlusTwo: 1 },
+    vintage:  { enabled: true,  mode: 'exact', scoreExact: 3, scorePlusOne: 2, scorePlusTwo: 1 },
     abv:      { enabled: false, score: 3  },
     price:    { enabled: false, score: 3, currency: 'HKD', rangeWidth: 100 }
   };
@@ -79,7 +79,7 @@ function buildCompareRows(wine, guess, rules) {
 
   if (r.grape.enabled) {
     rows.push({
-      label: isHK ? '提子' : 'Varietal',
+      label: isHK ? '提子' : 'Variety',
       guessVal: guess ? formatVarietalClient(guess) : '—',
       wineVal: wine ? formatVarietalClient(wine) : '—',
       scoreKey: 'varietal'
@@ -92,7 +92,7 @@ function buildCompareRows(wine, guess, rules) {
     const wineVal = wine?.country
       ? (isOldWorld(wine.country) ? t('rules.oldWorldVal') : t('rules.newWorldVal'))
       : '—';
-    rows.push({ label: t('rules.oldWorld'), guessVal, wineVal, scoreKey: 'oldWorld' });
+    rows.push({ label: isHK ? '舊/新' : 'Old / New', guessVal, wineVal, scoreKey: 'oldWorld' });
   }
   if (r.country.enabled) {
     rows.push({
@@ -146,7 +146,7 @@ function buildScoreChips(score, rules) {
   const r = normaliseRulesClient(rules);
   const isHK = typeof getLocale === 'function' && getLocale() === 'hk';
   const chips = [];
-  if (r.grape.enabled)    chips.push({ label: isHK ? '提子' : 'Varietal',   val: score?.varietal ?? 0 });
+  if (r.grape.enabled)    chips.push({ label: isHK ? '提子' : 'Variety',    val: score?.varietal ?? 0 });
   if (r.oldWorld.enabled) chips.push({ label: isHK ? '新/舊' : 'O/N World', val: score?.oldWorld  ?? 0 });
   if (r.country.enabled)  chips.push({ label: isHK ? '國家' : 'Country',    val: score?.country   ?? 0 });
   if (r.region.enabled)   chips.push({ label: isHK ? '產區' : 'Region',     val: score?.region    ?? 0 });

@@ -37,7 +37,7 @@ function buildExportHtml({ lobbyName, sorted, denseRanks, revealOrder, wineMap, 
   // ── Table column headers (rules-driven) ─────────────────────────────────────
   function tableHeaders() {
     const cols = [];
-    if (r.grape.enabled)    cols.push(isHK ? '提子' : 'Varietal');
+    if (r.grape.enabled)    cols.push(isHK ? '提子' : 'Variety');
     if (r.oldWorld.enabled) cols.push(isHK ? '新/舊世界' : 'Old/New World');
     if (r.country.enabled)  cols.push(isHK ? '國家' : 'Country');
     if (r.region.enabled)   cols.push(isHK ? '產區' : 'Region');
