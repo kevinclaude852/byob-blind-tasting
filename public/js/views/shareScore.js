@@ -2,19 +2,34 @@ async function renderShareScore(lobbyId) {
   const app = document.getElementById('app');
   app.innerHTML = `<div class="page"><div class="loading-screen"><div class="wine-glass">🍷</div><p>${t('app.loading')}</p></div></div>`;
 
-  let data;
+  let data, lobbyData;
   try {
-    data = await API.getScores(lobbyId);
+    [data, lobbyData] = await Promise.all([
+      API.getScores(lobbyId),
+      API.getLobby(lobbyId).catch(() => null),
+    ]);
   } catch (err) {
     app.innerHTML = `<div class="page"><div class="alert alert-error">${escHtml(err.error || t('app.failedLoad'))}</div></div>`;
     return;
   }
 
-  const { scores, revealOrder, wineMap } = data;
+  const { scores, revealOrder } = data;
+  const lobbyName = lobbyData?.lobbyName || '';
   const session = API.getSession(lobbyId);
   const currentPlayerId = session?.playerId;
   const sorted = Object.entries(scores).sort((a, b) => b[1].total - a[1].total);
   const isHK = getLocale() === 'hk';
+
+  // Dense ranking
+  const denseRanks = [];
+  for (let i = 0; i < sorted.length; i++) {
+    if (i === 0) denseRanks.push(1);
+    else if (sorted[i][1].total === sorted[i - 1][1].total) denseRanks.push(denseRanks[i - 1]);
+    else denseRanks.push(denseRanks[i - 1] + 1);
+  }
+  const rankMedals = { 1: '🥇', 2: '🥈', 3: '🥉' };
+
+  const takePhotoLabel = isHK ? t('share.takePhoto') : 'Take Photo as<br>Background';
 
   app.innerHTML = `
     <div class="page">
@@ -22,28 +37,18 @@ async function renderShareScore(lobbyId) {
 
       <div class="page-header">
         <h1>${t('share.title')}</h1>
-        <p>${t('share.subtitle')}</p>
+      </div>
+
+      <div class="story-photo-btns">
+        <label class="btn btn-secondary" style="line-height:1.3;text-align:center">
+          ${takePhotoLabel}
+          <input type="file" accept="image/*" id="bgInput" style="display:none">
+        </label>
+        ${navigator.share ? `<button class="btn" id="shareApiBtn" style="background:#000;color:#fff;font-weight:700;border:none">${t('share.shareBtn')}</button>` : ''}
       </div>
 
       <div class="story-card-wrap">
-        <canvas id="storyCanvas"></canvas>
-      </div>
-      <p class="story-hint" id="storyHint">${t('share.addBg')}</p>
-
-      <div class="story-photo-btns">
-        <label class="btn btn-secondary">
-          ${t('share.takePhoto')}
-          <input type="file" accept="image/*" capture="environment" id="cameraInput" style="display:none">
-        </label>
-        <label class="btn btn-secondary">
-          ${t('share.cameraRoll')}
-          <input type="file" accept="image/*" id="rollInput" style="display:none">
-        </label>
-      </div>
-
-      <div class="story-export-btns" id="exportBtns" style="display:none">
-        <button class="btn btn-primary" id="downloadBtn">${t('share.download')}</button>
-        ${navigator.share ? `<button class="btn btn-secondary" id="shareApiBtn">${t('share.shareBtn')}</button>` : ''}
+        <canvas id="storyCanvas" style="cursor:grab"></canvas>
       </div>
     </div>
   `;
@@ -57,6 +62,12 @@ async function renderShareScore(lobbyId) {
   canvas.width = W;
   canvas.height = H;
 
+  // Scroll + hit-test state — shared between drawCard and event handlers
+  let playerScrollPx = 0;
+  let listAreaH  = 0;
+  let listTotalH = 0;
+  let listTopCanvas  = 0;   // canvas-px y of list top
+  let listBotCanvas  = 0;   // canvas-px y of list bottom
   let bgImage = null;
 
   function drawCard() {
@@ -69,14 +80,12 @@ async function renderShareScore(lobbyId) {
       const sw = bgImage.naturalWidth * scale;
       const sh = bgImage.naturalHeight * scale;
       ctx.drawImage(bgImage, (W - sw) / 2, (H - sh) / 2, sw, sh);
-      // Dark semi-transparent overlay so text stays readable
-      ctx.fillStyle = 'rgba(8, 3, 15, 0.68)';
+      ctx.fillStyle = 'rgba(6, 9, 13, 0.45)';
       ctx.fillRect(0, 0, W, H);
     } else {
-      const grad = ctx.createLinearGradient(0, 0, W * 0.4, H);
-      grad.addColorStop(0, '#1c0a14');
-      grad.addColorStop(0.55, '#0f0610');
-      grad.addColorStop(1, '#07040a');
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, '#112133');
+      grad.addColorStop(1, '#050a0f');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, W, H);
     }
@@ -86,163 +95,286 @@ async function renderShareScore(lobbyId) {
     const MUTED = 'rgba(255,255,255,0.52)';
     const PAD   = 80;
 
-    // ── Header ───────────────────────────────────────────────────────────────
-    ctx.font = `100px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",serif`;
-    ctx.textAlign = 'center';
+    // ── Title ────────────────────────────────────────────────────────────────
     ctx.fillStyle = WHITE;
-    ctx.fillText('🍷', W / 2, 188);
-
-    ctx.fillStyle = GOLD;
-    ctx.font = `bold 64px Georgia,"Times New Roman",serif`;
+    ctx.font = `bold 68px Georgia,"Times New Roman",serif`;
     ctx.textAlign = 'center';
-    ctx.fillText(isHK ? 'BLIND TASTING' : 'BLIND WINE TASTING', W / 2, 298);
 
-    const wineCount   = revealOrder.length;
-    const playerCount = sorted.length;
-    ctx.fillStyle = MUTED;
-    ctx.font = `36px Georgia,serif`;
-    ctx.fillText(
-      isHK
-        ? `${playerCount}人 · ${wineCount}支酒`
-        : `${playerCount} player${playerCount !== 1 ? 's' : ''} · ${wineCount} wine${wineCount !== 1 ? 's' : ''}`,
-      W / 2, 358
-    );
+    let captionBottom;
+    if (isHK) {
+      ctx.fillText('盲品挑戰', W / 2, 210);
+      captionBottom = 210;
+    } else {
+      ctx.fillText('BLIND TASTING', W / 2, 210);
+      ctx.fillText('CHALLENGE', W / 2, 296);
+      captionBottom = 296;
+    }
+
+    // Sub-caption: lobby name
+    if (lobbyName) {
+      ctx.fillStyle = 'rgba(255,255,255,0.45)';
+      ctx.font = `bold 46px Georgia,"Times New Roman",serif`;
+      ctx.fillText(lobbyName, W / 2, captionBottom + 72);
+      captionBottom = captionBottom + 72;
+    }
 
     // Divider
+    const dividerY = captionBottom + 52;
     ctx.strokeStyle = 'rgba(212,175,55,0.38)';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(PAD, 394);
-    ctx.lineTo(W - PAD, 394);
+    ctx.moveTo(PAD, dividerY);
+    ctx.lineTo(W - PAD, dividerY);
     ctx.stroke();
 
-    // Section label
+    // Section label — centred
     ctx.fillStyle = 'rgba(212,175,55,0.72)';
     ctx.font = `bold 28px -apple-system,"Helvetica Neue",sans-serif`;
-    ctx.textAlign = 'left';
-    ctx.fillText(isHK ? 'LEADERBOARD 龍虎榜' : 'LEADERBOARD', PAD, 436);
+    ctx.textAlign = 'center';
+    ctx.fillText(isHK ? 'LEADERBOARD 龍虎榜' : 'LEADERBOARD', W / 2, dividerY + 44);
 
-    // ── Player rows ──────────────────────────────────────────────────────────
-    const ROW_H    = 118;
-    const ROW_START = 464;
-    const MAX_ROWS = Math.min(sorted.length, Math.floor((H - ROW_START - 200) / ROW_H));
-    const medals   = ['🥇', '🥈', '🥉'];
+    // ── Scrollable player list ────────────────────────────────────────────────
+    const ROWS_VISIBLE  = 9;
+    const LIST_TOP      = dividerY + 76;
+    const LIST_BOTTOM   = H - 285;
+    const AREA_H        = LIST_BOTTOM - LIST_TOP;
+    const ROW_H         = Math.min(130, Math.floor(AREA_H / ROWS_VISIBLE));
 
-    for (let i = 0; i < MAX_ROWS; i++) {
+    // Publish to outer scope for hit-testing in event handlers
+    listTopCanvas = LIST_TOP;
+    listBotCanvas = LIST_BOTTOM;
+    listAreaH  = AREA_H;
+    listTotalH = sorted.length * ROW_H;
+
+    const maxScroll = Math.max(0, listTotalH - listAreaH);
+    playerScrollPx  = Math.max(0, Math.min(playerScrollPx, maxScroll));
+
+    // Clip to list area
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, LIST_TOP, W, AREA_H);
+    ctx.clip();
+
+    const youTagStr  = isHK ? ' ← 你' : ' ← YOU';
+    const youFontStr = `bold 34px -apple-system,sans-serif`;
+
+    for (let i = 0; i < sorted.length; i++) {
       const [pid, s] = sorted[i];
-      const isMe = pid === currentPlayerId;
-      const y    = ROW_START + i * ROW_H;
-      const rowW = W - PAD * 2;
+      const isMe  = pid === currentPlayerId;
+      const y     = LIST_TOP + i * ROW_H - playerScrollPx;
 
-      // Row background
-      ctx.fillStyle = isMe
-        ? 'rgba(212,175,55,0.18)'
-        : (i % 2 === 0 ? 'rgba(255,255,255,0.055)' : 'rgba(255,255,255,0.03)');
-      ssRoundRect(ctx, PAD, y, rowW, ROW_H - 10, 10);
+      if (y + ROW_H <= LIST_TOP)   continue; // above clip
+      if (y >= LIST_BOTTOM)        break;    // below clip
+
+      const rowW  = W - PAD * 2;
+      const textY = y + Math.round(ROW_H * 0.56);
+
+      // Row background — black with 5.5% opacity for all; gold tint for current player
+      ctx.fillStyle = isMe ? 'rgba(156,133,65,0.2)' : 'rgba(0,0,0,0.055)';
+      ssRoundRect(ctx, PAD, y + 2, rowW, ROW_H - 8, 10);
       ctx.fill();
 
       if (isMe) {
         ctx.strokeStyle = GOLD;
-        ctx.lineWidth = 2.5;
-        ssRoundRect(ctx, PAD, y, rowW, ROW_H - 10, 10);
+        ctx.lineWidth = 4;
+        ssRoundRect(ctx, PAD, y + 2, rowW, ROW_H - 8, 10);
         ctx.stroke();
       }
 
-      // Medal / rank number
-      if (medals[i]) {
-        ctx.font = `50px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",serif`;
+      // Medal / rank number — based on dense rank
+      const rank  = denseRanks[i];
+      const medal = rankMedals[rank];
+      if (medal) {
+        ctx.font = `56px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",serif`;
         ctx.textAlign = 'center';
         ctx.fillStyle = WHITE;
-        ctx.fillText(medals[i], PAD + 48, y + 63);
+        ctx.fillText(medal, PAD + 52, textY);
       } else {
         ctx.fillStyle = MUTED;
-        ctx.font = `bold 34px -apple-system,sans-serif`;
+        ctx.font = `bold 38px -apple-system,sans-serif`;
         ctx.textAlign = 'center';
-        ctx.fillText(`${i + 1}`, PAD + 48, y + 65);
+        ctx.fillText(`${rank}`, PAD + 52, textY);
       }
 
       // Player emoji
-      ctx.font = `50px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",serif`;
+      ctx.font = `56px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",serif`;
       ctx.textAlign = 'center';
       ctx.fillStyle = WHITE;
-      ctx.fillText(s.emoji, PAD + 118, y + 63);
+      ctx.fillText(s.emoji, PAD + 124, textY);
 
-      // Name (truncated to fit)
-      const nameMaxW = rowW - 270;
-      ctx.font = isMe ? `bold 42px Georgia,serif` : `42px Georgia,serif`;
+      // Pre-measure points and YOU tag to determine name max width
+      const ptsStr     = `${s.total} ${isHK ? '分' : 'pts'}`;
+      const ptsFontStr = isMe ? `bold 52px Georgia,serif` : `52px Georgia,serif`;
+      ctx.font = ptsFontStr;
+      const ptsWidth = ctx.measureText(ptsStr).width;
+
+      let youTagWidth = 0;
+      if (isMe) {
+        ctx.font = youFontStr;
+        youTagWidth = ctx.measureText(youTagStr).width;
+      }
+
+      const nameX    = PAD + 170;
+      const ptsX     = W - PAD - 14;
+      const nameMaxW = ptsX - nameX - ptsWidth - youTagWidth - 40;
+
+      // Name
+      const nameFontStr = isMe ? `bold 50px Georgia,serif` : `50px Georgia,serif`;
+      ctx.font = nameFontStr;
       ctx.textAlign = 'left';
       ctx.fillStyle = isMe ? GOLD : WHITE;
       const displayName = ssTruncate(ctx, s.name, nameMaxW);
-      ctx.fillText(displayName, PAD + 162, y + 63);
+      ctx.fillText(displayName, nameX, textY);
 
-      // "YOU" sub-label for highlighted row
+      // YOU tag immediately after name, same line
       if (isMe) {
-        ctx.fillStyle = 'rgba(212,175,55,0.72)';
-        ctx.font = `bold 24px -apple-system,sans-serif`;
-        ctx.fillText(isHK ? '← 你' : '← YOU', PAD + 162, y + 94);
+        const nameActualW = ctx.measureText(displayName).width;
+        ctx.fillStyle = GOLD;
+        ctx.font = youFontStr;
+        ctx.fillText(youTagStr, nameX + nameActualW, textY);
       }
 
-      // Points (right-aligned)
+      // Points
       ctx.fillStyle = isMe ? GOLD : MUTED;
-      ctx.font = isMe ? `bold 44px Georgia,serif` : `44px Georgia,serif`;
+      ctx.font = ptsFontStr;
       ctx.textAlign = 'right';
-      ctx.fillText(`${s.total}`, W - PAD - 14, y + 63);
-
-      ctx.fillStyle = 'rgba(255,255,255,0.3)';
-      ctx.font = `26px -apple-system,sans-serif`;
-      ctx.fillText(isHK ? '分' : 'pts', W - PAD - 14, y + 92);
+      ctx.fillText(ptsStr, ptsX, textY);
     }
 
-    // "+N more players" if list was capped
-    if (sorted.length > MAX_ROWS) {
-      const y = ROW_START + MAX_ROWS * ROW_H + 14;
-      ctx.fillStyle = MUTED;
-      ctx.font = `30px Georgia,serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText(
-        isHK
-          ? `+${sorted.length - MAX_ROWS} 人未顯示`
-          : `+${sorted.length - MAX_ROWS} more player${sorted.length - MAX_ROWS !== 1 ? 's' : ''}`,
-        W / 2, y
-      );
+    ctx.restore();
+
+    // Fade hints at list edges when scrollable
+    if (listTotalH > listAreaH) {
+      const fadeH = ROW_H * 0.6;
+      if (playerScrollPx > 0) {
+        const topFade = ctx.createLinearGradient(0, LIST_TOP, 0, LIST_TOP + fadeH);
+        topFade.addColorStop(0, bgImage ? 'rgba(6,9,13,0.55)' : 'rgba(8,16,30,0.85)');
+        topFade.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = topFade;
+        ctx.fillRect(0, LIST_TOP, W, fadeH);
+      }
+      if (playerScrollPx < maxScroll) {
+        const botFade = ctx.createLinearGradient(0, LIST_BOTTOM - fadeH, 0, LIST_BOTTOM);
+        botFade.addColorStop(0, 'rgba(0,0,0,0)');
+        botFade.addColorStop(1, bgImage ? 'rgba(6,9,13,0.55)' : 'rgba(8,16,30,0.85)');
+        ctx.fillStyle = botFade;
+        ctx.fillRect(0, LIST_BOTTOM - fadeH, W, fadeH);
+      }
     }
+
+    // ── Bottom: challenger / wine count ──────────────────────────────────────
+    const wineCount       = revealOrder.length;
+    const challengerCount = sorted.length;
+
+    ctx.strokeStyle = 'rgba(212,175,55,0.25)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(PAD, H - 196);
+    ctx.lineTo(W - PAD, H - 196);
+    ctx.stroke();
+
+    ctx.fillStyle = MUTED;
+    ctx.font = `36px Georgia,serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(
+      isHK
+        ? `${challengerCount}位挑戰者 · ${wineCount}支酒`
+        : `${challengerCount} challenger${challengerCount !== 1 ? 's' : ''} · ${wineCount} wine${wineCount !== 1 ? 's' : ''}`,
+      W / 2, H - 148
+    );
 
     // ── Footer ───────────────────────────────────────────────────────────────
     ctx.fillStyle = 'rgba(255,255,255,0.2)';
     ctx.font = `28px -apple-system,sans-serif`;
     ctx.textAlign = 'center';
-    ctx.fillText('Blind Wine Tasting Game', W / 2, H - 88);
+    ctx.fillText('App developed by oenophilia.hk', W / 2, H - 100);
   }
 
-  // Initial render (no background photo yet)
+  // Initial render, then auto-scroll to centre current player
   drawCard();
+  const myIndex = sorted.findIndex(([pid]) => pid === currentPlayerId);
+  if (myIndex > 0 && listTotalH > listAreaH) {
+    const rowH = listTotalH / sorted.length;
+    playerScrollPx = Math.max(0, Math.min(
+      Math.max(0, listTotalH - listAreaH),
+      myIndex * rowH - listAreaH / 2 + rowH / 2
+    ));
+    drawCard();
+  }
 
+  // ── Background photo ─────────────────────────────────────────────────────
   function handleFileInput(file) {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = e => {
       const img = new Image();
-      img.onload = () => {
-        bgImage = img;
-        document.getElementById('storyHint').style.display = 'none';
-        document.getElementById('exportBtns').style.display = 'flex';
-        drawCard();
-      };
+      img.onload = () => { bgImage = img; drawCard(); };
       img.src = e.target.result;
     };
     reader.readAsDataURL(file);
   }
+  document.getElementById('bgInput').addEventListener('change', e => handleFileInput(e.target.files[0]));
 
-  document.getElementById('cameraInput').addEventListener('change', e => handleFileInput(e.target.files[0]));
-  document.getElementById('rollInput').addEventListener('change', e => handleFileInput(e.target.files[0]));
+  // ── Scroll helpers ────────────────────────────────────────────────────────
+  let lastPointerY = null;
 
-  document.getElementById('downloadBtn').addEventListener('click', () => {
-    const link = document.createElement('a');
-    link.download = 'blind-tasting-score.png';
-    link.href = canvas.toDataURL('image/png');
-    link.click();
+  function clientToCanvasY(clientY) {
+    const rect = canvas.getBoundingClientRect();
+    return (clientY - rect.top) * (H / rect.height);
+  }
+
+  function isInListArea(clientY) {
+    const cy = clientToCanvasY(clientY);
+    return cy >= listTopCanvas && cy <= listBotCanvas;
+  }
+
+  function canvasPixelDelta(clientDelta) {
+    return clientDelta * (H / canvas.getBoundingClientRect().height);
+  }
+
+  function applyScroll(canvasDy) {
+    const maxScroll = Math.max(0, listTotalH - listAreaH);
+    playerScrollPx = Math.max(0, Math.min(maxScroll, playerScrollPx + canvasDy));
+    drawCard();
+  }
+
+  // ── Touch scrolling ───────────────────────────────────────────────────────
+  canvas.addEventListener('touchstart', e => {
+    if (!isInListArea(e.touches[0].clientY)) return;
+    lastPointerY = e.touches[0].clientY;
+    canvas.style.cursor = 'grabbing';
+    e.preventDefault();
+  }, { passive: false });
+
+  canvas.addEventListener('touchmove', e => {
+    if (lastPointerY === null) return;
+    applyScroll(canvasPixelDelta(lastPointerY - e.touches[0].clientY));
+    lastPointerY = e.touches[0].clientY;
+    e.preventDefault();
+  }, { passive: false });
+
+  canvas.addEventListener('touchend', () => {
+    lastPointerY = null;
+    canvas.style.cursor = 'grab';
   });
 
+  // ── Mouse scrolling (desktop) ─────────────────────────────────────────────
+  canvas.addEventListener('mousedown', e => {
+    if (!isInListArea(e.clientY)) return;
+    lastPointerY = e.clientY;
+    canvas.style.cursor = 'grabbing';
+  });
+
+  canvas.addEventListener('mousemove', e => {
+    if (lastPointerY === null) return;
+    applyScroll(canvasPixelDelta(lastPointerY - e.clientY));
+    lastPointerY = e.clientY;
+  });
+
+  canvas.addEventListener('mouseup',    () => { lastPointerY = null; canvas.style.cursor = 'grab'; });
+  canvas.addEventListener('mouseleave', () => { lastPointerY = null; canvas.style.cursor = 'grab'; });
+
+  // ── Share via Web Share API ───────────────────────────────────────────────
   const shareApiBtn = document.getElementById('shareApiBtn');
   if (shareApiBtn) {
     shareApiBtn.addEventListener('click', () => {

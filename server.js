@@ -17,6 +17,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 const { router: lobbyRouter } = require('./src/routes/lobby');
 const playerRouter = require('./src/routes/player');
 const { router: gameRouter, setIo, rescheduleTimers } = require('./src/routes/game');
+const { router: dummyRouter } = require('./src/routes/dummy');
 const { grapes, countries, regions } = require('./src/utils/validation');
 const { setupSocketHandlers } = require('./src/socket/handler');
 
@@ -25,6 +26,7 @@ setIo(io);
 app.use('/api/lobby', lobbyRouter);
 app.use('/api/lobby/:lobbyId/player', playerRouter);
 app.use('/api/lobby/:lobbyId', gameRouter);
+app.use('/api/dummy', dummyRouter);
 
 // Reference data endpoints
 app.get('/api/reference/grapes', (req, res) => res.json(grapes));

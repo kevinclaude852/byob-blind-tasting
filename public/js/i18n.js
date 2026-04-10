@@ -139,9 +139,8 @@ const TRANSLATIONS = {
     'share.title':            'Share My Score',
     'share.subtitle':         'Save as an Instagram story',
     'share.addBg':            'Add a background photo below',
-    'share.takePhoto':        '📷 Take Photo',
-    'share.cameraRoll':       '🖼 Camera Roll',
-    'share.download':         '⬇ Save Image',
+    'share.takePhoto':        'Take Photo as Background',
+    'share.download':         'Save Image',
     'share.shareBtn':         '↗ Share',
     // My Guesses page
     'mg.title':               'My Guesses',
@@ -294,9 +293,8 @@ const TRANSLATIONS = {
     'share.title':            '分享成績',
     'share.subtitle':         'Instagram故事專用',
     'share.addBg':            '揀張相做背景',
-    'share.takePhoto':        '📷 影相',
-    'share.cameraRoll':       '🖼 相機相簿',
-    'share.download':         '⬇ 儲圖',
+    'share.takePhoto':        '影相做背景',
+    'share.download':         '儲圖',
     'share.shareBtn':         '↗ 分享',
     // My Guesses page
     'mg.title':               '我估咗啲乜',

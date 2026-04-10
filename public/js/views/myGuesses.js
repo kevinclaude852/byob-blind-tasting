@@ -98,7 +98,10 @@ async function renderMyGuesses(lobbyId) {
     }
 
     const scoreBadge = isRevealed && score !== null
-      ? `<span class="score-pill" style="flex-shrink:0">${score.total} ${t('mg.pts')}</span>`
+      ? `<div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
+           <span class="score-pill">${score.total} ${t('mg.pts')}</span>
+           <button class="share-guess-btn" data-wine-id="${wineId}" style="font-size:0.68rem;padding:2px 8px;border-radius:8px;background:transparent;border:1px solid var(--border);color:var(--text-muted);cursor:pointer;white-space:nowrap">↗ ${getLocale() === 'hk' ? '分享' : 'Share'}</button>
+         </div>`
       : `<span style="font-size:0.72rem;color:var(--text-muted);flex-shrink:0;white-space:nowrap">${getLocale() === 'hk' ? '仲未開估' : 'Not revealed'}</span>`;
 
     const scoreBreakdown = isRevealed && score ? `
@@ -149,5 +152,11 @@ async function renderMyGuesses(lobbyId) {
 
   document.getElementById('backBtn').addEventListener('click', () => {
     window.location.hash = `#/lobby/${lobbyId}`;
+  });
+
+  document.querySelectorAll('.share-guess-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      window.location.hash = `#/lobby/${lobbyId}/share-guess/${btn.dataset.wineId}`;
+    });
   });
 }

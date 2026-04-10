@@ -2,6 +2,12 @@ const fs = require('fs');
 const path = require('path');
 
 const GAMES_DIR = path.join(__dirname, '../../data/games');
+
+// Ensure the games directory exists (e.g. on first deploy where data/games/ is gitignored)
+if (!fs.existsSync(GAMES_DIR)) {
+  fs.mkdirSync(GAMES_DIR, { recursive: true });
+}
+
 const cache = new Map();
 const writeTimers = new Map();
 
