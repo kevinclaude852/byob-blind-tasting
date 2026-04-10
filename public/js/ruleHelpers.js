@@ -3,7 +3,9 @@
 const OLD_WORLD_COUNTRIES_CLIENT = new Set([
   'France', 'Italy', 'Spain', 'Portugal', 'Germany', 'Austria', 'Hungary',
   'Greece', 'Croatia', 'Slovenia', 'Romania', 'Bulgaria', 'Georgia',
-  'Switzerland', 'Luxembourg', 'England'
+  'Switzerland', 'Luxembourg', 'England', 'Moldova', 'Czech', 'Armenia', 
+  'North Macedonia', 'Serbia', 'Ukraine', 'Lebanon', 'Turkey', 'Cyprus', 
+  'Israel', 'Jordan', 'Morocco', 'Tunisia', 'Algeria'
 ]);
 
 function isOldWorld(country) {
