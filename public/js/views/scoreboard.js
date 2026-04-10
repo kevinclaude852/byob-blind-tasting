@@ -101,7 +101,7 @@ async function renderScoreboard(lobbyId) {
     if (r.country.enabled)  enabledCols.push({ key: 'country',  label: t('lb.country') });
     if (r.region.enabled)   enabledCols.push({ key: 'region',   label: t('lb.region') });
     if (r.vintage.enabled)  enabledCols.push({ key: 'vintage',  label: t('lb.vintage') });
-    if (r.abv.enabled)      enabledCols.push({ key: 'abv',      label: 'ABV' });
+    if (r.abv.enabled)      enabledCols.push({ key: 'abv',      label: getLocale() === 'hk' ? '酒精度' : 'ABV' });
     if (r.price.enabled)    enabledCols.push({ key: 'price',    label: t('mg.price') });
 
     const wineDetailLines = [
@@ -109,7 +109,7 @@ async function renderScoreboard(lobbyId) {
       r.grape.enabled ? { label: t('lb.varietal'), val: formatVarietalClient(wine) } : null,
       wine.country ? { label: t('lb.country'), val: wine.country } : null,
       wine.region  ? { label: t('lb.region'),  val: wine.region  } : null,
-      r.abv.enabled && wine.abv != null ? { label: 'ABV', val: `${wine.abv}%` } : null,
+      r.abv.enabled && wine.abv != null ? { label: getLocale() === 'hk' ? '酒精度' : 'ABV', val: `${wine.abv}%` } : null,
       r.price.enabled && wine.price != null ? { label: t('form.price'), val: formatWinePrice(wine.price, r.price.currency) } : null,
     ].filter(Boolean);
 

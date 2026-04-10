@@ -1060,22 +1060,27 @@ select:focus { background-color: white; }
 /* ===== Rules UI (Landing page) ===== */
 .rules-mode-group {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 0;
 }
 .rules-mode-opt {
+  flex: 1;
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
   cursor: pointer;
-  padding: 7px 14px;
+  padding: 8px 14px;
   border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  transition: background 0.12s, border-color 0.12s;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  user-select: none;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
 }
-.rules-mode-opt input[type="radio"] { accent-color: var(--wine); }
+.rules-mode-opt:first-child { border-radius: 6px 0 0 6px; }
+.rules-mode-opt:last-child  { border-radius: 0 6px 6px 0; border-left: none; }
+.rules-mode-opt input[type="radio"] { display: none; }
 .rules-mode-opt:has(input:checked) {
   background: var(--wine);
   color: #fff;
@@ -1135,6 +1140,13 @@ select:focus { background-color: white; }
   color: var(--text-muted);
   margin-top: 3px;
   padding-left: 24px;
+}
+
+/* Country sub-panel (Region accordion) */
+.rule-country-sub {
+  margin-top: 8px;
+  padding: 8px 0 0 24px;
+  border-top: 1px solid var(--border);
 }
 
 /* Vintage sub-options */

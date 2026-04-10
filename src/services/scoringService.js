@@ -50,10 +50,10 @@ function scoreVarietal(actual, guess, r) {
 }
 
 function scoreOldWorld(actual, guess, r) {
-  if (!guess.country || !actual.country) return 0;
-  const wineOld  = OLD_WORLD_COUNTRIES.has(actual.country);
-  const guessOld = OLD_WORLD_COUNTRIES.has(guess.country);
-  return wineOld === guessOld ? r.oldWorld.score : 0;
+  if (guess.oldWorld == null) return 0;
+  if (!actual.country) return 0;
+  const wineOld = OLD_WORLD_COUNTRIES.has(actual.country);
+  return guess.oldWorld === wineOld ? r.oldWorld.score : 0;
 }
 
 function scoreCountry(actual, guess, r) {

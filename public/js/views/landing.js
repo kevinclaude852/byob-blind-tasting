@@ -17,7 +17,7 @@ function buildRulesPanel() {
     oldWorld: { score: 5  },
     country:  { score: 5  },
     region:   { score: 5  },
-    vintage:  { mode: 'exact', scoreExact: 3, scorePlusOne: 1, scorePlusTwo: 1 },
+    vintage:  { mode: 'exact', scoreExact: 3, scorePlusOne: 2, scorePlusTwo: 1 },
     abv:      { score: 3  },
     price:    { score: 3, currency: 'HKD', rangeWidth: 100 }
   };
@@ -69,7 +69,7 @@ function buildRulesPanel() {
             <label>${t('rules.exactLabel')}</label>
             ${scoreSelectHtml('vintageExactScore', d.vintage.scoreExact)}
           </span>
-          <span class="rule-vs-item" id="vintagePlusOneWrap">
+          <span class="rule-vs-item" id="vintagePlusOneWrap" style="display:none">
             <label>${t('rules.plusOneLabel')}</label>
             ${scoreSelectHtml('vintagePlusOneScore', d.vintage.scorePlusOne)}
           </span>
@@ -114,9 +114,21 @@ function buildRulesPanel() {
   return `
     <div id="rulesPanel" class="rules-panel" style="display:none">
       ${ruleCard({ id: 'grape', label: t('rules.grape'), desc: t('rules.grapeDesc'), scoreId: 'grapeScore', scoreVal: d.grape.score, checked: true })}
-      ${ruleCard({ id: 'oldWorld', label: t('rules.oldWorld'), desc: t('rules.oldWorldDesc'), scoreId: 'oldWorldScore', scoreVal: d.oldWorld.score, checked: false })}
-      ${ruleCard({ id: 'country', label: t('rules.country'), desc: '', scoreId: 'countryScore', scoreVal: d.country.score, checked: true })}
-      ${ruleCard({ id: 'region', label: t('rules.region'), desc: '', scoreId: 'regionScore', scoreVal: d.region.score, checked: true })}
+      ${ruleCard({ id: 'oldWorld', label: t('rules.oldWorld'), desc: '', scoreId: 'oldWorldScore', scoreVal: d.oldWorld.score, checked: false })}
+      <div class="rule-card">
+        <label class="rule-card-header">
+          <input type="checkbox" id="countryCheck" class="rule-check" checked>
+          <span class="rule-name">${t('rules.country')}</span>
+          <span class="rule-score-wrap">${scoreSelectHtml('countryScore', d.country.score)} ${t('rules.pts')}</span>
+        </label>
+        <div class="rule-country-sub" id="countrySubPanel">
+          <label class="rule-card-header" style="padding:6px 0 0">
+            <input type="checkbox" id="regionCheck" class="rule-check" checked>
+            <span class="rule-name">${t('rules.region')}</span>
+            <span class="rule-score-wrap">${scoreSelectHtml('regionScore', d.region.score)} ${t('rules.pts')}</span>
+          </label>
+        </div>
+      </div>
       ${vintageCard}
       ${ruleCard({ id: 'abv', label: t('rules.abv'), desc: t('rules.abvDesc'), scoreId: 'abvScore', scoreVal: d.abv.score, checked: false })}
       ${priceCard}
@@ -255,6 +267,26 @@ function renderLanding() {
     if (opts) opts.style.display = e.target.checked ? '' : 'none';
   });
 
+  // Country ↔ Region dependency
+  document.getElementById('countryCheck')?.addEventListener('change', (e) => {
+    const subPanel = document.getElementById('countrySubPanel');
+    if (!e.target.checked) {
+      const regionCheck = document.getElementById('regionCheck');
+      if (regionCheck) regionCheck.checked = false;
+      if (subPanel) subPanel.style.display = 'none';
+    } else {
+      if (subPanel) subPanel.style.display = '';
+    }
+  });
+  document.getElementById('regionCheck')?.addEventListener('change', (e) => {
+    if (e.target.checked) {
+      const countryCheck = document.getElementById('countryCheck');
+      if (countryCheck) countryCheck.checked = true;
+      const subPanel = document.getElementById('countrySubPanel');
+      if (subPanel) subPanel.style.display = '';
+    }
+  });
+
   // Currency change → update range width options
   document.getElementById('priceCurrency')?.addEventListener('change', (e) => {
     const currency = e.target.value;
@@ -285,8 +317,8 @@ function renderLanding() {
         showError(errorEl, '±1 year score must be less than exact score.');
         return;
       }
-      if (rules.vintage.mode === 'plusTwo' && rules.vintage.scorePlusTwo >= rules.vintage.scorePlusOne) {
-        showError(errorEl, '±2 year score must be less than ±1 year score.');
+      if (rules.vintage.mode === 'plusTwo' && rules.vintage.scorePlusTwo > rules.vintage.scorePlusOne) {
+        showError(errorEl, '±2 year score must not exceed ±1 year score.');
         return;
       }
     }

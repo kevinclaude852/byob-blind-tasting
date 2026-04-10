@@ -86,15 +86,13 @@ function buildCompareRows(wine, guess, rules) {
     });
   }
   if (r.oldWorld.enabled) {
-    const toOW = country => country
-      ? (isOldWorld(country) ? t('rules.oldWorldVal') : t('rules.newWorldVal'))
+    const guessVal = guess?.oldWorld != null
+      ? (guess.oldWorld ? t('rules.oldWorldVal') : t('rules.newWorldVal'))
       : '—';
-    rows.push({
-      label: t('rules.oldWorld'),
-      guessVal: toOW(guess?.country),
-      wineVal: toOW(wine?.country),
-      scoreKey: 'oldWorld'
-    });
+    const wineVal = wine?.country
+      ? (isOldWorld(wine.country) ? t('rules.oldWorldVal') : t('rules.newWorldVal'))
+      : '—';
+    rows.push({ label: t('rules.oldWorld'), guessVal, wineVal, scoreKey: 'oldWorld' });
   }
   if (r.country.enabled) {
     rows.push({
@@ -122,7 +120,7 @@ function buildCompareRows(wine, guess, rules) {
   }
   if (r.abv.enabled) {
     rows.push({
-      label: 'ABV',
+      label: isHK ? '酒精度' : 'ABV',
       guessVal: guess?.abv != null ? `${guess.abv}%` : '—',
       wineVal: wine?.abv != null ? `${wine.abv}%` : '—',
       scoreKey: 'abv'
@@ -153,7 +151,7 @@ function buildScoreChips(score, rules) {
   if (r.country.enabled)  chips.push({ label: isHK ? '國家' : 'Country',    val: score?.country   ?? 0 });
   if (r.region.enabled)   chips.push({ label: isHK ? '產區' : 'Region',     val: score?.region    ?? 0 });
   if (r.vintage.enabled)  chips.push({ label: isHK ? '年份' : 'Vintage',    val: score?.vintage   ?? 0 });
-  if (r.abv.enabled)      chips.push({ label: 'ABV',                         val: score?.abv       ?? 0 });
+  if (r.abv.enabled)      chips.push({ label: isHK ? '酒精度' : 'ABV',        val: score?.abv       ?? 0 });
   if (r.price.enabled)    chips.push({ label: isHK ? '價錢' : 'Price',      val: score?.price     ?? 0 });
   chips.push({ label: isHK ? '總分' : 'Total', val: score?.total ?? 0 });
   return chips;
@@ -193,7 +191,7 @@ function buildRuleDisplayRows(rules) {
     rows.push({
       cat: t('rules.oldWorld'),
       pts: isHK ? `${r.oldWorld.score} 分` : `${r.oldWorld.score} pts`,
-      desc: t('rules.oldWorldDesc')
+      desc: isHK ? '啱晒先計' : 'Exact match'
     });
   }
   if (r.country.enabled) {

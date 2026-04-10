@@ -57,8 +57,8 @@ function validateWine(wine, rules) {
     }
   }
 
-  // Country required when country or oldWorld rule is enabled
-  const needsCountry = r.country.enabled || r.oldWorld.enabled;
+  // Country required when country, oldWorld, or region rule is enabled
+  const needsCountry = r.country.enabled || r.oldWorld.enabled || r.region.enabled;
   if (needsCountry) {
     if (!wine.country) {
       errors.push('Country is required.');

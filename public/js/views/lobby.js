@@ -180,17 +180,19 @@ async function renderLobby(lobbyId) {
 
       if (isRevealed) {
         const lobbyRules = normaliseRulesClient(lobby.rules);
+        const isHK = getLocale() === 'hk';
         const varietalStr = lobbyRules.grape.enabled
           ? (wine.type === 'blend'
               ? (wine.varietals || []).filter(v => v.grape).map(v => `${v.grape} ${v.percentage}%`).join(' — ')
               : wine.varietals?.[0]?.grape || null)
           : null;
         const detailRows = [
+          lobbyRules.oldWorld.enabled && wine.country ? `<div class="wine-reveal-row"><span>${isHK ? '舊/新' : 'OLD/NEW'}</span><span>${isOldWorld(wine.country) ? (isHK ? '舊世界' : 'Old World') : (isHK ? '新世界' : 'New World')}</span></div>` : '',
           wine.country ? `<div class="wine-reveal-row"><span>${t('lobby.country')}</span><span>${escHtml(wine.country)}</span></div>` : '',
           wine.region  ? `<div class="wine-reveal-row"><span>${t('lobby.region')}</span><span>${escHtml(wine.region)}</span></div>`  : '',
           varietalStr  ? `<div class="wine-reveal-row"><span>${t('lobby.variety')}</span><span>${escHtml(varietalStr)}</span></div>`  : '',
           wine.vintage ? `<div class="wine-reveal-row"><span>${t('lobby.vintage')}</span><span>${wine.vintage}</span></div>`          : '',
-          lobbyRules.abv.enabled && wine.abv != null ? `<div class="wine-reveal-row"><span>ABV</span><span>${wine.abv}%</span></div>` : '',
+          lobbyRules.abv.enabled && wine.abv != null ? `<div class="wine-reveal-row"><span>${isHK ? '酒精度' : 'ABV'}</span><span>${wine.abv}%</span></div>` : '',
           lobbyRules.price.enabled && wine.price != null ? `<div class="wine-reveal-row"><span>${t('form.price')}</span><span>${formatWinePrice(wine.price, lobbyRules.price.currency)}</span></div>` : '',
         ].filter(Boolean).join('');
         return `

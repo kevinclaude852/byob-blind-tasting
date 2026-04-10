@@ -77,6 +77,7 @@ async function renderMyGuesses(lobbyId) {
         const r = normaliseRulesClient(rules);
         const guessFields = [];
         if (r.grape.enabled) guessFields.push({ label: t('mg.grapeVariety'), val: formatVarietalClient(guess) });
+        if (r.oldWorld.enabled) guessFields.push({ label: t('mg.oldWorld'), val: guess.oldWorld != null ? (guess.oldWorld ? t('rules.oldWorldVal') : t('rules.newWorldVal')) : '—' });
         if (r.country.enabled) guessFields.push({ label: t('mg.country'), val: guess.country || '—' });
         if (r.region.enabled) guessFields.push({ label: t('mg.region'), val: guess.region || '—' });
         if (r.vintage.enabled) guessFields.push({ label: t('mg.vintage'), val: guess.vintage ? String(guess.vintage) : '—' });

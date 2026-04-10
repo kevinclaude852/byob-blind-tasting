@@ -167,16 +167,21 @@ function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], count
 
   const singleGrape = prefillVarietals[0] ? prefillVarietals[0].grape : '';
 
-  const countryField = `
+  const showCountry = isGuess
+    ? (r.country.enabled || r.region.enabled)
+    : (r.country.enabled || r.oldWorld.enabled || r.region.enabled);
+  const countryOptional = isGuess || !r.country.enabled;
+
+  const countryField = showCountry ? `
     <div class="form-group">
-      <label for="wineCountry">${t('lobby.country')}${(isGuess || !r.country.enabled && !r.oldWorld.enabled) ? ` ${opt}` : ''}</label>
+      <label for="wineCountry">${t('lobby.country')}${countryOptional ? ` ${opt}` : ''}</label>
       <select id="wineCountry">
         <option value="">${t('form.selectCountry')}</option>
         ${countries.map(c => `<option value="${c}" ${prefill && prefill.country === c ? 'selected' : ''}>${c}</option>`).join('')}
       </select>
-    </div>`;
+    </div>` : '';
 
-  const regionField = `
+  const regionField = r.region.enabled ? `
     <div class="form-group" id="regionGroup" style="${prefill && prefill.country ? '' : 'display:none'}">
       <label for="wineRegion">${t('lobby.region')} ${opt}</label>
       <select id="wineRegion">
@@ -185,7 +190,7 @@ function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], count
           ? regions[prefill.country].map(rg => `<option value="${rg}" ${prefill.region === rg ? 'selected' : ''}>${rg}</option>`).join('')
           : ''}
       </select>
-    </div>`;
+    </div>` : '';
 
   const vintageField = r.vintage.enabled ? `
     <div class="form-group">
@@ -201,11 +206,27 @@ function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], count
         ${buildGrapeAutocomplete({ id: 'singleGrape', prefillValue: singleGrape, placeholder: t('form.searchGrape') })}
       </div>` : '';
 
+    const oldWorldField = r.oldWorld.enabled ? `
+      <div class="form-group">
+        <label>${t('rules.oldWorld')} ${opt}</label>
+        <div class="radio-group">
+          <div class="radio-option">
+            <input type="radio" name="guessOldWorld" id="guessOldWorldOld" value="old"${prefill?.oldWorld === true ? ' checked' : ''}>
+            <label for="guessOldWorldOld" style="font-family:-apple-system,system-ui,sans-serif;font-style:normal">${t('rules.oldWorldVal')}</label>
+          </div>
+          <div class="radio-option">
+            <input type="radio" name="guessOldWorld" id="guessOldWorldNew" value="new"${prefill?.oldWorld === false ? ' checked' : ''}>
+            <label for="guessOldWorldNew" style="font-family:-apple-system,system-ui,sans-serif;font-style:normal">${t('rules.newWorldVal')}</label>
+          </div>
+        </div>
+      </div>` : '';
+
     const abvField = r.abv.enabled ? buildAbvSelect('wineAbv', prefill?.abv, false) : '';
     const priceField = r.price.enabled ? buildPriceRangeSelect('winePriceRange', r.price.currency, r.price.rangeWidth, prefill?.priceRange) : '';
 
     return `
       ${grapeField}
+      ${oldWorldField}
       ${countryField}
       ${regionField}
       ${vintageField}
@@ -367,6 +388,11 @@ function collectWineFormData(isGuess = false, rules = null) {
     country: document.getElementById('wineCountry')?.value || null,
     region: document.getElementById('wineRegion')?.value || null
   };
+
+  if (isGuess && r.oldWorld.enabled) {
+    const owEl = document.querySelector('input[name="guessOldWorld"]:checked');
+    if (owEl) data.oldWorld = owEl.value === 'old';
+  }
 
   // ABV
   if (r.abv.enabled) {

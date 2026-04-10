@@ -92,7 +92,7 @@ function renderRevealedView(wineInfo, myGuess, lobby, wineId, rules) {
     r.grape.enabled ? `<div class="wine-detail-row"><span class="wine-detail-label">${t('lb.varietal')}</span><span class="wine-detail-value">${escHtml(formatVarietalClient(wine))}</span></div>` : '',
     wine.country ? `<div class="wine-detail-row"><span class="wine-detail-label">${t('lb.country')}</span><span class="wine-detail-value">${escHtml(wine.country)}</span></div>` : '',
     wine.region  ? `<div class="wine-detail-row"><span class="wine-detail-label">${t('lb.region')}</span><span class="wine-detail-value">${escHtml(wine.region)}</span></div>`  : '',
-    r.abv.enabled && wine.abv != null ? `<div class="wine-detail-row"><span class="wine-detail-label">ABV</span><span class="wine-detail-value">${wine.abv}%</span></div>` : '',
+    r.abv.enabled && wine.abv != null ? `<div class="wine-detail-row"><span class="wine-detail-label">${getLocale() === 'hk' ? '酒精度' : 'ABV'}</span><span class="wine-detail-value">${wine.abv}%</span></div>` : '',
     r.price.enabled && wine.price != null ? `<div class="wine-detail-row"><span class="wine-detail-label">${t('form.price')}</span><span class="wine-detail-value">${formatWinePrice(wine.price, r.price.currency)}</span></div>` : '',
   ].filter(Boolean).join('');
 

@@ -42,7 +42,7 @@ function buildExportHtml({ lobbyName, sorted, denseRanks, revealOrder, wineMap, 
     if (r.country.enabled)  cols.push(isHK ? '國家' : 'Country');
     if (r.region.enabled)   cols.push(isHK ? '產區' : 'Region');
     if (r.vintage.enabled)  cols.push(isHK ? '年份' : 'Vintage');
-    if (r.abv.enabled)      cols.push('ABV');
+    if (r.abv.enabled)      cols.push(isHK ? '酒精度' : 'ABV');
     if (r.price.enabled)    cols.push(isHK ? '價錢' : 'Price');
     return cols;
   }
@@ -60,10 +60,10 @@ function buildExportHtml({ lobbyName, sorted, denseRanks, revealOrder, wineMap, 
       cells.push(`<td class="${scoreClass(scoreObj.varietal, false)}">${escHtml(guessObj ? formatVarietalClient(guessObj) : '—')}</td>`);
     }
     if (r.oldWorld.enabled) {
-      const toOW = country => country
-        ? (isOldWorld(country) ? (isHK ? '舊世界' : 'Old World') : (isHK ? '新世界' : 'New World'))
+      const owVal = guessObj?.oldWorld != null
+        ? (guessObj.oldWorld ? (isHK ? '舊世界' : 'Old World') : (isHK ? '新世界' : 'New World'))
         : '—';
-      cells.push(`<td class="${scoreClass(scoreObj.oldWorld, false)}">${escHtml(toOW(guessObj?.country))}</td>`);
+      cells.push(`<td class="${scoreClass(scoreObj.oldWorld, false)}">${escHtml(owVal)}</td>`);
     }
     if (r.country.enabled) {
       cells.push(`<td class="${scoreClass(scoreObj.country, false)}">${escHtml(guessObj?.country || '—')}</td>`);
