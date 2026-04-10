@@ -179,6 +179,9 @@ async function renderScoreboard(lobbyId) {
       ${showDots ? `<div class="swipe-dots" id="swipeDots">
         ${sortedRevealOrder.map((_, i) => `<span class="swipe-dot${i===0?' active':''}" data-index="${i}"></span>`).join('')}
       </div>` : ''}
+      <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border);text-align:center">
+        <button class="btn btn-secondary btn-sm" id="exportBtn" style="width:auto">${getLocale() === 'hk' ? '↓ 匯出結果' : '↓ Export Results'}</button>
+      </div>
       ` : ''}
     </div>
   `;
@@ -190,6 +193,21 @@ async function renderScoreboard(lobbyId) {
   document.getElementById('shareScoreBtn').addEventListener('click', () => {
     window.location.hash = `#/lobby/${lobbyId}/share-score`;
   });
+
+  const exportBtn = document.getElementById('exportBtn');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', async () => {
+      const isHK = getLocale() === 'hk';
+      exportBtn.textContent = isHK ? '生成中…' : 'Generating…';
+      exportBtn.disabled = true;
+      let lobbyName = '';
+      try { lobbyName = (await API.getLobby(lobbyId)).lobbyName || ''; } catch {}
+      const html = buildExportHtml({ lobbyName, sorted, denseRanks, revealOrder, wineMap, guesses, scores });
+      downloadExportHtml(lobbyId, html);
+      exportBtn.textContent = isHK ? '↓ 匯出結果' : '↓ Export Results';
+      exportBtn.disabled = false;
+    });
+  }
 
   // Player row accordion toggle
   document.querySelectorAll('.score-row-expandable').forEach(row => {
