@@ -5,12 +5,12 @@ const fs = require('fs');
 const { loadGame, saveGame } = require('../services/persistenceService');
 const { calculateScore } = require('../services/scoringService');
 const { validateGuess } = require('../utils/validation');
+const { normaliseRules, buildZeroScore } = require('../utils/rulesNormaliser');
 const { authHost, getToken, findWine } = require('./lobby');
 
 let ioInstance = null;
 function setIo(io) { ioInstance = io; }
 
-// Active countdown timers: key = "lobbyId:wineId" -> NodeJS Timeout
 const pendingTimers = new Map();
 
 function getCurrentPlayer(game, token) {
@@ -28,10 +28,11 @@ function doReveal(lobbyId, wineId) {
   const found = findWine(game, wineId);
   if (!found || found.wine.revealed) return;
 
+  const rules = normaliseRules(game.rules);
   const ownerPlayer = game.players[found.playerId];
   const wineInData = ownerPlayer.wines.find(w => w.id === wineId);
   wineInData.revealed = true;
-  wineInData.revealAt = null; // clear countdown marker
+  wineInData.revealAt = null;
   game.revealOrder.push(wineId);
 
   // Calculate scores for all guessers
@@ -39,7 +40,7 @@ function doReveal(lobbyId, wineId) {
   for (const [guesserId, theirGuesses] of Object.entries(game.guesses)) {
     if (guesserId === found.playerId) continue;
     const guess = (theirGuesses || {})[wineId] || null;
-    game.scores[wineId][guesserId] = calculateScore(wineInData, guess);
+    game.scores[wineId][guesserId] = calculateScore(wineInData, guess, rules);
   }
 
   // Zero score for players who didn't guess (skip non-participating host)
@@ -47,7 +48,7 @@ function doReveal(lobbyId, wineId) {
     if (playerId === found.playerId) continue;
     if (player.participating === false) continue;
     if (!game.scores[wineId][playerId]) {
-      game.scores[wineId][playerId] = { varietal: 0, country: 0, region: 0, vintage: 0, total: 0 };
+      game.scores[wineId][playerId] = buildZeroScore();
     }
   }
 
@@ -81,7 +82,6 @@ function rescheduleTimers() {
             const ms = wine.revealAt - Date.now();
             const key = `${lobbyId}:${wine.id}`;
             if (ms <= 0) {
-              // Countdown already expired — reveal immediately
               doReveal(lobbyId, wine.id);
             } else if (!pendingTimers.has(key)) {
               pendingTimers.set(key, setTimeout(() => doReveal(lobbyId, wine.id), ms));
@@ -112,8 +112,9 @@ router.put('/guess/:wineId', (req, res) => {
   if (found.playerId === currentPlayerId) return res.status(400).json({ error: 'Cannot guess your own wine.' });
   if (found.wine.revealed) return res.status(400).json({ error: 'This wine has already been revealed.' });
 
+  const rules = normaliseRules(game.rules);
   const guessData = req.body;
-  const errors = validateGuess(guessData, found.playerId, currentPlayerId);
+  const errors = validateGuess(guessData, found.playerId, currentPlayerId, rules);
   if (errors.length) return res.status(400).json({ errors });
 
   if (!game.guesses[currentPlayerId]) game.guesses[currentPlayerId] = {};
@@ -123,6 +124,8 @@ router.put('/guess/:wineId', (req, res) => {
     varietals: (guessData.varietals || []).filter(v => v.grape).map(v => ({ grape: v.grape })),
     country: guessData.country || null,
     region: guessData.region || null,
+    abv: rules.abv.enabled ? (guessData.abv != null ? Number(guessData.abv) : null) : null,
+    priceRange: rules.price.enabled ? (guessData.priceRange || null) : null,
     submittedAt: new Date().toISOString()
   };
 
@@ -148,7 +151,7 @@ router.get('/guess/:wineId', (req, res) => {
   res.json({ guess });
 });
 
-// POST /api/lobby/:lobbyId/reveal/:wineId — host reveals a wine (immediately or after a countdown)
+// POST /api/lobby/:lobbyId/reveal/:wineId — host reveals a wine
 router.post('/reveal/:wineId', (req, res) => {
   const { lobbyId, wineId } = req.params;
   const game = loadGame(lobbyId);
@@ -162,14 +165,12 @@ router.post('/reveal/:wineId', (req, res) => {
   const delayMinutes = Number(req.body?.delayMinutes) || 0;
 
   if (delayMinutes > 0) {
-    // Countdown mode — store revealAt on wine and schedule server-side timer
     const ownerPlayer = game.players[found.playerId];
     const wineInData = ownerPlayer.wines.find(w => w.id === wineId);
     const revealAt = Date.now() + delayMinutes * 60 * 1000;
     wineInData.revealAt = revealAt;
     saveGame(lobbyId, game);
 
-    // Cancel any existing timer for this wine before setting a new one
     const key = `${lobbyId}:${wineId}`;
     if (pendingTimers.has(key)) clearTimeout(pendingTimers.get(key));
     pendingTimers.set(key, setTimeout(() => doReveal(lobbyId, wineId), delayMinutes * 60 * 1000));
@@ -181,12 +182,11 @@ router.post('/reveal/:wineId', (req, res) => {
     return res.json({ success: true, revealAt });
   }
 
-  // Immediate reveal
   doReveal(lobbyId, wineId);
   res.json({ success: true });
 });
 
-// DELETE /api/lobby/:lobbyId/reveal/:wineId — host cancels an active countdown
+// DELETE /api/lobby/:lobbyId/reveal/:wineId — host cancels countdown
 router.delete('/reveal/:wineId', (req, res) => {
   const { lobbyId, wineId } = req.params;
   const game = loadGame(lobbyId);
@@ -198,7 +198,6 @@ router.delete('/reveal/:wineId', (req, res) => {
   if (found.wine.revealed) return res.status(400).json({ error: 'Wine already revealed.' });
   if (!found.wine.revealAt) return res.status(400).json({ error: 'No countdown active.' });
 
-  // Cancel the scheduled timer
   const key = `${lobbyId}:${wineId}`;
   if (pendingTimers.has(key)) {
     clearTimeout(pendingTimers.get(key));
@@ -221,7 +220,11 @@ router.delete('/reveal/:wineId', (req, res) => {
 router.get('/scores', (req, res) => {
   const game = loadGame(req.params.lobbyId);
   if (!game) return res.status(404).json({ error: 'Lobby not found.' });
-  if (game.revealOrder.length === 0) return res.json({ scores: {}, revealOrder: [], wineMap: {}, players: {} });
+  if (game.revealOrder.length === 0) {
+    return res.json({ scores: {}, revealOrder: [], wineMap: {}, players: {}, rules: normaliseRules(game.rules) });
+  }
+
+  const rules = normaliseRules(game.rules);
 
   const totals = {};
   for (const [pid, player] of Object.entries(game.players)) {
@@ -238,7 +241,6 @@ router.get('/scores', (req, res) => {
     }
   }
 
-  // Build wineMap for display
   const wineMap = {};
   for (const [pid, p] of Object.entries(game.players)) {
     for (const w of (p.wines || [])) {
@@ -246,7 +248,6 @@ router.get('/scores', (req, res) => {
     }
   }
 
-  // Include actual guess content for revealed wines (shown on leaderboard)
   const revealedGuesses = {};
   for (const [guesserId, wineGuesses] of Object.entries(game.guesses)) {
     for (const [wineId, guess] of Object.entries(wineGuesses)) {
@@ -262,6 +263,7 @@ router.get('/scores', (req, res) => {
     revealOrder: game.revealOrder,
     wineMap,
     guesses: revealedGuesses,
+    rules,
     players: Object.fromEntries(
       Object.entries(game.players).map(([id, p]) => [id, { name: p.name, emoji: p.emoji, wines: p.wines }])
     )

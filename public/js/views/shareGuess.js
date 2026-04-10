@@ -13,6 +13,7 @@ async function renderShareGuess(lobbyId, wineId) {
   const isHK = getLocale() === 'hk';
   const lobbyName = lobbyData?.lobbyName || '';
   const currentPlayerId = lobbyData.currentPlayerId;
+  const rules = normaliseRulesClient(lobbyData.rules);
 
   const wineInfo = lobbyData.wineMap?.[wineId];
   if (!wineInfo || !wineInfo.wine) {
@@ -25,20 +26,13 @@ async function renderShareGuess(lobbyId, wineId) {
   const score = (lobbyData.scores || {})[wineId]?.[currentPlayerId] || null;
   const guess = (lobbyData.myGuesses || {})[wineId] || null;
 
-  function formatVarietal(obj) {
-    if (!obj) return '—';
-    if (obj.type === 'blend') {
-      return (obj.varietals || []).filter(v => v.grape).map(v => `${v.grape}${v.percentage ? ` ${v.percentage}%` : ''}`).join(', ') || '—';
-    }
-    return obj.varietals?.[0]?.grape || '—';
-  }
-
-  const compareRows = [
-    { label: isHK ? '提子' : 'Varietal', guessVal: guess ? formatVarietal(guess) : '—', wineVal: formatVarietal(wine), scoreKey: 'varietal' },
-    { label: isHK ? '國家' : 'Country',  guessVal: guess?.country || '—',               wineVal: wine?.country || '—',  scoreKey: 'country'  },
-    { label: isHK ? '產區' : 'Region',   guessVal: guess?.region  || '—',               wineVal: wine?.region  || '—',  scoreKey: 'region'   },
-    { label: isHK ? '年份' : 'Vintage',  guessVal: guess?.vintage ? String(guess.vintage) : '—', wineVal: wine?.vintage ? String(wine.vintage) : '—', scoreKey: 'vintage' },
-  ];
+  // Build compare rows using ruleHelpers
+  const compareRows = buildCompareRows(wine, guess, rules);
+  // Add scoreKey-based pts lookup
+  const compareRowsWithPts = compareRows.map(row => ({
+    ...row,
+    pts: score ? (score[row.scoreKey] ?? null) : null
+  }));
 
   const takePhotoLabel = isHK ? t('share.takePhoto') : 'Take Photo as<br>Background';
 
@@ -97,7 +91,6 @@ async function renderShareGuess(lobbyId, wineId) {
 
     const GOLD  = '#d4af37';
     const WHITE = '#ffffff';
-    // When a photo is behind the card, bump semi-transparent colours to 0.75 so they remain legible
     const MUTED      = bgImage ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.52)';
     const SUBCAPTION = bgImage ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.45)';
     const COLHDR     = bgImage ? 'rgba(212,175,55,0.90)'  : 'rgba(212,175,55,0.72)';
@@ -118,7 +111,7 @@ async function renderShareGuess(lobbyId, wineId) {
       captionBottom = 536;
     }
 
-    // Sub-caption: "<owner>'s <wine name>" / "<owner>支 <wine name>"
+    // Sub-caption: "<owner>'s <wine name>"
     const subCaption = isHK
       ? `${wineInfo.playerName}支 ${wineName}`
       : `${wineInfo.playerName}'s ${wineName}`;
@@ -151,11 +144,13 @@ async function renderShareGuess(lobbyId, wineId) {
     ctx.fillText(isHK ? '我估' : 'MY GUESS',  col1Center, hdrY);
     ctx.fillText(isHK ? '答案' : 'THE WINE', col2Center, hdrY);
 
-    const ROW_H    = 122;
+    const numRows = compareRowsWithPts.length;
+    // Adaptive row height to avoid overflow — cap at 115 when many rows
+    const ROW_H    = numRows > 5 ? Math.max(80, Math.floor(600 / numRows)) : 122;
     const TABLE_TOP = hdrY + 28;
 
-    for (let i = 0; i < compareRows.length; i++) {
-      const { label, guessVal, wineVal, scoreKey } = compareRows[i];
+    for (let i = 0; i < compareRowsWithPts.length; i++) {
+      const { label, guessVal, wineVal, pts } = compareRowsWithPts[i];
       const rowY  = TABLE_TOP + i * ROW_H;
       const textY = rowY + Math.round(ROW_H * 0.58);
 
@@ -170,8 +165,7 @@ async function renderShareGuess(lobbyId, wineId) {
       ctx.textAlign = 'left';
       ctx.fillText(label, PAD + 18, textY);
 
-      // Guess value — gold if points earned, muted if 0 or no guess submitted; wraps if long
-      const pts = score?.[scoreKey];
+      // Guess value — gold if points earned, muted if 0 or no guess
       const guessColor = pts != null && pts > 0 ? GOLD : MUTED;
       ctx.fillStyle = guessColor;
       ctx.font = `bold 34px Georgia,serif`;
@@ -194,11 +188,10 @@ async function renderShareGuess(lobbyId, wineId) {
       });
     }
 
-    const tableBottom = TABLE_TOP + compareRows.length * ROW_H;
+    const tableBottom = TABLE_TOP + compareRowsWithPts.length * ROW_H;
 
-    // ── Score section ─────────────────────────────────────────────────────────
+    // ── Score chips ─────────────────────────────────────────────────────────
     if (score) {
-      // Divider
       ctx.strokeStyle = 'rgba(212,175,55,0.25)';
       ctx.lineWidth = 1;
       ctx.beginPath();
@@ -206,19 +199,11 @@ async function renderShareGuess(lobbyId, wineId) {
       ctx.lineTo(W - PAD, tableBottom + 28);
       ctx.stroke();
 
-      // 5 chips: 4 categories + total (evenly distributed, total on right)
-      const CHIP_GAP = 16;
-      const CHIP_W   = Math.floor((W - PAD * 2 - CHIP_GAP * 4) / 5);
+      const chips = buildScoreChips(score, rules);
+      const CHIP_GAP = Math.max(8, Math.floor(16 * (5 / chips.length)));
+      const CHIP_W   = Math.floor((W - PAD * 2 - CHIP_GAP * (chips.length - 1)) / chips.length);
       const CHIP_H   = 100;
       const CHIP_TOP = tableBottom + 68;
-
-      const chips = [
-        { label: isHK ? '提子' : 'Varietal', val: score.varietal },
-        { label: isHK ? '國家' : 'Country',  val: score.country  },
-        { label: isHK ? '產區' : 'Region',   val: score.region   },
-        { label: isHK ? '年份' : 'Vintage',  val: score.vintage  },
-        { label: isHK ? '總分' : 'Total',    val: score.total    },
-      ];
 
       chips.forEach(({ label, val }, ci) => {
         const cx  = PAD + ci * (CHIP_W + CHIP_GAP);
@@ -229,7 +214,8 @@ async function renderShareGuess(lobbyId, wineId) {
         ctx.fill();
 
         ctx.fillStyle = MUTED;
-        ctx.font = `24px -apple-system,sans-serif`;
+        const chipLabelFont = chips.length > 6 ? '20px' : '24px';
+        ctx.font = `${chipLabelFont} -apple-system,sans-serif`;
         ctx.textAlign = 'center';
         ctx.fillText(label, cxc, CHIP_TOP + 34);
 
@@ -239,7 +225,7 @@ async function renderShareGuess(lobbyId, wineId) {
       });
     }
 
-    // ── Bottom divider & footer ───────────────────────────────────────────────
+    // ── Footer ───────────────────────────────────────────────────────────────
     ctx.strokeStyle = 'rgba(212,175,55,0.25)';
     ctx.lineWidth = 1;
     ctx.beginPath();

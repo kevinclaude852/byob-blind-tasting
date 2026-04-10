@@ -1057,6 +1057,147 @@ select:focus { background-color: white; }
   flex: 1;
 }
 
+/* ===== Rules UI (Landing page) ===== */
+.rules-mode-group {
+  display: flex;
+  gap: 0;
+}
+.rules-mode-opt {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  user-select: none;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.rules-mode-opt:first-child { border-radius: 6px 0 0 6px; }
+.rules-mode-opt:last-child  { border-radius: 0 6px 6px 0; border-left: none; }
+.rules-mode-opt input[type="radio"] { display: none; }
+.rules-mode-opt:has(input:checked) {
+  background: var(--wine);
+  color: #fff;
+  border-color: var(--wine);
+}
+
+.rules-panel {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.rule-card {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--card-bg, #fff);
+}
+.rule-card:last-child { border-bottom: none; }
+.rule-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+.rule-card-header input[type="checkbox"] {
+  flex-shrink: 0;
+  accent-color: var(--wine);
+  width: 16px;
+  height: 16px;
+}
+.rule-name {
+  flex: 1;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.rule-score-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.rule-score-sel {
+  font-size: 0.82rem;
+  padding: 2px 4px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg, #fff);
+  color: var(--text);
+  cursor: pointer;
+}
+.rule-desc {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  margin-top: 3px;
+  padding-left: 24px;
+}
+
+/* Country sub-panel (Region accordion) */
+.rule-country-sub {
+  margin-top: 8px;
+  padding: 8px 0 0 24px;
+  border-top: 1px solid var(--border);
+}
+
+/* Vintage sub-options */
+.rule-vintage-opts {
+  margin-top: 8px;
+  padding-left: 24px;
+}
+.rule-vintage-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.rule-vm-opt {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.rule-vm-opt input[type="radio"] { accent-color: var(--wine); }
+.rule-vintage-scores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+.rule-vs-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* Price sub-options */
+.rule-price-opts {
+  margin-top: 8px;
+  padding-left: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rule-price-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
 /* ===== Spin ===== */
 .spin { animation: spin 1s linear infinite; display: inline-block; }
 @keyframes spin { to { transform: rotate(360deg); } }

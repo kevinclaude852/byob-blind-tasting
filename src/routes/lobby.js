@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { generateLobbyId, generatePlayerId, generateSessionToken } = require('../utils/idGenerator');
 const { loadGame, saveGame, lobbyExists } = require('../services/persistenceService');
+const { normaliseRules, validateRules } = require('../utils/rulesNormaliser');
+const { DEFAULT_RULES_PRESET } = require('../utils/ruleConstants');
 
 function authPlayer(game, playerId, token) {
   const player = game.players[playerId];
@@ -30,10 +32,20 @@ function findWine(game, wineId) {
 
 // POST /api/lobby — create lobby
 router.post('/', (req, res) => {
-  const { hostName, hostEmoji, lobbyName, hostParticipating = true } = req.body;
+  const { hostName, hostEmoji, lobbyName, hostParticipating = true, rules } = req.body;
   if (hostParticipating) {
     if (!hostName || !hostName.trim()) return res.status(400).json({ error: 'Host name required.' });
     if (!hostEmoji) return res.status(400).json({ error: 'Host emoji required.' });
+  }
+
+  // Validate and normalise rules
+  let normalisedRules;
+  if (rules) {
+    const ruleErrors = validateRules(rules);
+    if (ruleErrors.length) return res.status(400).json({ errors: ruleErrors });
+    normalisedRules = normaliseRules(rules);
+  } else {
+    normalisedRules = JSON.parse(JSON.stringify(DEFAULT_RULES_PRESET));
   }
 
   let lobbyId;
@@ -47,6 +59,7 @@ router.post('/', (req, res) => {
     lobbyName: lobbyName || 'Blind Tasting',
     hostPlayerId,
     hostParticipating: !!hostParticipating,
+    rules: normalisedRules,
     createdAt: new Date().toISOString(),
     players: {
       [hostPlayerId]: {
@@ -85,7 +98,6 @@ router.get('/:lobbyId', (req, res) => {
   const players = {};
   for (const [pid, p] of Object.entries(game.players)) {
     const isSelf = pid === currentPlayerId;
-    // Skip non-participating host unless they are looking at themselves
     if (!p.participating && p.participating !== undefined && !isSelf) continue;
     players[pid] = {
       id: p.id,
@@ -98,18 +110,19 @@ router.get('/:lobbyId', (req, res) => {
         emoji: w.emoji,
         revealed: w.revealed,
         revealAt: w.revealAt || null,
-        // Hide wine details (except name/emoji) for unrevealed wines not owned by current player
-        name: (w.revealed || isSelf) ? w.name : null,
-        vintage: (w.revealed || isSelf) ? w.vintage : null,
-        type: (w.revealed || isSelf) ? w.type : null,
-        varietals: (w.revealed || isSelf) ? w.varietals : null,
-        country: (w.revealed || isSelf) ? w.country : null,
-        region: (w.revealed || isSelf) ? w.region : null,
+        name:     (w.revealed || isSelf) ? w.name     : null,
+        vintage:  (w.revealed || isSelf) ? w.vintage  : null,
+        type:     (w.revealed || isSelf) ? w.type     : null,
+        varietals:(w.revealed || isSelf) ? w.varietals: null,
+        country:  (w.revealed || isSelf) ? w.country  : null,
+        region:   (w.revealed || isSelf) ? w.region   : null,
+        abv:      (w.revealed || isSelf) ? w.abv      : null,
+        price:    (w.revealed || isSelf) ? w.price     : null,
       }))
     };
   }
 
-  // Build a flat wine map for easy frontend lookup: wineId -> { playerId, playerName, playerEmoji, wine }
+  // Build a flat wine map for easy frontend lookup
   const wineMap = {};
   for (const [pid, p] of Object.entries(game.players)) {
     for (const w of (p.wines || [])) {
@@ -119,16 +132,13 @@ router.get('/:lobbyId', (req, res) => {
         playerEmoji: p.emoji,
         wineEmoji: w.emoji,
         revealed: w.revealed,
-        wine: players[pid].wines.find(pw => pw.id === w.id)
+        wine: players[pid]?.wines.find(pw => pw.id === w.id)
       };
     }
   }
 
-  // Current player's guesses (only their own)
   const myGuesses = game.guesses[currentPlayerId] || {};
 
-  // guessStatus: wineId → array of playerIds who have submitted a guess
-  // (reveals who has guessed but not what they guessed)
   const guessStatus = {};
   for (const [guessingPlayerId, guesses] of Object.entries(game.guesses || {})) {
     for (const wineId of Object.keys(guesses)) {
@@ -142,6 +152,7 @@ router.get('/:lobbyId', (req, res) => {
     lobbyName: game.lobbyName,
     hostPlayerId: game.hostPlayerId,
     hostParticipating: game.hostParticipating !== false,
+    rules: normaliseRules(game.rules),
     createdAt: game.createdAt,
     players,
     wineMap,

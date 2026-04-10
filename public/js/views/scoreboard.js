@@ -10,13 +10,14 @@ async function renderScoreboard(lobbyId) {
     return;
   }
 
-  const { scores, revealOrder, wineMap, guesses = {} } = data;
+  const { scores, revealOrder, wineMap, guesses = {}, rules } = data;
+  const r = normaliseRulesClient(rules);
   const session = API.getSession(lobbyId);
   const currentPlayerId = session?.playerId;
 
   const sorted = Object.entries(scores).sort((a, b) => b[1].total - a[1].total);
 
-  // Dense ranking: tied scores share the same rank, next rank is +1 (not +n)
+  // Dense ranking
   const denseRanks = [];
   for (let i = 0; i < sorted.length; i++) {
     if (i === 0) denseRanks.push(1);
@@ -24,15 +25,6 @@ async function renderScoreboard(lobbyId) {
     else denseRanks.push(denseRanks[i - 1] + 1);
   }
   const rankMedals = { 1: '🥇', 2: '🥈', 3: '🥉' };
-
-  // Helper: format varietals from a wine or guess object
-  function formatVarietal(obj) {
-    if (!obj) return '—';
-    if (obj.type === 'blend') {
-      return (obj.varietals || []).filter(v => v.grape).map(v => `${v.grape}${v.percentage ? ` ${v.percentage}%` : ''}`).join(', ') || '—';
-    }
-    return obj.varietals?.[0]?.grape || '—';
-  }
 
   // ── Overall Rankings ──────────────────────────────────────────────────────
   const rankingRows = sorted.map(([pid, s], i) => {
@@ -46,14 +38,8 @@ async function renderScoreboard(lobbyId) {
         const wine = info.wine;
         const accId = `swine-${pid}-${wineId}`;
 
-        // Guess vs Wine attribute rows
-        const attrs = [
-          { label: t('lb.varietal'), guessVal: formatVarietal(guess),        wineVal: formatVarietal(wine) },
-          { label: t('lb.country'), guessVal: guess?.country  || '—',       wineVal: wine?.country  || '—' },
-          { label: t('lb.region'),  guessVal: guess?.region   || '—',       wineVal: wine?.region   || '—' },
-          { label: t('lb.vintage'), guessVal: guess?.vintage  ? String(guess.vintage) : '—', wineVal: wine?.vintage ? String(wine.vintage) : '—' },
-        ];
-        const attrRows = attrs.map(({ label, guessVal, wineVal }) => `
+        const compareRows = buildCompareRows(wine, guess, rules);
+        const attrRows = compareRows.map(({ label, guessVal, wineVal }) => `
           <div class="gvw-attr-row">
             <span class="gvw-label">${label}</span>
             <span class="gvw-guess-val">${escHtml(guessVal)}</span>
@@ -103,11 +89,31 @@ async function renderScoreboard(lobbyId) {
     const info = wineMap[wineId];
     if (!info || !info.wine) return '';
     const wine = info.wine;
-    const varietalStr = formatVarietal(wine);
 
     const wineScores = sorted
       .filter(([pid]) => pid !== info.playerId && scores[pid]?.breakdown?.[wineId])
       .map(([pid, s]) => ({ pid, name: s.name, emoji: s.emoji, score: s.breakdown[wineId] }));
+
+    // Build dynamic columns based on rules
+    const enabledCols = [];
+    if (r.grape.enabled)    enabledCols.push({ key: 'varietal', label: getLocale() === 'hk' ? '提子' : 'Variety' });
+    if (r.oldWorld.enabled) enabledCols.push({ key: 'oldWorld',  label: t('mg.oldWorld') });
+    if (r.country.enabled)  enabledCols.push({ key: 'country',  label: t('lb.country') });
+    if (r.region.enabled)   enabledCols.push({ key: 'region',   label: t('lb.region') });
+    if (r.vintage.enabled)  enabledCols.push({ key: 'vintage',  label: t('lb.vintage') });
+    if (r.abv.enabled)      enabledCols.push({ key: 'abv',      label: getLocale() === 'hk' ? '酒精度' : 'ABV' });
+    if (r.price.enabled)    enabledCols.push({ key: 'price',    label: t('mg.price') });
+
+    const isHK = getLocale() === 'hk';
+    const wineDetailLines = [
+      wine.vintage ? { label: t('lb.vintage'), val: wine.vintage } : null,
+      r.grape.enabled ? { label: isHK ? '提子' : 'Variety', val: formatVarietalClient(wine) } : null,
+      r.oldWorld.enabled && wine.country ? { label: isHK ? '舊/新' : 'Old / New', val: isOldWorld(wine.country) ? (isHK ? '舊世界' : 'Old World') : (isHK ? '新世界' : 'New World') } : null,
+      wine.country ? { label: t('lb.country'), val: wine.country } : null,
+      wine.region  ? { label: t('lb.region'),  val: wine.region  } : null,
+      r.abv.enabled && wine.abv != null ? { label: isHK ? '酒精度' : 'ABV', val: `${wine.abv}%` } : null,
+      r.price.enabled && wine.price != null ? { label: t('form.price'), val: formatWinePrice(wine.price, r.price.currency) } : null,
+    ].filter(Boolean);
 
     return `
       <div class="wine-swipe-card card">
@@ -119,19 +125,15 @@ async function renderScoreboard(lobbyId) {
           </div>
         </div>
         <div style="font-size:0.8rem;display:flex;flex-direction:column;gap:4px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)">
-          <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">${t('lb.vintage')}</span><span style="font-weight:600">${wine.vintage}</span></div>
-          <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">${t('lb.varietal')}</span><span style="font-weight:600;text-align:right;max-width:65%">${escHtml(varietalStr)}</span></div>
-          <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">${t('lb.country')}</span><span style="font-weight:600">${escHtml(wine.country || '—')}</span></div>
-          <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">${t('lb.region')}</span><span style="font-weight:600">${escHtml(wine.region || '—')}</span></div>
+          ${wineDetailLines.map(({ label, val }) => `
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">${label}</span><span style="font-weight:600;text-align:right;max-width:65%">${escHtml(String(val))}</span></div>
+          `).join('')}
         </div>
         <table style="width:100%;border-collapse:collapse;font-size:0.78rem">
           <thead>
             <tr style="border-bottom:1px solid var(--border);color:var(--text-muted)">
               <th style="text-align:left;padding:4px 0;font-weight:600">${t('lb.player')}</th>
-              <th style="text-align:center;padding:4px 2px;font-weight:600">${t('lb.varietal')}</th>
-              <th style="text-align:center;padding:4px 2px;font-weight:600">${t('lb.country')}</th>
-              <th style="text-align:center;padding:4px 2px;font-weight:600">${t('lb.region')}</th>
-              <th style="text-align:center;padding:4px 2px;font-weight:600">${t('lb.vintage')}</th>
+              ${enabledCols.map(c => `<th style="text-align:center;padding:4px 2px;font-weight:600">${c.label}</th>`).join('')}
               <th style="text-align:right;padding:4px 0;font-weight:600">${t('lb.points')}</th>
             </tr>
           </thead>
@@ -139,10 +141,7 @@ async function renderScoreboard(lobbyId) {
             ${wineScores.map(({ name, emoji, score }) => `
               <tr style="border-bottom:1px solid var(--border)">
                 <td style="padding:5px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80px">${emoji} ${escHtml(name)}</td>
-                <td style="text-align:center;padding:5px 2px">${score.varietal}</td>
-                <td style="text-align:center;padding:5px 2px">${score.country}</td>
-                <td style="text-align:center;padding:5px 2px">${score.region}</td>
-                <td style="text-align:center;padding:5px 2px">${score.vintage}</td>
+                ${enabledCols.map(c => `<td style="text-align:center;padding:5px 2px">${score[c.key] ?? 0}</td>`).join('')}
                 <td style="text-align:right;padding:5px 0;font-weight:700;color:var(--wine)">${score.total}</td>
               </tr>`).join('')}
           </tbody>
@@ -179,6 +178,9 @@ async function renderScoreboard(lobbyId) {
       ${showDots ? `<div class="swipe-dots" id="swipeDots">
         ${sortedRevealOrder.map((_, i) => `<span class="swipe-dot${i===0?' active':''}" data-index="${i}"></span>`).join('')}
       </div>` : ''}
+      <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border);text-align:center">
+        <button class="btn btn-secondary btn-sm" id="exportBtn" style="width:auto">${getLocale() === 'hk' ? '↓ 匯出結果' : '↓ Export Results'}</button>
+      </div>
       ` : ''}
     </div>
   `;
@@ -191,6 +193,21 @@ async function renderScoreboard(lobbyId) {
     window.location.hash = `#/lobby/${lobbyId}/share-score`;
   });
 
+  const exportBtn = document.getElementById('exportBtn');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', async () => {
+      const isHK = getLocale() === 'hk';
+      exportBtn.textContent = isHK ? '生成中…' : 'Generating…';
+      exportBtn.disabled = true;
+      let lobbyName = '';
+      try { lobbyName = (await API.getLobby(lobbyId)).lobbyName || ''; } catch {}
+      const html = buildExportHtml({ lobbyName, sorted, denseRanks, revealOrder, wineMap, guesses, scores, rules });
+      downloadExportHtml(lobbyId, html);
+      exportBtn.textContent = isHK ? '↓ 匯出結果' : '↓ Export Results';
+      exportBtn.disabled = false;
+    });
+  }
+
   // Player row accordion toggle
   document.querySelectorAll('.score-row-expandable').forEach(row => {
     row.addEventListener('click', () => {
@@ -202,10 +219,10 @@ async function renderScoreboard(lobbyId) {
     });
   });
 
-  // Wine sub-accordion toggle (inside player accordion)
+  // Wine sub-accordion toggle
   document.querySelectorAll('.score-wine-expandable').forEach(row => {
     row.addEventListener('click', e => {
-      e.stopPropagation(); // don't bubble to player row
+      e.stopPropagation();
       const accId = row.dataset.acc;
       const accordion = document.getElementById(accId);
       const chevron = row.querySelector('.score-wine-chevron');

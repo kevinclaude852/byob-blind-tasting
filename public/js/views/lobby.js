@@ -1,3 +1,23 @@
+function buildScoringRulesHtml(rules) {
+  const rows = buildRuleDisplayRows(rules);
+  const maxPts = getMaxScore(rules);
+  const isHK = getLocale() === 'hk';
+  if (rows.length === 0) return '';
+  return `
+    <div class="scoring-rules">
+      <div class="scoring-rules-title">${t('lobby.scoringRules')}</div>
+      <div class="scoring-rules-grid">
+        ${rows.map(({ cat, pts, desc }) => `
+          <div class="scoring-rule-item">
+            <span class="scoring-rule-cat">${cat}</span>
+            <span class="scoring-rule-pts">${pts}</span>
+            <span class="scoring-rule-desc">${desc}</span>
+          </div>`).join('')}
+      </div>
+      <div class="scoring-rule-max">${isHK ? `每支酒最多 ${maxPts} 分` : `Maximum ${maxPts} pts per wine`}</div>
+    </div>`;
+}
+
 async function renderLobby(lobbyId) {
   const app = document.getElementById('app');
   app.innerHTML = `<div class="page"><div class="loading-screen"><div class="wine-glass">🍷</div><p>${t('app.loading')}</p></div></div>`;
@@ -159,14 +179,21 @@ async function renderLobby(lobbyId) {
       }
 
       if (isRevealed) {
-        const varietalStr = wine.type === 'blend'
-          ? (wine.varietals || []).filter(v => v.grape).map(v => `${v.grape} ${v.percentage}%`).join(' — ')
-          : wine.varietals?.[0]?.grape || null;
+        const lobbyRules = normaliseRulesClient(lobby.rules);
+        const isHK = getLocale() === 'hk';
+        const varietalStr = lobbyRules.grape.enabled
+          ? (wine.type === 'blend'
+              ? (wine.varietals || []).filter(v => v.grape).map(v => `${v.grape} ${v.percentage}%`).join(' — ')
+              : wine.varietals?.[0]?.grape || null)
+          : null;
         const detailRows = [
+          lobbyRules.oldWorld.enabled && wine.country ? `<div class="wine-reveal-row"><span>${isHK ? '舊/新' : 'OLD/NEW'}</span><span>${isOldWorld(wine.country) ? (isHK ? '舊世界' : 'Old World') : (isHK ? '新世界' : 'New World')}</span></div>` : '',
           wine.country ? `<div class="wine-reveal-row"><span>${t('lobby.country')}</span><span>${escHtml(wine.country)}</span></div>` : '',
           wine.region  ? `<div class="wine-reveal-row"><span>${t('lobby.region')}</span><span>${escHtml(wine.region)}</span></div>`  : '',
           varietalStr  ? `<div class="wine-reveal-row"><span>${t('lobby.variety')}</span><span>${escHtml(varietalStr)}</span></div>`  : '',
           wine.vintage ? `<div class="wine-reveal-row"><span>${t('lobby.vintage')}</span><span>${wine.vintage}</span></div>`          : '',
+          lobbyRules.abv.enabled && wine.abv != null ? `<div class="wine-reveal-row"><span>${isHK ? '酒精度' : 'ABV'}</span><span>${wine.abv}%</span></div>` : '',
+          lobbyRules.price.enabled && wine.price != null ? `<div class="wine-reveal-row"><span>${t('form.price')}</span><span>${formatWinePrice(wine.price, lobbyRules.price.currency)}</span></div>` : '',
         ].filter(Boolean).join('');
         return `
           <div class="wine-row-wrap">
@@ -291,32 +318,7 @@ async function renderLobby(lobbyId) {
 
         <div class="players-grid" id="playersGrid">${playerCards}</div>
 
-        <div class="scoring-rules">
-          <div class="scoring-rules-title">${t('lobby.scoringRules')}</div>
-          <div class="scoring-rules-grid">
-            <div class="scoring-rule-item">
-              <span class="scoring-rule-cat">${t('lobby.grapeVariety')}</span>
-              <span class="scoring-rule-pts">${t('lobby.upTo10pts')}</span>
-              <span class="scoring-rule-desc">${t('lobby.grapeDesc')}</span>
-            </div>
-            <div class="scoring-rule-item">
-              <span class="scoring-rule-cat">${t('lobby.country')}</span>
-              <span class="scoring-rule-pts">${t('lobby.5pts')}</span>
-              <span class="scoring-rule-desc">${t('lobby.exactMatch')}</span>
-            </div>
-            <div class="scoring-rule-item">
-              <span class="scoring-rule-cat">${t('lobby.region')}</span>
-              <span class="scoring-rule-pts">${t('lobby.5pts')}</span>
-              <span class="scoring-rule-desc">${t('lobby.exactMatch')}</span>
-            </div>
-            <div class="scoring-rule-item">
-              <span class="scoring-rule-cat">${t('lobby.vintage')}</span>
-              <span class="scoring-rule-pts">${t('lobby.vintageScore')}</span>
-              <span class="scoring-rule-desc">${t('lobby.vintageDesc')}</span>
-            </div>
-          </div>
-          <div class="scoring-rule-max">${t('lobby.maxPts')}</div>
-        </div>
+        ${buildScoringRulesHtml(lobby.rules)}
 
       </div>
     `;

@@ -14,6 +14,7 @@ async function renderGuess(lobbyId, wineId) {
     return;
   }
 
+  const rules = normaliseRulesClient(lobby.rules);
   const wineInfo = lobby.wineMap[wineId];
   if (!wineInfo) {
     app.innerHTML = `<div class="page"><div class="alert alert-error">Wine not found.</div></div>`;
@@ -35,7 +36,7 @@ async function renderGuess(lobbyId, wineId) {
         </div>
       </div>
 
-      ${isRevealed ? renderRevealedView(wineInfo, existingGuess, lobby, wineId) : renderGuessForm(grapes, countries, regions, existingGuess)}
+      ${isRevealed ? renderRevealedView(wineInfo, existingGuess, lobby, wineId, rules) : renderGuessForm(grapes, countries, regions, existingGuess, rules)}
     </div>
   `;
 
@@ -47,7 +48,7 @@ async function renderGuess(lobbyId, wineId) {
     attachWineFormListeners(regions, grapes);
 
     document.getElementById('guessSubmitBtn').addEventListener('click', async () => {
-      const data = collectWineFormData(true);
+      const data = collectWineFormData(true, rules);
       const errorEl = document.getElementById('guessError');
       const btn = document.getElementById('guessSubmitBtn');
       btn.disabled = true;
@@ -68,57 +69,62 @@ async function renderGuess(lobbyId, wineId) {
   }
 }
 
-function renderGuessForm(grapes, countries, regions, prefill) {
+function renderGuessForm(grapes, countries, regions, prefill, rules) {
   return `
     <div class="card">
-      ${buildWineFormHTML({ isGuess: true, prefill, grapes, countries, regions })}
+      ${buildWineFormHTML({ isGuess: true, prefill, grapes, countries, regions, rules })}
       <div id="guessError"></div>
       <button class="btn btn-primary" id="guessSubmitBtn">${t('guess.saveBtn')}</button>
     </div>
   `;
 }
 
-function renderRevealedView(wineInfo, myGuess, lobby, wineId) {
+function renderRevealedView(wineInfo, myGuess, lobby, wineId, rules) {
   const wine = wineInfo.wine;
+  const r = normaliseRulesClient(rules);
   const currentPlayerId = lobby.currentPlayerId;
   const myScore = (lobby.scores && lobby.scores[wineId] && lobby.scores[wineId][currentPlayerId]) || null;
 
-  const varietalStr = wine.type === 'blend'
-    ? wine.varietals.map(v => `${v.grape} (${v.percentage}%)`).join(', ')
-    : wine.varietals?.[0]?.grape || '—';
+  const compareRows = buildCompareRows(wine, myGuess, rules);
 
-  const guessVarietalStr = myGuess && myGuess.varietals && myGuess.varietals.length
-    ? myGuess.varietals.map(v => v.grape).join(', ')
-    : '—';
+  const wineDetailRows = [
+    wine.vintage ? `<div class="wine-detail-row"><span class="wine-detail-label">${t('lb.vintage')}</span><span class="wine-detail-value">${wine.vintage}</span></div>` : '',
+    r.grape.enabled ? `<div class="wine-detail-row"><span class="wine-detail-label">${t('lb.varietal')}</span><span class="wine-detail-value">${escHtml(formatVarietalClient(wine))}</span></div>` : '',
+    wine.country ? `<div class="wine-detail-row"><span class="wine-detail-label">${t('lb.country')}</span><span class="wine-detail-value">${escHtml(wine.country)}</span></div>` : '',
+    wine.region  ? `<div class="wine-detail-row"><span class="wine-detail-label">${t('lb.region')}</span><span class="wine-detail-value">${escHtml(wine.region)}</span></div>`  : '',
+    r.abv.enabled && wine.abv != null ? `<div class="wine-detail-row"><span class="wine-detail-label">${getLocale() === 'hk' ? '酒精度' : 'ABV'}</span><span class="wine-detail-value">${wine.abv}%</span></div>` : '',
+    r.price.enabled && wine.price != null ? `<div class="wine-detail-row"><span class="wine-detail-label">${t('form.price')}</span><span class="wine-detail-value">${formatWinePrice(wine.price, r.price.currency)}</span></div>` : '',
+  ].filter(Boolean).join('');
+
+  const maxScore = getMaxScore(rules);
+  const scoreChips = myScore ? buildScoreChips(myScore, rules) : null;
 
   return `
     <div class="revealed-wine">
       <h3>${escHtml(wine.name || '—')}</h3>
-      <div class="wine-detail">
-        <div class="wine-detail-row"><span class="wine-detail-label">${t('lb.vintage')}</span><span class="wine-detail-value">${wine.vintage || '—'}</span></div>
-        <div class="wine-detail-row"><span class="wine-detail-label">${t('lb.varietal')}</span><span class="wine-detail-value">${escHtml(varietalStr)}</span></div>
-        <div class="wine-detail-row"><span class="wine-detail-label">${t('lb.country')}</span><span class="wine-detail-value">${escHtml(wine.country || '—')}</span></div>
-        <div class="wine-detail-row"><span class="wine-detail-label">${t('lb.region')}</span><span class="wine-detail-value">${escHtml(wine.region || '—')}</span></div>
-      </div>
+      <div class="wine-detail">${wineDetailRows}</div>
     </div>
 
     ${myGuess ? `
     <div class="card">
       <h3 style="margin-bottom:12px;font-size:0.95rem;color:var(--text-muted)">Your Guess</h3>
       <div class="wine-detail">
-        <div class="wine-detail-row"><span class="wine-detail-label">${t('lb.vintage')}</span><span class="wine-detail-value">${myGuess.vintage || '—'}</span></div>
-        <div class="wine-detail-row"><span class="wine-detail-label">${t('lb.varietal')}</span><span class="wine-detail-value">${escHtml(guessVarietalStr)}</span></div>
-        <div class="wine-detail-row"><span class="wine-detail-label">${t('lb.country')}</span><span class="wine-detail-value">${escHtml(myGuess.country || '—')}</span></div>
-        <div class="wine-detail-row"><span class="wine-detail-label">${t('lb.region')}</span><span class="wine-detail-value">${escHtml(myGuess.region || '—')}</span></div>
+        ${compareRows.map(row => `
+          <div class="wine-detail-row">
+            <span class="wine-detail-label">${row.label}</span>
+            <span class="wine-detail-value">${escHtml(row.guessVal)}</span>
+          </div>`).join('')}
       </div>
       ${myScore ? `
       <div class="score-breakdown">
         <h4>Your Score</h4>
         <div class="score-items">
-          <div class="score-item"><div class="si-label">${t('lb.varietal')}</div><div class="si-value">${myScore.varietal}</div><div class="si-max">/ 10</div></div>
-          <div class="score-item"><div class="si-label">${t('lb.country')}</div><div class="si-value">${myScore.country}</div><div class="si-max">/ 5</div></div>
-          <div class="score-item"><div class="si-label">${t('lb.region')}</div><div class="si-value">${myScore.region}</div><div class="si-max">/ 5</div></div>
-          <div class="score-item"><div class="si-label">${t('lb.vintage')}</div><div class="si-value">${myScore.vintage}</div><div class="si-max">/ 5</div></div>
+          ${scoreChips.filter(c => c.label !== (getLocale() === 'hk' ? '總分' : 'Total')).map(c => `
+            <div class="score-item">
+              <div class="si-label">${c.label}</div>
+              <div class="si-value">${c.val}</div>
+              <div class="si-max">/ ${maxScore > 0 ? '' : '?'}</div>
+            </div>`).join('')}
         </div>
         <div style="text-align:center;margin-top:16px;font-size:2rem;font-weight:700;color:var(--wine)">${myScore.total} ${t('lb.pts')}</div>
       </div>` : ''}
