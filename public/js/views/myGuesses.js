@@ -10,25 +10,17 @@ async function renderMyGuesses(lobbyId) {
     return;
   }
 
+  const rules = normaliseRulesClient(lobby.rules);
   const currentPlayerId = lobby.currentPlayerId;
   const myGuesses = lobby.myGuesses || {};
   const scores = lobby.scores || {};
   const revealedSet = new Set(lobby.revealOrder || []);
 
-  // Calculate my total score across all wines
   let totalScore = 0;
   for (const wineId of Object.keys(scores)) {
     if (scores[wineId]?.[currentPlayerId]) {
       totalScore += scores[wineId][currentPlayerId].total;
     }
-  }
-
-  function formatVarietal(obj) {
-    if (!obj) return '—';
-    if (obj.type === 'blend') {
-      return (obj.varietals || []).filter(v => v.grape).map(v => `${v.grape}${v.percentage ? ` ${v.percentage}%` : ''}`).join(', ') || '—';
-    }
-    return obj.varietals?.[0]?.grape || '—';
   }
 
   // Build ordered list of wines to show: all wines I didn't bring
@@ -62,17 +54,12 @@ async function renderMyGuesses(lobbyId) {
       ? wine.name
       : `${info.playerName}'s Wine ${info.wineEmoji}`;
 
-    const attrs = [
-      { label: t('mg.grapeVariety'), guessVal: guess ? formatVarietal(guess) : '—',                     wineVal: wine ? formatVarietal(wine) : '—' },
-      { label: t('mg.country'),       guessVal: guess?.country  || '—',                                   wineVal: wine?.country  || '—' },
-      { label: t('mg.region'),        guessVal: guess?.region   || '—',                                   wineVal: wine?.region   || '—' },
-      { label: t('mg.vintage'),       guessVal: guess?.vintage  ? String(guess.vintage) : '—',            wineVal: wine?.vintage  ? String(wine.vintage) : '—' },
-    ];
+    const compareRows = buildCompareRows(wine, guess, rules);
 
     let attributeSection;
     if (guess) {
       if (isRevealed) {
-        const attrRows = attrs.map(({ label, guessVal, wineVal }) => `
+        const attrRows = compareRows.map(({ label, guessVal, wineVal }) => `
           <div class="gvw-attr-row">
             <span class="gvw-label">${label}</span>
             <span class="gvw-guess-val">${escHtml(guessVal)}</span>
@@ -86,10 +73,20 @@ async function renderMyGuesses(lobbyId) {
           </div>
           ${attrRows}`;
       } else {
-        const attrRows = attrs.map(({ label, guessVal }) => `
+        // Not revealed yet: show only my guess
+        const r = normaliseRulesClient(rules);
+        const guessFields = [];
+        if (r.grape.enabled) guessFields.push({ label: t('mg.grapeVariety'), val: formatVarietalClient(guess) });
+        if (r.country.enabled) guessFields.push({ label: t('mg.country'), val: guess.country || '—' });
+        if (r.region.enabled) guessFields.push({ label: t('mg.region'), val: guess.region || '—' });
+        if (r.vintage.enabled) guessFields.push({ label: t('mg.vintage'), val: guess.vintage ? String(guess.vintage) : '—' });
+        if (r.abv.enabled) guessFields.push({ label: t('mg.abv'), val: guess.abv != null ? `${guess.abv}%` : '—' });
+        if (r.price.enabled) guessFields.push({ label: t('mg.price'), val: guess.priceRange ? formatPriceBucket(guess.priceRange, r.price.currency) : '—' });
+
+        const attrRows = guessFields.map(({ label, val }) => `
           <div class="wine-detail-row">
             <span class="wine-detail-label" style="font-size:0.82rem">${label}</span>
-            <span class="wine-detail-value" style="font-size:0.82rem">${escHtml(guessVal)}</span>
+            <span class="wine-detail-value" style="font-size:0.82rem">${escHtml(val)}</span>
           </div>`).join('');
         attributeSection = `<div class="wine-detail">${attrRows}</div>`;
       }
@@ -104,13 +101,14 @@ async function renderMyGuesses(lobbyId) {
          </div>`
       : `<span style="font-size:0.72rem;color:var(--text-muted);flex-shrink:0;white-space:nowrap">${getLocale() === 'hk' ? '仲未開估' : 'Not revealed'}</span>`;
 
-    const scoreBreakdown = isRevealed && score ? `
-      <div style="display:flex;justify-content:center;gap:16px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:0.78rem;color:var(--text-muted)">
-        <span>${t('mg.variety')} <strong style="color:var(--text)">${score.varietal}</strong></span>
-        <span>${t('mg.country')} <strong style="color:var(--text)">${score.country}</strong></span>
-        <span>${t('mg.region')} <strong style="color:var(--text)">${score.region}</strong></span>
-        <span>${t('mg.vintage')} <strong style="color:var(--text)">${score.vintage}</strong></span>
-      </div>` : '';
+    const scoreBreakdown = isRevealed && score
+      ? (() => {
+          const chips = buildScoreChips(score, rules).filter(c => c.label !== (getLocale() === 'hk' ? '總分' : 'Total'));
+          return `<div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:0.78rem;color:var(--text-muted)">
+            ${chips.map(c => `<span>${c.label} <strong style="color:var(--text)">${c.val}</strong></span>`).join('')}
+          </div>`;
+        })()
+      : '';
 
     return `
       <div class="card" style="margin-bottom:16px">
@@ -124,6 +122,9 @@ async function renderMyGuesses(lobbyId) {
         </div>
         ${attributeSection}
         ${scoreBreakdown}
+        ${isRevealed && guess ? `<div style="margin-top:12px;text-align:center">
+          <a href="#/lobby/${lobbyId}/share-guess/${wineId}" class="btn btn-secondary btn-sm" style="width:auto;text-decoration:none">📸 ${getLocale() === 'hk' ? '分享我嘅答案' : 'Share My Guess'}</a>
+        </div>` : ''}
       </div>`;
   }).join('');
 

@@ -30,18 +30,16 @@ function attachGrapeAutocomplete(grapes) {
     function highlight(idx) {
       getItems().forEach((el, i) => el.classList.toggle('active', i === idx));
       activeIdx = idx;
-      // Scroll active item into view
       const active = getItems()[idx];
       if (active) active.scrollIntoView({ block: 'nearest' });
     }
 
-    // Strip diacritics for accent-insensitive matching (e.g. "Semi" matches "Sémillon")
     function norm(s) {
       return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
     }
 
     function buildList(q) {
-      if (!q) return grapes; // show full list when nothing typed
+      if (!q) return grapes;
       const ql = norm(q);
       const starts   = grapes.filter(g =>  norm(g).startsWith(ql));
       const contains = grapes.filter(g => !norm(g).startsWith(ql) && norm(g).includes(ql));
@@ -74,45 +72,29 @@ function attachGrapeAutocomplete(grapes) {
       closeDrop();
     }
 
-    // Open on focus — show full list or filtered if text already present
     textEl.addEventListener('focus', () => openDrop(buildList(textEl.value.trim())));
-
-    // Filter as user types
     textEl.addEventListener('input', () => {
       const q = textEl.value.trim();
       valEl.value = grapes.includes(q) ? q : '';
       openDrop(buildList(q));
     });
-
-    // Toggle button opens/closes the full list
     toggleBtn.addEventListener('mousedown', (e) => {
       e.preventDefault();
-      if (isOpen) {
-        closeDrop();
-        textEl.blur();
-      } else {
-        textEl.focus();
-        openDrop(buildList(textEl.value.trim()));
-      }
+      if (isOpen) { closeDrop(); textEl.blur(); }
+      else { textEl.focus(); openDrop(buildList(textEl.value.trim())); }
     });
-
-    // Keyboard navigation
     textEl.addEventListener('keydown', (e) => {
       if (!isOpen) { if (e.key === 'ArrowDown' || e.key === 'Enter') { openDrop(buildList(textEl.value.trim())); return; } }
       const items = getItems();
       if (e.key === 'ArrowDown')  { e.preventDefault(); highlight(Math.min(activeIdx + 1, items.length - 1)); }
       else if (e.key === 'ArrowUp')   { e.preventDefault(); highlight(Math.max(activeIdx - 1, 0)); }
-      else if (e.key === 'Enter') { e.preventDefault(); const t = items[activeIdx]; if (t) commit(t.dataset.value); }
+      else if (e.key === 'Enter') { e.preventDefault(); const ti = items[activeIdx]; if (ti) commit(ti.dataset.value); }
       else if (e.key === 'Escape') { closeDrop(); }
     });
-
-    // Click item to select
     drop.addEventListener('mousedown', (e) => {
       const item = e.target.closest('.grape-ac-item');
       if (item) { e.preventDefault(); commit(item.dataset.value); }
     });
-
-    // Close on blur (with delay to allow item click to fire first)
     textEl.addEventListener('blur', () => {
       setTimeout(() => {
         closeDrop();
@@ -122,9 +104,48 @@ function attachGrapeAutocomplete(grapes) {
   });
 }
 
-// Shared wine form builder used by both registration and guessing
-function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], countries = [], regions = {}, wineIndex = 0 } = {}) {
+// ── ABV select HTML ───────────────────────────────────────────────────────────
+function buildAbvSelect(id, prefillVal, isRequired) {
+  const opts = getAbvOptions();
+  const optHtml = `<option value="">${t('form.selectAbv')}</option>` +
+    opts.map(v => `<option value="${v}"${prefillVal != null && Number(prefillVal) === v ? ' selected' : ''}>${v}%</option>`).join('');
+  return `<div class="form-group">
+    <label for="${id}">${t('form.abv')}${isRequired ? '' : ` <span class="optional">${t('form.optional')}</span>`}</label>
+    <select id="${id}">${optHtml}</select>
+  </div>`;
+}
+
+// ── Price range select HTML (for guessing) ───────────────────────────────────
+function buildPriceRangeSelect(id, currency, rangeWidth, prefillRange) {
+  const buckets = getPriceBuckets(currency, rangeWidth);
+  const optHtml = `<option value="">${t('form.selectPriceRange')}</option>` +
+    buckets.map(b => {
+      const isSelected = prefillRange &&
+        prefillRange.min === b.min &&
+        (prefillRange.max === b.max || (prefillRange.max == null && b.max == null));
+      return `<option value="${b.min}|${b.max ?? ''}" ${isSelected ? 'selected' : ''}>${formatPriceBucket(b, currency)}</option>`;
+    }).join('');
+  return `<div class="form-group">
+    <label for="${id}">${t('form.priceRange')} <span class="optional">${t('form.optional')}</span></label>
+    <select id="${id}">${optHtml}</select>
+  </div>`;
+}
+
+// ── Price text input (for wine registration) ─────────────────────────────────
+function buildPriceInput(id, currency, prefillVal, isRequired) {
+  const sym = { HKD: 'HK$', USD: '$', GBP: '£', EUR: '€' }[currency] || currency + ' ';
+  return `<div class="form-group">
+    <label for="${id}">${t('form.price')} (${sym})${isRequired ? '' : ` <span class="optional">${t('form.optional')}</span>`}</label>
+    <input type="number" id="${id}" min="0" step="1" placeholder="0" value="${prefillVal != null ? prefillVal : ''}">
+  </div>`;
+}
+
+// ── Shared wine form builder ──────────────────────────────────────────────────
+function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], countries = [], regions = {}, wineIndex = 0, rules = null } = {}) {
+  const r = normaliseRulesClient(rules);
   const currentYear = new Date().getFullYear();
+  const opt = `<span class="optional">${t('form.optional')}</span>`;
+
   const vintageOptions = `<option value="">${t('form.selectVintage')}</option>
     <option value="NV" ${prefill && prefill.vintage === 'NV' ? 'selected' : ''}>NV (Non-Vintage)</option>
     ${Array.from({ length: 51 }, (_, i) => currentYear - i)
@@ -146,12 +167,9 @@ function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], count
 
   const singleGrape = prefillVarietals[0] ? prefillVarietals[0].grape : '';
 
-  // Shared fragments
-  const opt = `<span class="optional">${t('form.optional')}</span>`;
-
   const countryField = `
     <div class="form-group">
-      <label for="wineCountry">${t('lobby.country')}${isGuess ? opt : ''}</label>
+      <label for="wineCountry">${t('lobby.country')}${(isGuess || !r.country.enabled && !r.oldWorld.enabled) ? ` ${opt}` : ''}</label>
       <select id="wineCountry">
         <option value="">${t('form.selectCountry')}</option>
         ${countries.map(c => `<option value="${c}" ${prefill && prefill.country === c ? 'selected' : ''}>${c}</option>`).join('')}
@@ -164,44 +182,40 @@ function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], count
       <select id="wineRegion">
         <option value="">${t('form.selectRegion')}</option>
         ${prefill && prefill.country && regions[prefill.country]
-          ? regions[prefill.country].map(r => `<option value="${r}" ${prefill.region === r ? 'selected' : ''}>${r}</option>`).join('')
+          ? regions[prefill.country].map(rg => `<option value="${rg}" ${prefill.region === rg ? 'selected' : ''}>${rg}</option>`).join('')
           : ''}
       </select>
     </div>`;
 
-  const vintageField = `
+  const vintageField = r.vintage.enabled ? `
     <div class="form-group">
-      <label for="wineVintage">${t('lobby.vintage')}${isGuess ? opt : ''}</label>
+      <label for="wineVintage">${t('lobby.vintage')}${isGuess ? ` ${opt}` : ''}</label>
       <select id="wineVintage">${vintageOptions}</select>
-    </div>`;
+    </div>` : '';
 
-  // ── Guess form: Grape Variety → Country → Region → Vintage (no radio, single grape only)
+  // ── Guess form: simplified (single grape only, no emoji/name)
   if (isGuess) {
-    return `
+    const grapeField = r.grape.enabled ? `
       <div class="form-group">
         <label>${t('lobby.grapeVariety')} ${opt}</label>
         ${buildGrapeAutocomplete({ id: 'singleGrape', prefillValue: singleGrape, placeholder: t('form.searchGrape') })}
-      </div>
+      </div>` : '';
+
+    const abvField = r.abv.enabled ? buildAbvSelect('wineAbv', prefill?.abv, false) : '';
+    const priceField = r.price.enabled ? buildPriceRangeSelect('winePriceRange', r.price.currency, r.price.rangeWidth, prefill?.priceRange) : '';
+
+    return `
+      ${grapeField}
       ${countryField}
       ${regionField}
       ${vintageField}
+      ${abvField}
+      ${priceField}
     `;
   }
 
-  // ── Wine registration form: Emoji → Name → Cépage radio → Variety/Blend → Country → Region → Vintage
-  return `
-    <div class="form-group">
-      <label>${t('form.wineEmoji')}</label>
-      <div class="emoji-picker wine-emoji-picker" id="wineEmojiPicker">
-        ${WINE_EMOJIS.map(e => `<button type="button" class="emoji-btn${e === defaultEmoji ? ' selected' : ''}" data-emoji="${e}"><span>${e}</span></button>`).join('')}
-      </div>
-      <input type="hidden" id="selectedWineEmoji" value="${defaultEmoji}">
-    </div>
-    <div class="form-group">
-      <label for="wineName">${t('form.wineName')}</label>
-      <input type="text" id="wineName" placeholder="e.g. Château Margaux" value="${prefill ? escHtml(prefill.name || '') : ''}">
-    </div>
-
+  // ── Wine registration form: full form with emoji / name / cépage
+  const grapeSection = r.grape.enabled ? `
     <div class="form-group">
       <label>${t('form.cepage')}</label>
       <div class="radio-group">
@@ -215,32 +229,47 @@ function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], count
         </div>
       </div>
     </div>
-
     <div id="singleVarietalSection" style="${prefillType === 'blend' ? 'display:none' : ''}">
       <div class="form-group">
         <label>${t('lobby.grapeVariety')}</label>
         ${buildGrapeAutocomplete({ id: 'singleGrape', prefillValue: singleGrape, placeholder: t('form.searchGrape') })}
       </div>
     </div>
-
     <div id="blendSection" style="${prefillType !== 'blend' ? 'display:none' : ''}">
       <div class="form-group">
         <label>${t('form.grapeBlend')} <span class="optional">${t('form.blendHint')}</span></label>
         ${blendRows}
         <div class="pct-total" id="pctTotal">${t('form.pctTotal')}: 0%</div>
       </div>
-    </div>
+    </div>` : '';
 
+  const abvField = r.abv.enabled ? buildAbvSelect('wineAbv', prefill?.abv, true) : '';
+  const priceField = r.price.enabled ? buildPriceInput('winePrice', r.price.currency, prefill?.price, true) : '';
+
+  return `
+    <div class="form-group">
+      <label>${t('form.wineEmoji')}</label>
+      <div class="emoji-picker wine-emoji-picker" id="wineEmojiPicker">
+        ${WINE_EMOJIS.map(e => `<button type="button" class="emoji-btn${e === defaultEmoji ? ' selected' : ''}" data-emoji="${e}"><span>${e}</span></button>`).join('')}
+      </div>
+      <input type="hidden" id="selectedWineEmoji" value="${defaultEmoji}">
+    </div>
+    <div class="form-group">
+      <label for="wineName">${t('form.wineName')}</label>
+      <input type="text" id="wineName" placeholder="e.g. Château Margaux" value="${prefill ? escHtml(prefill.name || '') : ''}">
+    </div>
+    ${grapeSection}
     ${countryField}
     ${regionField}
     ${vintageField}
+    ${abvField}
+    ${priceField}
   `;
 }
 
 function attachWineFormListeners(regions, grapes = []) {
   attachGrapeAutocomplete(grapes);
 
-  // Wine emoji picker
   document.querySelectorAll('.wine-emoji-picker .emoji-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.wine-emoji-picker .emoji-btn').forEach(b => b.classList.remove('selected'));
@@ -250,7 +279,6 @@ function attachWineFormListeners(regions, grapes = []) {
     });
   });
 
-  // Type toggle
   document.querySelectorAll('input[name="wineType"]').forEach(radio => {
     radio.addEventListener('change', () => {
       const isBlend = radio.value === 'blend';
@@ -260,12 +288,10 @@ function attachWineFormListeners(regions, grapes = []) {
     });
   });
 
-  // Percentage total
   document.querySelectorAll('.blend-pct').forEach(inp => {
     inp.addEventListener('input', updatePctTotal);
   });
 
-  // Country -> Region cascade
   const countrySelect = document.getElementById('wineCountry');
   if (countrySelect) {
     countrySelect.addEventListener('change', () => {
@@ -304,39 +330,64 @@ function updateRegionDropdown(country, regions, selectedRegion = '') {
     list.map(r => `<option value="${r}" ${r === selectedRegion ? 'selected' : ''}>${r}</option>`).join('');
 }
 
-function collectWineFormData(isGuess = false) {
+function collectWineFormData(isGuess = false, rules = null) {
+  const r = normaliseRulesClient(rules);
   const varietals = [];
   let type;
 
   if (isGuess) {
-    // Guesses are always single-grape
     type = 'single';
-    const grape = document.getElementById('singleGrape')?.value;
+    const grape = r.grape.enabled ? (document.getElementById('singleGrape')?.value || null) : null;
     if (grape) varietals.push({ grape, percentage: 100 });
   } else {
-    type = document.querySelector('input[name="wineType"]:checked')?.value || 'single';
-    if (type === 'single') {
-      const grape = document.getElementById('singleGrape')?.value;
-      if (grape) varietals.push({ grape, percentage: 100 });
+    if (r.grape.enabled) {
+      type = document.querySelector('input[name="wineType"]:checked')?.value || 'single';
+      if (type === 'single') {
+        const grape = document.getElementById('singleGrape')?.value;
+        if (grape) varietals.push({ grape, percentage: 100 });
+      } else {
+        document.querySelectorAll('.blend-grape').forEach((sel, i) => {
+          if (sel.value) {
+            const pctEl = document.querySelectorAll('.blend-pct')[i];
+            const entry = { grape: sel.value };
+            if (pctEl) entry.percentage = parseInt(pctEl.value, 10) || 0;
+            varietals.push(entry);
+          }
+        });
+      }
     } else {
-      document.querySelectorAll('.blend-grape').forEach((sel, i) => {
-        if (sel.value) {
-          const pctEl = document.querySelectorAll('.blend-pct')[i];
-          const entry = { grape: sel.value };
-          if (pctEl) entry.percentage = parseInt(pctEl.value, 10) || 0;
-          varietals.push(entry);
-        }
-      });
+      type = 'single';
     }
   }
 
   const data = {
-    vintage: document.getElementById('wineVintage')?.value || null,
+    vintage: r.vintage.enabled ? (document.getElementById('wineVintage')?.value || null) : null,
     type,
     varietals,
     country: document.getElementById('wineCountry')?.value || null,
     region: document.getElementById('wineRegion')?.value || null
   };
+
+  // ABV
+  if (r.abv.enabled) {
+    const abvVal = document.getElementById('wineAbv')?.value;
+    data.abv = abvVal ? Number(abvVal) : null;
+  }
+
+  // Price (wine = actual price, guess = range bucket)
+  if (r.price.enabled) {
+    if (isGuess) {
+      const rangeVal = document.getElementById('winePriceRange')?.value;
+      if (rangeVal) {
+        const [minStr, maxStr] = rangeVal.split('|');
+        data.priceRange = { min: Number(minStr), max: maxStr === '' ? null : Number(maxStr) };
+      }
+    } else {
+      const priceVal = document.getElementById('winePrice')?.value;
+      data.price = priceVal ? Number(priceVal) : null;
+    }
+  }
+
   if (!isGuess) {
     data.name = document.getElementById('wineName')?.value || '';
     data.emoji = document.getElementById('selectedWineEmoji')?.value || '1️⃣';
@@ -344,7 +395,7 @@ function collectWineFormData(isGuess = false) {
   return data;
 }
 
-// Wine registration / edit page
+// ── Wine registration / edit page ─────────────────────────────────────────────
 async function renderWineRegistration(lobbyId, wineId = null) {
   const app = document.getElementById('app');
   app.innerHTML = `<div class="page"><div class="loading-screen"><div class="wine-glass">🍷</div><p>Loading...</p></div></div>`;
@@ -362,6 +413,7 @@ async function renderWineRegistration(lobbyId, wineId = null) {
     return;
   }
 
+  const rules = normaliseRulesClient(lobby.rules);
   const player = lobby.players[session.playerId];
   const isEditing = !!wineId;
   const prefill = isEditing ? (player.wines || []).find(w => w.id === wineId) : null;
@@ -376,7 +428,7 @@ async function renderWineRegistration(lobbyId, wineId = null) {
         <p>${isEditing ? t('wine.editSubtitle') : t('wine.pageSubtitle')}</p>
       </div>
       <div class="card">
-        ${buildWineFormHTML({ isGuess: false, prefill, grapes, countries, regions, wineIndex })}
+        ${buildWineFormHTML({ isGuess: false, prefill, grapes, countries, regions, wineIndex, rules })}
         <div id="wineError"></div>
         <button class="btn btn-primary" id="wineSubmitBtn">${submitLabel}</button>
         ${isEditing ? `
@@ -393,7 +445,7 @@ async function renderWineRegistration(lobbyId, wineId = null) {
   attachWineFormListeners(regions, grapes);
 
   async function submitWine(redirectToLobby = true) {
-    const data = collectWineFormData(false);
+    const data = collectWineFormData(false, rules);
     const errorEl = document.getElementById('wineError');
     const btn = document.getElementById('wineSubmitBtn');
     btn.disabled = true;
@@ -409,7 +461,6 @@ async function renderWineRegistration(lobbyId, wineId = null) {
       if (redirectToLobby) {
         window.location.hash = `#/lobby/${lobbyId}`;
       } else {
-        // Reset form for another wine
         showToast(t('wine.added'));
         await renderWineRegistration(lobbyId, null);
       }

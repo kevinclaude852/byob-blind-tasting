@@ -1,16 +1,8 @@
-function buildExportHtml({ lobbyName, sorted, denseRanks, revealOrder, wineMap, guesses, scores }) {
+function buildExportHtml({ lobbyName, sorted, denseRanks, revealOrder, wineMap, guesses, scores, rules }) {
   const isHK = getLocale() === 'hk';
+  const r = normaliseRulesClient(rules);
   const rankMedals = { 1: '🥇', 2: '🥈', 3: '🥉' };
   const now = new Date().toLocaleDateString(isHK ? 'zh-HK' : 'en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
-
-  function fmtVarietal(obj) {
-    if (!obj) return '—';
-    if (obj.type === 'blend') {
-      return (obj.varietals || []).filter(v => v.grape)
-        .map(v => `${v.grape}${v.percentage ? ` ${v.percentage}%` : ''}`).join(', ') || '—';
-    }
-    return obj.varietals?.[0]?.grape || '—';
-  }
 
   // ── Leaderboard rows ────────────────────────────────────────────────────────
   const leaderboardRows = sorted.map(([pid, s], i) => {
@@ -25,34 +17,101 @@ function buildExportHtml({ lobbyName, sorted, denseRanks, revealOrder, wineMap, 
       </tr>`;
   }).join('');
 
-  // ── Wine sections ───────────────────────────────────────────────────────────
-  const wineSections = revealOrder.map((wineId, wi) => {
-    const info = wineMap[wineId];
-    if (!info || !info.wine) return '';
-    const wine = info.wine;
-    const varietalStr = fmtVarietal(wine);
+  // ── Scoring rules summary ────────────────────────────────────────────────────
+  const ruleRows = buildRuleDisplayRows(rules);
+  const maxPts = getMaxScore(rules);
+  const scoringRulesHtml = ruleRows.length > 0 ? `
+    <div class="rules-card">
+      <div class="sec-title">${isHK ? '計分準則' : 'Scoring Rules'}</div>
+      <table class="rules-table">
+        ${ruleRows.map(({ cat, pts, desc }) => `
+          <tr>
+            <td class="rl-cat">${cat}</td>
+            <td class="rl-pts">${pts}</td>
+            <td class="rl-desc">${desc}</td>
+          </tr>`).join('')}
+      </table>
+      <div class="rl-max">${isHK ? `每支酒最多 ${maxPts} 分` : `Maximum ${maxPts} pts per wine`}</div>
+    </div>` : '';
 
-    // Players who guessed this wine, sorted by per-wine score desc
-    const guessers = sorted
-      .filter(([pid]) => pid !== info.playerId && scores[pid]?.breakdown?.[wineId])
-      .sort((a, b) => b[1].breakdown[wineId].total - a[1].breakdown[wineId].total);
+  // ── Table column headers (rules-driven) ─────────────────────────────────────
+  function tableHeaders() {
+    const cols = [];
+    if (r.grape.enabled)    cols.push(isHK ? '提子' : 'Varietal');
+    if (r.oldWorld.enabled) cols.push(isHK ? '新/舊世界' : 'Old/New World');
+    if (r.country.enabled)  cols.push(isHK ? '國家' : 'Country');
+    if (r.region.enabled)   cols.push(isHK ? '產區' : 'Region');
+    if (r.vintage.enabled)  cols.push(isHK ? '年份' : 'Vintage');
+    if (r.abv.enabled)      cols.push('ABV');
+    if (r.price.enabled)    cols.push(isHK ? '價錢' : 'Price');
+    return cols;
+  }
 
+  // ── Guess row cells (rules-driven) ──────────────────────────────────────────
+  function guessRowCells(wineObj, guessObj, scoreObj) {
     function scoreClass(pts, isVintage) {
-      if (pts > 0 && isVintage && pts < 5) return 'near';
+      if (pts > 0 && isVintage && pts < r.vintage.scoreExact) return 'near';
       if (pts > 0) return 'correct';
       return 'wrong';
     }
 
+    const cells = [];
+    if (r.grape.enabled) {
+      cells.push(`<td class="${scoreClass(scoreObj.varietal, false)}">${escHtml(guessObj ? formatVarietalClient(guessObj) : '—')}</td>`);
+    }
+    if (r.oldWorld.enabled) {
+      const toOW = country => country
+        ? (isOldWorld(country) ? (isHK ? '舊世界' : 'Old World') : (isHK ? '新世界' : 'New World'))
+        : '—';
+      cells.push(`<td class="${scoreClass(scoreObj.oldWorld, false)}">${escHtml(toOW(guessObj?.country))}</td>`);
+    }
+    if (r.country.enabled) {
+      cells.push(`<td class="${scoreClass(scoreObj.country, false)}">${escHtml(guessObj?.country || '—')}</td>`);
+    }
+    if (r.region.enabled) {
+      cells.push(`<td class="${scoreClass(scoreObj.region, false)}">${escHtml(guessObj?.region || '—')}</td>`);
+    }
+    if (r.vintage.enabled) {
+      cells.push(`<td class="${scoreClass(scoreObj.vintage, true)}">${escHtml(guessObj?.vintage ? String(guessObj.vintage) : '—')}</td>`);
+    }
+    if (r.abv.enabled) {
+      cells.push(`<td class="${scoreClass(scoreObj.abv, false)}">${escHtml(guessObj?.abv != null ? `${guessObj.abv}%` : '—')}</td>`);
+    }
+    if (r.price.enabled) {
+      const currency = r.price.currency || 'HKD';
+      const priceStr = guessObj?.priceRange ? formatPriceBucket(guessObj.priceRange, currency) : '—';
+      cells.push(`<td class="${scoreClass(scoreObj.price, false)}">${escHtml(priceStr)}</td>`);
+    }
+    return cells.join('');
+  }
+
+  // ── Wine sections ────────────────────────────────────────────────────────────
+  const wineSections = revealOrder.map((wineId, wi) => {
+    const info = wineMap[wineId];
+    if (!info || !info.wine) return '';
+    const wine = info.wine;
+
+    const guessers = sorted
+      .filter(([pid]) => pid !== info.playerId && scores[pid]?.breakdown?.[wineId])
+      .sort((a, b) => b[1].breakdown[wineId].total - a[1].breakdown[wineId].total);
+
+    const wineMetaParts = [
+      wine.vintage,
+      r.grape.enabled ? formatVarietalClient(wine) : null,
+      wine.country,
+      wine.region,
+      r.abv.enabled && wine.abv != null ? `${wine.abv}%` : null,
+      r.price.enabled && wine.price != null ? formatWinePrice(wine.price, r.price.currency) : null,
+    ].filter(Boolean);
+
+    const headers = tableHeaders();
     const guessRows = guessers.map(([pid, s]) => {
       const g  = (guesses[pid] || {})[wineId] || null;
       const sc = s.breakdown[wineId];
       return `
         <tr>
           <td class="g-player">${s.emoji} ${escHtml(s.name)}</td>
-          <td class="${scoreClass(sc.varietal, false)}">${escHtml(g ? fmtVarietal(g) : '—')}</td>
-          <td class="${scoreClass(sc.country,  false)}">${escHtml(g?.country  || '—')}</td>
-          <td class="${scoreClass(sc.region,   false)}">${escHtml(g?.region   || '—')}</td>
-          <td class="${scoreClass(sc.vintage,  true )}">${escHtml(g?.vintage  ? String(g.vintage) : '—')}</td>
+          ${guessRowCells(wine, g, sc)}
           <td class="g-score">${sc.total}</td>
         </tr>`;
     }).join('');
@@ -63,7 +122,7 @@ function buildExportHtml({ lobbyName, sorted, denseRanks, revealOrder, wineMap, 
           <span class="w-emoji">${wine.emoji || ''}</span>
           <div class="w-info">
             <div class="w-name">${escHtml(wine.name)}</div>
-            <div class="w-meta">${[wine.vintage, varietalStr, wine.country, wine.region].filter(Boolean).join(' · ')}</div>
+            <div class="w-meta">${wineMetaParts.join(' · ')}</div>
             <div class="w-owner">${isHK ? '帶酒：' : 'Brought by: '}${info.playerEmoji} ${escHtml(info.playerName)}</div>
           </div>
         </div>
@@ -72,10 +131,7 @@ function buildExportHtml({ lobbyName, sorted, denseRanks, revealOrder, wineMap, 
           <thead>
             <tr>
               <th>${isHK ? '參加者' : 'Player'}</th>
-              <th>${isHK ? '提子' : 'Varietal'}</th>
-              <th>${isHK ? '國家' : 'Country'}</th>
-              <th>${isHK ? '產區' : 'Region'}</th>
-              <th>${isHK ? '年份' : 'Vintage'}</th>
+              ${headers.map(h => `<th>${h}</th>`).join('')}
               <th>${isHK ? '分' : 'Pts'}</th>
             </tr>
           </thead>
@@ -116,6 +172,17 @@ body{font-family:-apple-system,"Helvetica Neue",sans-serif;background:#f7f3ee;co
 .r-name{font-weight:600;font-size:14px}
 .r-pts{text-align:right;font-family:Georgia,serif;font-weight:700;color:#722F37;font-size:14px}
 
+/* Rules card */
+.rules-card{background:#fff;border-radius:10px;padding:16px 22px;margin-bottom:24px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.rules-table{width:100%;border-collapse:collapse}
+.rules-table tr{border-bottom:1px solid #f2ece3}
+.rules-table tr:last-child{border-bottom:none}
+.rules-table td{padding:6px 4px;font-size:12px}
+.rl-cat{font-weight:600;width:130px}
+.rl-pts{font-weight:700;color:#d4af37;width:90px}
+.rl-desc{color:#888}
+.rl-max{margin-top:8px;font-size:11px;font-weight:700;color:#aaa;text-align:right}
+
 /* Wine cards */
 .wine-card{background:#fff;border-radius:10px;padding:18px 22px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.07);page-break-inside:avoid}
 .wine-card-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #f2ece3}
@@ -144,7 +211,7 @@ body{font-family:-apple-system,"Helvetica Neue",sans-serif;background:#f7f3ee;co
 @media print{
   body{background:#fff}
   .page{padding:12px}
-  .wine-card,.lb-card{box-shadow:none;border:1px solid #e0d8cc}
+  .wine-card,.lb-card,.rules-card{box-shadow:none;border:1px solid #e0d8cc}
   .exp-header{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 </style>
@@ -166,6 +233,8 @@ body{font-family:-apple-system,"Helvetica Neue",sans-serif;background:#f7f3ee;co
     <div class="sec-title">🏆 ${isHK ? '總體排名' : 'Overall Rankings'}</div>
     <table>${leaderboardRows}</table>
   </div>
+
+  ${scoringRulesHtml}
 
   <div class="sec-title" style="margin-bottom:14px">${isHK ? '逐支酒睇' : 'Wine Breakdown'}</div>
   ${wineSections}
