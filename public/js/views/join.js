@@ -50,10 +50,13 @@ function renderJoin(lobbyId, lobbyName, gameMode = 'byob') {
     try {
       const data = await API.joinLobby(lobbyId, { name, emoji: selectedEmoji });
       API.saveSession(lobbyId, { playerId: data.playerId, sessionToken: data.sessionToken });
-      // In hostPrepares mode, players don't bring wines — go straight to the lobby
-      window.location.hash = gameMode === 'hostPrepares'
-        ? `#/lobby/${lobbyId}`
-        : `#/lobby/${lobbyId}/wine`;
+      if (gameMode === 'hostPrepares') {
+        // Hash is already #/lobby/:id (the join page URL), so hashchange won't fire.
+        // Call route() directly to re-render as the now-authenticated player.
+        route();
+      } else {
+        window.location.hash = `#/lobby/${lobbyId}/wine`;
+      }
     } catch (err) {
       errorEl.innerHTML = `<div class="alert alert-error">${escHtml(err.error || 'Failed to join.')}</div>`;
       btn.disabled = false;
