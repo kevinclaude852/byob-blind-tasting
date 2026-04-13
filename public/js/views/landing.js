@@ -180,23 +180,40 @@ function renderLanding() {
           <input type="text" id="lobbyName" placeholder="${t('landing.lobbyNamePlaceholder')}" value="" required>
         </div>
         <div class="form-group">
-          <label class="checkbox-label">
-            <input type="checkbox" id="hostNotParticipating">
-            ${t('landing.hostNotParticipating')}
-          </label>
+          <label for="hostName">${t('landing.yourName')}</label>
+          <input type="text" id="hostName" placeholder="${t('landing.yourNamePlaceholder')}">
         </div>
-        <div id="hostFields">
-          <div class="form-group">
-            <label for="hostName">${t('landing.yourName')}</label>
-            <input type="text" id="hostName" placeholder="${t('landing.yourNamePlaceholder')}">
+        <div class="form-group">
+          <label>${t('landing.yourAvatar')}</label>
+          <div class="emoji-picker" id="emojiPicker">
+            ${AVATARS.map(e => `<button class="emoji-btn" data-emoji="${e}"><span>${e}</span></button>`).join('')}
           </div>
-          <div class="form-group">
-            <label>${t('landing.yourAvatar')}</label>
-            <div class="emoji-picker" id="emojiPicker">
-              ${AVATARS.map(e => `<button class="emoji-btn" data-emoji="${e}"><span>${e}</span></button>`).join('')}
-            </div>
-            <input type="hidden" id="selectedEmoji" value="">
+          <input type="hidden" id="selectedEmoji" value="">
+        </div>
+        <div class="form-group">
+          <label>${t('landing.gameMode')}</label>
+          <div class="rules-mode-group">
+            <label class="rules-mode-opt">
+              <input type="radio" name="gameMode" value="byob" checked>
+              <span>${t('landing.modeByob')}</span>
+            </label>
+            <label class="rules-mode-opt">
+              <input type="radio" name="gameMode" value="hostPrepares">
+              <span>${t('landing.modeHostPrepares')}</span>
+            </label>
           </div>
+          <div id="revealPolicyPanel" style="margin-top:10px;padding:10px 12px;background:var(--bg,#f9f5f0);border-radius:8px;border:1px solid var(--border,#e8e0d5)">
+            <div style="font-size:0.78rem;font-weight:600;color:var(--text-muted,#888);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">${t('landing.revealPolicy')}</div>
+            <label class="rule-vm-opt" style="display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer">
+              <input type="radio" name="revealPolicy" value="hostOnly" checked>
+              <span style="font-size:0.85rem">${t('landing.revealHostOnly')}</span>
+            </label>
+            <label class="rule-vm-opt" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="radio" name="revealPolicy" value="ownerOrHost">
+              <span style="font-size:0.85rem">${t('landing.revealOwnerOrHost')}</span>
+            </label>
+          </div>
+          <div id="hostPreparesDesc" style="display:none;margin-top:8px;font-size:0.82rem;color:var(--text-muted,#888);padding:8px 12px;background:var(--bg,#f9f5f0);border-radius:8px;border:1px solid var(--border,#e8e0d5)">${t('landing.modeHostPreparesDesc')}</div>
         </div>
 
         <div class="form-group">
@@ -225,8 +242,13 @@ function renderLanding() {
 
   let selectedEmoji = '';
 
-  document.getElementById('hostNotParticipating').addEventListener('change', (e) => {
-    document.getElementById('hostFields').style.display = e.target.checked ? 'none' : '';
+  // Game mode toggle — show/hide reveal policy panel and host-prepares description
+  document.querySelectorAll('input[name="gameMode"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      const isByob = radio.value === 'byob';
+      document.getElementById('revealPolicyPanel').style.display = isByob ? '' : 'none';
+      document.getElementById('hostPreparesDesc').style.display = isByob ? 'none' : '';
+    });
   });
 
   document.querySelectorAll('.emoji-btn').forEach(btn => {
@@ -299,15 +321,16 @@ function renderLanding() {
 
   document.getElementById('createBtn').addEventListener('click', async () => {
     const lobbyName = document.getElementById('lobbyName').value.trim();
-    const hostNotParticipating = document.getElementById('hostNotParticipating').checked;
+    const hostName = document.getElementById('hostName').value.trim();
+    const gameMode = document.querySelector('input[name="gameMode"]:checked')?.value || 'byob';
+    const revealPolicy = gameMode === 'byob'
+      ? (document.querySelector('input[name="revealPolicy"]:checked')?.value || 'hostOnly')
+      : 'hostOnly';
     const errorEl = document.getElementById('landingError');
 
     if (!lobbyName) { showError(errorEl, t('error.enterLobbyName')); return; }
-    if (!hostNotParticipating) {
-      const hostName = document.getElementById('hostName').value.trim();
-      if (!hostName) { showError(errorEl, t('error.enterName')); return; }
-      if (!selectedEmoji) { showError(errorEl, t('error.chooseAvatar')); return; }
-    }
+    if (!hostName) { showError(errorEl, t('error.enterName')); return; }
+    if (!selectedEmoji) { showError(errorEl, t('error.chooseAvatar')); return; }
 
     const rules = collectLandingRules();
 
@@ -329,9 +352,7 @@ function renderLanding() {
     errorEl.innerHTML = '';
 
     try {
-      const hostName = hostNotParticipating ? '' : document.getElementById('hostName').value.trim();
-      const hostEmoji = hostNotParticipating ? '🎩' : selectedEmoji;
-      const data = await API.createLobby({ hostName, hostEmoji, lobbyName, hostParticipating: !hostNotParticipating, rules });
+      const data = await API.createLobby({ hostName, hostEmoji: selectedEmoji, lobbyName, gameMode, revealPolicy, rules });
       API.saveSession(data.lobbyId, { playerId: data.hostPlayerId, sessionToken: data.sessionToken });
       window.location.hash = `#/lobby/${data.lobbyId}`;
     } catch (err) {

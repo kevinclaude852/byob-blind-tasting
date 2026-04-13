@@ -6,7 +6,7 @@ const { loadGame, saveGame } = require('../services/persistenceService');
 const { calculateScore } = require('../services/scoringService');
 const { validateGuess } = require('../utils/validation');
 const { normaliseRules, buildZeroScore } = require('../utils/rulesNormaliser');
-const { authHost, getToken, findWine } = require('./lobby');
+const { authHost, getToken, findWine, getGameMode, getRevealPolicy } = require('./lobby');
 
 let ioInstance = null;
 function setIo(io) { ioInstance = io; }
@@ -124,6 +124,7 @@ router.put('/guess/:wineId', (req, res) => {
     varietals: (guessData.varietals || []).filter(v => v.grape).map(v => ({ grape: v.grape })),
     country: guessData.country || null,
     region: guessData.region || null,
+    oldWorld: rules.oldWorld.enabled ? (guessData.oldWorld != null ? guessData.oldWorld : null) : null,
     abv: rules.abv.enabled ? (guessData.abv != null ? Number(guessData.abv) : null) : null,
     priceRange: rules.price.enabled ? (guessData.priceRange || null) : null,
     submittedAt: new Date().toISOString()
@@ -151,16 +152,25 @@ router.get('/guess/:wineId', (req, res) => {
   res.json({ guess });
 });
 
-// POST /api/lobby/:lobbyId/reveal/:wineId — host reveals a wine
+// POST /api/lobby/:lobbyId/reveal/:wineId — reveal a wine (host always; owner if ownerOrHost policy)
 router.post('/reveal/:wineId', (req, res) => {
   const { lobbyId, wineId } = req.params;
   const game = loadGame(lobbyId);
   if (!game) return res.status(404).json({ error: 'Lobby not found.' });
-  if (!authHost(game, getToken(req))) return res.status(403).json({ error: 'Host only.' });
+
+  const token = getToken(req);
+  const isHost = authHost(game, token);
+  const currentPlayerId = getCurrentPlayer(game, token);
 
   const found = findWine(game, wineId);
   if (!found) return res.status(404).json({ error: 'Wine not found.' });
   if (found.wine.revealed) return res.status(400).json({ error: 'Already revealed.' });
+
+  const gameMode = getGameMode(game);
+  const revealPolicy = getRevealPolicy(game);
+  const isWineOwner = currentPlayerId === found.playerId;
+  const canReveal = isHost || (gameMode === 'byob' && revealPolicy === 'ownerOrHost' && isWineOwner);
+  if (!canReveal) return res.status(403).json({ error: 'Not allowed to reveal.' });
 
   const delayMinutes = Number(req.body?.delayMinutes) || 0;
 
@@ -186,17 +196,26 @@ router.post('/reveal/:wineId', (req, res) => {
   res.json({ success: true });
 });
 
-// DELETE /api/lobby/:lobbyId/reveal/:wineId — host cancels countdown
+// DELETE /api/lobby/:lobbyId/reveal/:wineId — cancel countdown (host always; owner if ownerOrHost policy)
 router.delete('/reveal/:wineId', (req, res) => {
   const { lobbyId, wineId } = req.params;
   const game = loadGame(lobbyId);
   if (!game) return res.status(404).json({ error: 'Lobby not found.' });
-  if (!authHost(game, getToken(req))) return res.status(403).json({ error: 'Host only.' });
+
+  const token = getToken(req);
+  const isHost = authHost(game, token);
+  const currentPlayerId = getCurrentPlayer(game, token);
 
   const found = findWine(game, wineId);
   if (!found) return res.status(404).json({ error: 'Wine not found.' });
   if (found.wine.revealed) return res.status(400).json({ error: 'Wine already revealed.' });
   if (!found.wine.revealAt) return res.status(400).json({ error: 'No countdown active.' });
+
+  const gameMode = getGameMode(game);
+  const revealPolicy = getRevealPolicy(game);
+  const isWineOwner = currentPlayerId === found.playerId;
+  const canCancel = isHost || (gameMode === 'byob' && revealPolicy === 'ownerOrHost' && isWineOwner);
+  if (!canCancel) return res.status(403).json({ error: 'Not allowed.' });
 
   const key = `${lobbyId}:${wineId}`;
   if (pendingTimers.has(key)) {

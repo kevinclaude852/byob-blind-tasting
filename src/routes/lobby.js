@@ -30,13 +30,29 @@ function findWine(game, wineId) {
   return null;
 }
 
+// Derive gameMode / revealPolicy from stored game (backward compat with old hostParticipating flag)
+function getGameMode(game) {
+  return game.gameMode ?? (game.hostParticipating === false ? 'hostPrepares' : 'byob');
+}
+function getRevealPolicy(game) {
+  return game.revealPolicy ?? 'hostOnly';
+}
+
 // POST /api/lobby — create lobby
 router.post('/', (req, res) => {
-  const { hostName, hostEmoji, lobbyName, hostParticipating = true, rules } = req.body;
-  if (hostParticipating) {
-    if (!hostName || !hostName.trim()) return res.status(400).json({ error: 'Host name required.' });
-    if (!hostEmoji) return res.status(400).json({ error: 'Host emoji required.' });
-  }
+  const { hostName, hostEmoji, lobbyName, gameMode: rawGameMode, revealPolicy: rawRevealPolicy, hostParticipating, rules } = req.body;
+
+  // Derive gameMode with legacy compat (old clients may send hostParticipating: false)
+  let gameMode = rawGameMode || (hostParticipating === false ? 'hostPrepares' : 'byob');
+  if (!['byob', 'hostPrepares'].includes(gameMode)) gameMode = 'byob';
+
+  let revealPolicy = rawRevealPolicy || 'hostOnly';
+  if (gameMode === 'hostPrepares') revealPolicy = 'hostOnly'; // not applicable in this mode
+  if (!['hostOnly', 'ownerOrHost'].includes(revealPolicy)) revealPolicy = 'hostOnly';
+
+  // Both modes require a named host
+  if (!hostName || !hostName.trim()) return res.status(400).json({ error: 'Host name required.' });
+  if (!hostEmoji) return res.status(400).json({ error: 'Host emoji required.' });
 
   // Validate and normalise rules
   let normalisedRules;
@@ -58,15 +74,17 @@ router.post('/', (req, res) => {
     lobbyId,
     lobbyName: lobbyName || 'Blind Tasting',
     hostPlayerId,
-    hostParticipating: !!hostParticipating,
+    gameMode,
+    revealPolicy,
     rules: normalisedRules,
     createdAt: new Date().toISOString(),
     players: {
       [hostPlayerId]: {
         id: hostPlayerId,
-        name: hostParticipating ? hostName.trim() : '',
-        emoji: hostParticipating ? hostEmoji : '🎩',
-        participating: !!hostParticipating,
+        name: hostName.trim(),
+        emoji: hostEmoji,
+        // In hostPrepares the host is the wine provider, not a guesser — excluded from leaderboard
+        participating: gameMode !== 'hostPrepares',
         joinedAt: new Date().toISOString(),
         sessionToken,
         wines: []
@@ -93,12 +111,16 @@ router.get('/:lobbyId', (req, res) => {
   }
 
   const isHost = currentPlayerId && currentPlayerId === game.hostPlayerId;
+  const gameMode = getGameMode(game);
+  const revealPolicy = getRevealPolicy(game);
 
-  // Build filtered player list — exclude non-participating host from everyone else's view
+  // Build filtered player list.
+  // In hostPrepares mode, the host (participating=false) is included for all players so guests
+  // can see and guess the host's wines. In BYOB mode, non-participating players are excluded.
   const players = {};
   for (const [pid, p] of Object.entries(game.players)) {
     const isSelf = pid === currentPlayerId;
-    if (!p.participating && p.participating !== undefined && !isSelf) continue;
+    if (!p.participating && p.participating !== undefined && !isSelf && gameMode !== 'hostPrepares') continue;
     players[pid] = {
       id: p.id,
       name: p.name,
@@ -151,7 +173,10 @@ router.get('/:lobbyId', (req, res) => {
     lobbyId: game.lobbyId,
     lobbyName: game.lobbyName,
     hostPlayerId: game.hostPlayerId,
-    hostParticipating: game.hostParticipating !== false,
+    gameMode,
+    revealPolicy,
+    // Keep hostParticipating for backward compat with old cached clients
+    hostParticipating: gameMode !== 'hostPrepares',
     rules: normaliseRules(game.rules),
     createdAt: game.createdAt,
     players,
@@ -204,4 +229,4 @@ router.post('/:lobbyId/join', (req, res) => {
   res.json({ playerId, sessionToken });
 });
 
-module.exports = { router, authPlayer, authHost, getToken, findWine };
+module.exports = { router, authPlayer, authHost, getToken, findWine, getGameMode, getRevealPolicy };

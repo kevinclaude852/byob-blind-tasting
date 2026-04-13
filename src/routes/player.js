@@ -3,7 +3,7 @@ const router = express.Router({ mergeParams: true });
 const { loadGame, saveGame } = require('../services/persistenceService');
 const { validateWine } = require('../utils/validation');
 const { normaliseRules } = require('../utils/rulesNormaliser');
-const { authPlayer, getToken } = require('./lobby');
+const { authPlayer, getToken, getGameMode } = require('./lobby');
 const { generateWineId } = require('../utils/idGenerator');
 
 const NUMBER_EMOJIS = ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟'];
@@ -22,6 +22,11 @@ router.post('/:playerId/wines', (req, res) => {
   const game = loadGame(lobbyId);
   if (!game) return res.status(404).json({ error: 'Lobby not found.' });
   if (!authPlayer(game, playerId, getToken(req))) return res.status(403).json({ error: 'Forbidden.' });
+
+  // In hostPrepares mode, only the host can add wines
+  if (getGameMode(game) === 'hostPrepares' && playerId !== game.hostPlayerId) {
+    return res.status(403).json({ error: 'Only the host can add wines in this mode.' });
+  }
 
   const rules = normaliseRules(game.rules);
   const wine = normaliseWine(req.body);

@@ -117,7 +117,10 @@ async function renderLobby(lobbyId) {
     const wines = player.wines || [];
     const currentPlayerId = lobby.currentPlayerId;
     const isHost = lobby.isHost;
-    const isNonParticipatingHost = isHost && lobby.hostParticipating === false;
+    const gameMode = lobby.gameMode || 'byob';
+    const revealPolicy = lobby.revealPolicy || 'hostOnly';
+    // In hostPrepares mode, the host provides wines and does not guess
+    const isHostNonGuessing = isHost && gameMode === 'hostPrepares';
     const isSelf = player.id === currentPlayerId;
 
     if (wines.length === 0) {
@@ -149,29 +152,32 @@ async function renderLobby(lobbyId) {
         : '';
 
       // Countdown display (shown to everyone when a timed reveal is pending)
+      const canStop = isHost || (gameMode === 'byob' && revealPolicy === 'ownerOrHost' && isSelf);
       const countdownHtml = isPending
         ? `<div class="wine-countdown" data-reveal-at="${wine.revealAt}">
              <span class="countdown-label">${t('lobby.revealsIn')}</span>
              <span class="countdown-timer">--:--</span>
-             ${isHost ? `<button class="btn btn-xs btn-danger countdown-stop-btn" data-wine-id="${wine.id}">${t('lobby.stopBtn')}</button>` : ''}
+             ${canStop ? `<button class="btn btn-xs btn-danger countdown-stop-btn" data-wine-id="${wine.id}">${t('lobby.stopBtn')}</button>` : ''}
            </div>`
         : '';
 
       // Action buttons
+      // In ownerOrHost policy, any player can reveal their own wine
+      const canRevealOwn = isHost || (gameMode === 'byob' && revealPolicy === 'ownerOrHost');
       let actionsHtml = '';
       if (isSelf) {
         if (!isRevealed && !isPending) {
-          if (isHost) {
+          if (canRevealOwn) {
             actionsHtml += `<button class="btn btn-xs btn-gold reveal-btn" data-wine-id="${wine.id}">${t('lobby.revealBtn')}</button>`;
           }
           actionsHtml += `<a href="#/lobby/${lobbyId}/wine/${wine.id}" class="btn btn-xs btn-secondary" style="text-decoration:none">${t('lobby.editBtn')}</a>`;
         }
       } else {
         if (!isRevealed) {
-          if (!isNonParticipatingHost) {
+          if (!isHostNonGuessing) {
             actionsHtml += `<button class="btn btn-xs btn-danger guess-btn" data-wine-id="${wine.id}">${hasGuessed ? t('lobby.changeGuessBtn') : t('lobby.guessBtn')}</button>`;
           }
-          // Only show Reveal button if no countdown is already running
+          // Only the host can reveal other players' wines; no countdown already running
           if (isHost && !isPending) {
             actionsHtml += `<button class="btn btn-xs btn-gold reveal-btn" data-wine-id="${wine.id}">${t('lobby.revealBtn')}</button>`;
           }
@@ -252,16 +258,17 @@ async function renderLobby(lobbyId) {
 
     const currentPlayerId = lobby.currentPlayerId;
     const isHost = lobby.isHost;
+    const gameMode = lobby.gameMode || 'byob';
+    const revealPolicy = lobby.revealPolicy || 'hostOnly';
     const joinUrl = `${location.protocol}//${location.host}/#/lobby/${lobbyId}`;
     const hasReveals = lobby.revealOrder && lobby.revealOrder.length > 0;
+    // Exclude non-participating host from player count (e.g. in hostPrepares mode)
     const playerCount = Object.values(lobby.players).filter(p => p.participating !== false).length;
     const totalWines = Object.values(lobby.players).reduce((sum, p) => sum + (p.wines || []).length, 0);
     const revealedWines = lobby.revealOrder ? lobby.revealOrder.length : 0;
 
-    // Own card always first; hide non-participating host from their own view too
-    const isNonParticipatingHost = isHost && lobby.hostParticipating === false;
+    // Own card always first; server already handles visibility per-mode, no extra filter needed
     const sortedPlayers = Object.values(lobby.players)
-      .filter(p => !(p.id === currentPlayerId && isNonParticipatingHost))
       .sort((a, b) => {
         if (a.id === currentPlayerId) return -1;
         if (b.id === currentPlayerId) return 1;
@@ -282,7 +289,7 @@ async function renderLobby(lobbyId) {
           <div class="player-wines-section">
             ${buildWineRows(player)}
           </div>
-          ${isSelf && !(isHost && lobby.hostParticipating === false) ? `<div style="margin-top:8px"><a href="#/lobby/${lobbyId}/wine" class="btn btn-sm btn-primary" style="width:100%;text-decoration:none;text-align:center;display:block">${t('lobby.addWine')}</a></div>` : ''}
+          ${isSelf && (gameMode !== 'hostPrepares' || isHost) ? `<div style="margin-top:8px"><a href="#/lobby/${lobbyId}/wine" class="btn btn-sm btn-primary" style="width:100%;text-decoration:none;text-align:center;display:block">${t('lobby.addWine')}</a></div>` : ''}
         </div>`;
     }).join('');
 
@@ -311,7 +318,7 @@ async function renderLobby(lobbyId) {
             <h3 style="margin-top:3px">${t('lobby.wines')} (${revealedWines} / ${totalWines})</h3>
           </div>
           <div style="display:flex;gap:8px">
-            <a href="#/lobby/${lobbyId}/myguesses" class="btn btn-secondary btn-sm" style="width:auto">${t('lobby.myGuesses')}</a>
+            ${!(gameMode === 'hostPrepares' && isHost) ? `<a href="#/lobby/${lobbyId}/myguesses" class="btn btn-secondary btn-sm" style="width:auto">${t('lobby.myGuesses')}</a>` : ''}
             ${hasReveals ? `<a href="#/lobby/${lobbyId}/scores" class="btn btn-secondary btn-sm" style="width:auto">${t('lobby.leaderboard')}</a>` : ''}
           </div>
         </div>
