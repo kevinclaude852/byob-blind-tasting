@@ -1,4 +1,4 @@
-function renderJoin(lobbyId, lobbyName) {
+function renderJoin(lobbyId, lobbyName, gameMode = 'byob') {
   const app = document.getElementById('app');
   const AVATARS = ['⛰️','🌞','🎃','🐦','🏝️','🐔','🎸','👻','🤡','🌸','😼','😈','🐵','🐨','🌻','🍄','🍪','🎩','🍭','💀','🚀','💥','🐑','🌶️','⭐️','🌀','🌈','🌊','🍙','🐳'];
 
@@ -50,7 +50,10 @@ function renderJoin(lobbyId, lobbyName) {
     try {
       const data = await API.joinLobby(lobbyId, { name, emoji: selectedEmoji });
       API.saveSession(lobbyId, { playerId: data.playerId, sessionToken: data.sessionToken });
-      window.location.hash = `#/lobby/${lobbyId}/wine`;
+      // In hostPrepares mode, players don't bring wines — go straight to the lobby
+      window.location.hash = gameMode === 'hostPrepares'
+        ? `#/lobby/${lobbyId}`
+        : `#/lobby/${lobbyId}/wine`;
     } catch (err) {
       errorEl.innerHTML = `<div class="alert alert-error">${escHtml(err.error || 'Failed to join.')}</div>`;
       btn.disabled = false;

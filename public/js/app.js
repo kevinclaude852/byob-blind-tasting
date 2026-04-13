@@ -99,7 +99,7 @@ async function route() {
     if (!session) {
       try {
         const lobby = await API.getLobby(lobbyId);
-        return renderJoin(lobbyId, lobby.lobbyName);
+        return renderJoin(lobbyId, lobby.lobbyName, lobby.gameMode);
       } catch {
         document.getElementById('app').innerHTML = `<div class="page"><div class="alert alert-error">Lobby not found or expired.</div></div>`;
         return;
