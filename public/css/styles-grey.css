@@ -414,6 +414,54 @@ select {
   margin-top: 10px;
 }
 
+/* ===== Flight Groups (hostPrepares mode) ===== */
+.flight-group {
+  margin-top: 8px;
+}
+.flight-group-header {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  font-family: -apple-system, sans-serif;
+  padding: 6px 4px 4px;
+  border-top: 1px solid var(--border);
+  margin-bottom: 5px;
+}
+.flight-group-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* ===== Challengers Box (hostPrepares mode) ===== */
+.challengers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 6px;
+}
+.challenger-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+.challenger-row:last-child { border-bottom: none; }
+.challenger-emoji { font-size: 1.2rem; flex-shrink: 0; }
+.challenger-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 600;
+}
+
 /* ===== Scoreboard ===== */
 .scoreboard {
   background: white;

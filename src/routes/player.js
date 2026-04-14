@@ -33,6 +33,10 @@ router.post('/:playerId/wines', (req, res) => {
   const errors = validateWine(wine, rules);
   if (errors.length) return res.status(400).json({ errors });
 
+  const gameMode = getGameMode(game);
+  const flightNumber = gameMode === 'hostPrepares' && req.body.flightNumber
+    ? Number(req.body.flightNumber) : null;
+
   const player = game.players[playerId];
   const wineCount = (player.wines || []).length;
   const wineId = generateWineId();
@@ -51,11 +55,17 @@ router.post('/:playerId/wines', (req, res) => {
     region: wine.region || null,
     abv: rules.abv.enabled ? (wine.abv != null ? Number(wine.abv) : null) : null,
     price: rules.price.enabled ? (wine.price != null ? Number(wine.price) : null) : null,
-    revealed: false
+    revealed: false,
+    flightNumber
   };
 
   if (!player.wines) player.wines = [];
   player.wines.push(newWine);
+
+  if (flightNumber != null) {
+    if (!game.flightNames) game.flightNames = {};
+    game.flightNames[String(flightNumber)] = req.body.flightName || '';
+  }
 
   saveGame(lobbyId, game);
   res.json({ success: true, wineId });
@@ -78,6 +88,10 @@ router.put('/:playerId/wines/:wineId', (req, res) => {
   const errors = validateWine(wine, rules);
   if (errors.length) return res.status(400).json({ errors });
 
+  const gameModeEdit = getGameMode(game);
+  const flightNumberEdit = gameModeEdit === 'hostPrepares' && req.body.flightNumber
+    ? Number(req.body.flightNumber) : null;
+
   player.wines[wineIndex] = {
     ...player.wines[wineIndex],
     emoji: wine.emoji || player.wines[wineIndex].emoji,
@@ -91,7 +105,13 @@ router.put('/:playerId/wines/:wineId', (req, res) => {
     region: wine.region || null,
     abv: rules.abv.enabled ? (wine.abv != null ? Number(wine.abv) : null) : null,
     price: rules.price.enabled ? (wine.price != null ? Number(wine.price) : null) : null,
+    flightNumber: flightNumberEdit
   };
+
+  if (flightNumberEdit != null) {
+    if (!game.flightNames) game.flightNames = {};
+    game.flightNames[String(flightNumberEdit)] = req.body.flightName || '';
+  }
 
   saveGame(lobbyId, game);
   res.json({ success: true });

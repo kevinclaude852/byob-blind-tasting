@@ -112,22 +112,15 @@ async function renderLobby(lobbyId) {
     });
   }
 
-  // ── Wine row builder ────────────────────────────────────────────────────────
-  function buildWineRows(player) {
-    const wines = player.wines || [];
+  // ── Single wine row builder (shared by flat and grouped renderers) ──────────
+  function buildWineRow(player, wine, wineIndex) {
     const currentPlayerId = lobby.currentPlayerId;
     const isHost = lobby.isHost;
     const gameMode = lobby.gameMode || 'byob';
     const revealPolicy = lobby.revealPolicy || 'hostOnly';
-    // In hostPrepares mode, the host provides wines and does not guess
     const isHostNonGuessing = isHost && gameMode === 'hostPrepares';
     const isSelf = player.id === currentPlayerId;
-
-    if (wines.length === 0) {
-      return `<div class="player-status">${t('lobby.noWinesYet')}</div>`;
-    }
-
-    return wines.map((wine, wineIndex) => {
+    {
       const isRevealed = wine.revealed;
       const isPending = !isRevealed && !!wine.revealAt; // countdown active
       const myGuess = !isSelf ? lobby.myGuesses[wine.id] : null;
@@ -248,7 +241,44 @@ async function renderLobby(lobbyId) {
               : `<div style="font-size:0.78rem;color:var(--text-muted);font-style:italic;padding:4px 0">${t('lobby.noOtherPlayers')}</div>`}
           </div>
         </div>`;
-    }).join('');
+    }
+  }
+
+  // ── Flat wine rows (all wines, no grouping) ─────────────────────────────────
+  function buildWineRows(player) {
+    const wines = player.wines || [];
+    if (wines.length === 0) return `<div class="player-status">${t('lobby.noWinesYet')}</div>`;
+    return wines.map((wine, i) => buildWineRow(player, wine, i)).join('');
+  }
+
+  // ── Flight-grouped wine rows (hostPrepares host card) ───────────────────────
+  function buildFlightGroupedWines(player) {
+    const wines = player.wines || [];
+    if (wines.length === 0) return `<div class="player-status">${t('lobby.noWinesYet')}</div>`;
+    const flightNamesMap = lobby.flightNames || {};
+    const ungrouped = wines.map((w, i) => ({ w, i })).filter(x => x.w.flightNumber == null);
+    const byFlight = new Map();
+    wines.forEach((w, i) => {
+      if (w.flightNumber != null) {
+        const n = Number(w.flightNumber);
+        if (!byFlight.has(n)) byFlight.set(n, []);
+        byFlight.get(n).push({ w, i });
+      }
+    });
+    const flightNums = Array.from(byFlight.keys()).sort((a, b) => a - b);
+    let html = ungrouped.map(({ w, i }) => buildWineRow(player, w, i)).join('');
+    for (const n of flightNums) {
+      const name = flightNamesMap[String(n)] || '';
+      const header = name
+        ? `${t('wine.flight')} ${n} — ${escHtml(name)}`
+        : `${t('wine.flight')} ${n}`;
+      const inner = byFlight.get(n).map(({ w, i }) => buildWineRow(player, w, i)).join('');
+      html += `<div class="flight-group">
+        <div class="flight-group-header">${header}</div>
+        <div class="flight-group-rows">${inner}</div>
+      </div>`;
+    }
+    return html;
   }
 
   // ── Main render ─────────────────────────────────────────────────────────────
@@ -267,16 +297,9 @@ async function renderLobby(lobbyId) {
     const totalWines = Object.values(lobby.players).reduce((sum, p) => sum + (p.wines || []).length, 0);
     const revealedWines = lobby.revealOrder ? lobby.revealOrder.length : 0;
 
-    // Own card always first; server already handles visibility per-mode, no extra filter needed
-    const sortedPlayers = Object.values(lobby.players)
-      .sort((a, b) => {
-        if (a.id === currentPlayerId) return -1;
-        if (b.id === currentPlayerId) return 1;
-        return 0;
-      });
-
-    const playerCards = sortedPlayers.map(player => {
+    function renderPlayerCard(player) {
       const isSelf = player.id === currentPlayerId;
+      const useFlights = gameMode === 'hostPrepares' && player.id === lobby.hostPlayerId;
       return `
         <div class="player-card${isSelf ? ' self' : ''}" data-player-id="${player.id}">
           <div class="player-card-header">
@@ -287,11 +310,50 @@ async function renderLobby(lobbyId) {
             </div>
           </div>
           <div class="player-wines-section">
-            ${buildWineRows(player)}
+            ${useFlights ? buildFlightGroupedWines(player) : buildWineRows(player)}
           </div>
           ${isSelf && (gameMode !== 'hostPrepares' || isHost) ? `<div style="margin-top:8px"><a href="#/lobby/${lobbyId}/wine" class="btn btn-sm btn-primary" style="width:100%;text-decoration:none;text-align:center;display:block">${t('lobby.addWine')}</a></div>` : ''}
         </div>`;
-    }).join('');
+    }
+
+    let playerCards;
+    if (gameMode === 'hostPrepares') {
+      // Host card always first, then one compact "Challengers" card
+      const hostPlayer = lobby.players[lobby.hostPlayerId];
+      const allPlayers = Object.values(lobby.players);
+      const challengers = allPlayers.filter(p => p.id !== lobby.hostPlayerId);
+
+      const challengerRows = challengers.length
+        ? challengers.map(p => {
+            const isSelf = p.id === currentPlayerId;
+            return `<div class="challenger-row">
+              <span class="challenger-emoji">${p.emoji}</span>
+              <span class="challenger-name">${escHtml(p.name)}</span>
+              ${isSelf ? `<span class="badge badge-you">${t('lobby.you')}</span>` : ''}
+            </div>`;
+          }).join('')
+        : `<div class="player-status">${t('lobby.waitingChallengers')}</div>`;
+
+      const challengersCard = `
+        <div class="player-card">
+          <div class="player-card-header">
+            <div class="player-card-info">
+              <div class="player-name">${t('lobby.challengers')} (${challengers.length})</div>
+            </div>
+          </div>
+          <div class="challengers-list">${challengerRows}</div>
+        </div>`;
+
+      playerCards = (hostPlayer ? renderPlayerCard(hostPlayer) : '') + challengersCard;
+    } else {
+      // BYOB: self first, then others
+      const sorted = Object.values(lobby.players).sort((a, b) => {
+        if (a.id === currentPlayerId) return -1;
+        if (b.id === currentPlayerId) return 1;
+        return 0;
+      });
+      playerCards = sorted.map(renderPlayerCard).join('');
+    }
 
     app.innerHTML = `
       <div class="page wide">

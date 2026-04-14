@@ -141,7 +141,7 @@ function buildPriceInput(id, currency, prefillVal, isRequired) {
 }
 
 // ── Shared wine form builder ──────────────────────────────────────────────────
-function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], countries = [], regions = {}, wineIndex = 0, rules = null } = {}) {
+function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], countries = [], regions = {}, wineIndex = 0, rules = null, showFlight = false, existingFlights = [], flightNames = {} } = {}) {
   const r = normaliseRulesClient(rules);
   const currentYear = new Date().getFullYear();
   const opt = `<span class="optional">${t('form.optional')}</span>`;
@@ -267,6 +267,31 @@ function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], count
   const abvField = r.abv.enabled ? buildAbvSelect('wineAbv', prefill?.abv, true) : '';
   const priceField = r.price.enabled ? buildPriceInput('winePrice', r.price.currency, prefill?.price, true) : '';
 
+  let flightField = '';
+  if (showFlight) {
+    const prefillFlight = (prefill && prefill.flightNumber != null) ? Number(prefill.flightNumber) : null;
+    const nextFlight = existingFlights.length ? Math.max(...existingFlights) + 1 : 1;
+    const allFlightOpts = [
+      `<option value="">${t('wine.flightNone')}</option>`,
+      ...existingFlights.map(n =>
+        `<option value="${n}"${prefillFlight === n ? ' selected' : ''}>${t('wine.flight')} ${n}</option>`
+      ),
+      `<option value="${nextFlight}"${prefillFlight === nextFlight ? ' selected' : ''}>${t('wine.flight')} ${nextFlight}</option>`
+    ].join('');
+    const prefillName = prefillFlight != null ? (flightNames[String(prefillFlight)] || '') : '';
+    flightField = `
+      <div class="form-group">
+        <label for="wineFlight">${t('wine.flight')}</label>
+        <select id="wineFlight">${allFlightOpts}</select>
+      </div>
+      <div id="flightNameAccordion" style="${prefillFlight != null ? '' : 'display:none'}">
+        <div class="form-group">
+          <label for="wineFlightName">${t('wine.flightName')} <span class="optional">${t('form.optional')}</span></label>
+          <input type="text" id="wineFlightName" placeholder="${t('wine.flightNamePlaceholder')}" value="${escHtml(prefillName)}">
+        </div>
+      </div>`;
+  }
+
   return `
     <div class="form-group">
       <label>${t('form.wineEmoji')}</label>
@@ -285,10 +310,11 @@ function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], count
     ${vintageField}
     ${abvField}
     ${priceField}
+    ${flightField}
   `;
 }
 
-function attachWineFormListeners(regions, grapes = []) {
+function attachWineFormListeners(regions, grapes = [], flightNames = {}) {
   attachGrapeAutocomplete(grapes);
 
   document.querySelectorAll('.wine-emoji-picker .emoji-btn').forEach(btn => {
@@ -319,6 +345,18 @@ function attachWineFormListeners(regions, grapes = []) {
       updateRegionDropdown(countrySelect.value, regions);
     });
     if (countrySelect.value) updateRegionDropdown(countrySelect.value, regions, document.getElementById('wineRegion')?.value);
+  }
+
+  // Flight select → show/hide name accordion + pre-fill existing name
+  const flightSelect = document.getElementById('wineFlight');
+  if (flightSelect) {
+    flightSelect.addEventListener('change', () => {
+      const accordion = document.getElementById('flightNameAccordion');
+      const nameInput = document.getElementById('wineFlightName');
+      const v = flightSelect.value;
+      if (accordion) accordion.style.display = v ? '' : 'none';
+      if (nameInput && v) nameInput.value = flightNames[v] || '';
+    });
   }
 
   updatePctTotal();
@@ -417,6 +455,11 @@ function collectWineFormData(isGuess = false, rules = null) {
   if (!isGuess) {
     data.name = document.getElementById('wineName')?.value || '';
     data.emoji = document.getElementById('selectedWineEmoji')?.value || '1️⃣';
+    const flightEl = document.getElementById('wineFlight');
+    if (flightEl) {
+      data.flightNumber = flightEl.value ? Number(flightEl.value) : null;
+      data.flightName = document.getElementById('wineFlightName')?.value || '';
+    }
   }
   return data;
 }
@@ -445,6 +488,15 @@ async function renderWineRegistration(lobbyId, wineId = null) {
   const prefill = isEditing ? (player.wines || []).find(w => w.id === wineId) : null;
   const wineIndex = isEditing ? (player.wines || []).findIndex(w => w.id === wineId) : (player.wines || []).length;
 
+  // Flight feature: only for the host in hostPrepares mode
+  const showFlight = (lobby.gameMode === 'hostPrepares') && lobby.isHost;
+  const flightNames = lobby.flightNames || {};
+  const existingFlights = showFlight
+    ? [...new Set(
+        Object.values(lobby.players).flatMap(p => (p.wines || []).map(w => w.flightNumber).filter(n => n != null))
+      )].sort((a, b) => a - b)
+    : [];
+
   const submitLabel = isEditing ? t('wine.saveEdit') : t('wine.submitNew');
 
   app.innerHTML = `
@@ -454,7 +506,7 @@ async function renderWineRegistration(lobbyId, wineId = null) {
         <p>${isEditing ? t('wine.editSubtitle') : t('wine.pageSubtitle')}</p>
       </div>
       <div class="card">
-        ${buildWineFormHTML({ isGuess: false, prefill, grapes, countries, regions, wineIndex, rules })}
+        ${buildWineFormHTML({ isGuess: false, prefill, grapes, countries, regions, wineIndex, rules, showFlight, existingFlights, flightNames })}
         <div id="wineError"></div>
         <button class="btn btn-primary" id="wineSubmitBtn">${submitLabel}</button>
         ${isEditing ? `
@@ -468,7 +520,7 @@ async function renderWineRegistration(lobbyId, wineId = null) {
     </div>
   `;
 
-  attachWineFormListeners(regions, grapes);
+  attachWineFormListeners(regions, grapes, flightNames);
 
   async function submitWine(redirectToLobby = true) {
     const data = collectWineFormData(false, rules);

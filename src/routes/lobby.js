@@ -92,7 +92,8 @@ router.post('/', (req, res) => {
     },
     guesses: {},
     scores: {},
-    revealOrder: []
+    revealOrder: [],
+    flightNames: {}
   };
 
   saveGame(lobbyId, game, true);
@@ -132,6 +133,7 @@ router.get('/:lobbyId', (req, res) => {
         emoji: w.emoji,
         revealed: w.revealed,
         revealAt: w.revealAt || null,
+        flightNumber: w.flightNumber ?? null,
         name:     (w.revealed || isSelf) ? w.name     : null,
         vintage:  (w.revealed || isSelf) ? w.vintage  : null,
         type:     (w.revealed || isSelf) ? w.type     : null,
@@ -175,6 +177,7 @@ router.get('/:lobbyId', (req, res) => {
     hostPlayerId: game.hostPlayerId,
     gameMode,
     revealPolicy,
+    flightNames: game.flightNames || {},
     // Keep hostParticipating for backward compat with old cached clients
     hostParticipating: gameMode !== 'hostPrepares',
     rules: normaliseRules(game.rules),

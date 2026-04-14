@@ -196,6 +196,14 @@ const TRANSLATIONS = {
     'form.priceRange':        'Price Range',
     'form.selectAbv':         '-- Select ABV --',
     'form.selectPriceRange':  '-- Select Range --',
+    // Wine form — Flight fields (hostPrepares mode)
+    'wine.flight':            'Flight',
+    'wine.flightNone':        'No flight (ungrouped)',
+    'wine.flightName':        'Flight Name',
+    'wine.flightNamePlaceholder': 'e.g. Chablis vs Côte de Beaune',
+    // Lobby — hostPrepares challengers box
+    'lobby.challengers':      'Challengers',
+    'lobby.waitingChallengers': '⏳ Waiting for challengers to join...',
   },
   hk: {
     // Landing
@@ -393,6 +401,14 @@ const TRANSLATIONS = {
     'form.priceRange':        '價格範圍',
     'form.selectAbv':         '-- 揀酒精度 --',
     'form.selectPriceRange':  '-- 揀範圍 --',
+    // Wine form — Flight fields (hostPrepares mode)
+    'wine.flight':            '飛',
+    'wine.flightNone':        '唔分飛',
+    'wine.flightName':        '飛嘅名',
+    'wine.flightNamePlaceholder': '例如：夏布利 vs 布根地',
+    // Lobby — hostPrepares challengers box
+    'lobby.challengers':      '挑戰者',
+    'lobby.waitingChallengers': '⏳ 等緊挑戰者入嚟...',
   }
 };
 
