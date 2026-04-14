@@ -1246,6 +1246,15 @@ select:focus { background-color: white; }
   color: var(--text-muted);
 }
 
+/* Remove wine confirm-pending state */
+.btn-confirm-pending {
+  background: var(--error) !important;
+  border-color: var(--error) !important;
+  color: #fff !important;
+  animation: confirmPulse 0.3s ease;
+}
+@keyframes confirmPulse { from { transform: scale(0.96); } to { transform: scale(1); } }
+
 /* ===== Spin ===== */
 .spin { animation: spin 1s linear infinite; display: inline-block; }
 @keyframes spin { to { transform: rotate(360deg); } }

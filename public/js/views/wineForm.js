@@ -554,21 +554,40 @@ async function renderWineRegistration(lobbyId, wineId = null) {
   document.getElementById('wineSubmitBtn').addEventListener('click', () => submitWine(true));
 
   if (isEditing) {
-    document.getElementById('removeWineBtn')?.addEventListener('click', async () => {
-      if (!confirm(t('wine.removeConfirm'))) return;
-      const btn = document.getElementById('removeWineBtn');
-      btn.disabled = true;
-      btn.textContent = t('wine.removing');
-      try {
-        await API.removeWine(lobbyId, session.playerId, wineId);
-        showToast(t('wine.removed'));
-        window.location.hash = `#/lobby/${lobbyId}`;
-      } catch (err) {
-        showToast(err.error || t('wine.removeFailed'));
-        btn.disabled = false;
-        btn.textContent = t('wine.removeBtn');
-      }
-    });
+    let removeConfirmPending = false;
+    let removeConfirmTimer = null;
+    const removeBtn = document.getElementById('removeWineBtn');
+    if (removeBtn) {
+      removeBtn.addEventListener('click', async () => {
+        if (!removeConfirmPending) {
+          // First click: ask for confirmation inline
+          removeConfirmPending = true;
+          removeBtn.textContent = t('wine.removeConfirm');
+          removeBtn.classList.add('btn-confirm-pending');
+          removeConfirmTimer = setTimeout(() => {
+            removeConfirmPending = false;
+            removeBtn.textContent = t('wine.removeBtn');
+            removeBtn.classList.remove('btn-confirm-pending');
+          }, 3000);
+          return;
+        }
+        // Second click within 3 s: confirmed — proceed with removal
+        clearTimeout(removeConfirmTimer);
+        removeConfirmPending = false;
+        removeBtn.disabled = true;
+        removeBtn.textContent = t('wine.removing');
+        removeBtn.classList.remove('btn-confirm-pending');
+        try {
+          await API.removeWine(lobbyId, session.playerId, wineId);
+          showToast(t('wine.removed'));
+          window.location.hash = `#/lobby/${lobbyId}`;
+        } catch (err) {
+          showToast(err.error || t('wine.removeFailed'));
+          removeBtn.disabled = false;
+          removeBtn.textContent = t('wine.removeBtn');
+        }
+      });
+    }
   } else {
     document.getElementById('skipWineBtn')?.addEventListener('click', () => {
       window.location.hash = `#/lobby/${lobbyId}`;
