@@ -297,7 +297,7 @@ const TRANSLATIONS = {
     'error.chooseAvatar':     '揀返個嘜頭',
     // Shared loading/error
     'app.loading':            'Load緊',
-    'app.failedLoad':         'load唔到',
+    'app.failedLoad':         'Load唔到',
     'lobby.failedLoad':       '搵唔到大廳喎',
     'lobby.noDetails':        '冇資料',
     'lobby.guessMade':        '估咗未',
@@ -335,7 +335,7 @@ const TRANSLATIONS = {
     'lobby.guessBtn':         '估酒',
     'lobby.changeGuessBtn':   '轉軚',
     // Guess page
-    'guess.subtitle':         '估下支酒係乜，冇強迫你估晒㗎',
+    'guess.subtitle':         '估下支酒係乜，唔需要估晒㗎',
     'guess.saveBtn':          'Save低先',
     // Leaderboard page
     'lb.title':               '龍虎榜',
@@ -409,13 +409,13 @@ const TRANSLATIONS = {
     // Tasting note (guess form + my guesses page)
     'form.tastingNote':       '品酒筆記',
     'form.tastingNotePoints': '(0 分)',
-    'form.tastingNoteHint':   '純粹係自己睇',
+    'form.tastingNoteHint':   '純粹係自己之後睇返',
     'mg.tastingNote':         '品酒筆記',
     // Wine form — Flight fields (hostPrepares mode)
-    'wine.flight':            '飛',
-    'wine.flightNone':        '唔分飛',
-    'wine.flightName':        '飛嘅名',
-    'wine.flightNamePlaceholder': '例如：夏布利 vs 布根地',
+    'wine.flight':            'Set',
+    'wine.flightNone':        '唔分set',
+    'wine.flightName':        'Set 名',
+    'wine.flightNamePlaceholder': '例如：Chablis vs Côte de Beaune',
     // Lobby — hostPrepares challengers box
     'lobby.challengers':      '挑戰者',
     'lobby.waitingChallengers': '⏳ 等緊挑戰者入嚟...',
