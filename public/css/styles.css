@@ -501,6 +501,22 @@ select:focus { background-color: white; }
 .wine-reveal-accordion { display: none; border: 1px solid #9a7820; border-top: none; background: #faf6ee; padding: 8px 10px; }
 .wine-reveal-accordion.open { display: block; }
 
+/* Wine owner name hint inside unrevealed accordion */
+.wine-owner-name-hint {
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-style: italic;
+  font-family: Georgia, 'Times New Roman', serif;
+  color: var(--text);
+  padding: 5px 4px 6px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2px;
+}
+.wine-owner-vintage {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
 /* Unrevealed wine guess-status accordion */
 .wine-guess-accordion { display: none; border: 1px solid var(--border); border-top: none; background: var(--bg-subtle); padding: 6px 10px; }
 .wine-guess-accordion.open { display: block; }

@@ -359,6 +359,22 @@ select {
   min-width: 0;
 }
 
+/* Wine owner name hint inside unrevealed accordion */
+.wine-owner-name-hint {
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-style: italic;
+  font-family: Georgia, 'Times New Roman', serif;
+  color: var(--text);
+  padding: 5px 4px 6px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2px;
+}
+.wine-owner-vintage {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
 /* Scoreboard swipe */
 .wine-swipe-container {
   display: flex;

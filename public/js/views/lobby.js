@@ -221,6 +221,10 @@ async function renderLobby(lobbyId) {
           </div>`;
         }).join('');
 
+      const ownerNameHint = isSelf && wine.name
+        ? `<div class="wine-owner-name-hint">${escHtml(wine.name)}${wine.vintage ? `<span class="wine-owner-vintage"> · ${wine.vintage}</span>` : ''}</div>`
+        : '';
+
       return `
         <div class="wine-row-wrap">
           <div class="wine-row wine-row--unrev-expandable" data-wine-guess-accord="${wine.id}">
@@ -232,6 +236,7 @@ async function renderLobby(lobbyId) {
           </div>
           ${countdownHtml}
           <div class="wine-guess-accordion" id="wine-guess-accord-${wine.id}">
+            ${ownerNameHint}
             ${guesserRows
               ? `<div class="wine-guess-row wine-guess-header">
                    <span class="wine-guess-avatar"></span>
