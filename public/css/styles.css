@@ -1271,6 +1271,30 @@ select:focus { background-color: white; }
 }
 @keyframes confirmPulse { from { transform: scale(0.96); } to { transform: scale(1); } }
 
+/* ===== Tasting Note (My Guesses page) ===== */
+.tasting-note-display {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.tasting-note-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  font-family: -apple-system, sans-serif;
+  margin-bottom: 4px;
+}
+.tasting-note-text {
+  font-size: 0.85rem;
+  color: var(--text);
+  font-style: italic;
+  font-family: Georgia, 'Times New Roman', serif;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
 /* ===== Spin ===== */
 .spin { animation: spin 1s linear infinite; display: inline-block; }
 @keyframes spin { to { transform: rotate(360deg); } }

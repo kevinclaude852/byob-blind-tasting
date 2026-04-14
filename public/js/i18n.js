@@ -196,6 +196,11 @@ const TRANSLATIONS = {
     'form.priceRange':        'Price Range',
     'form.selectAbv':         '-- Select ABV --',
     'form.selectPriceRange':  '-- Select Range --',
+    // Tasting note (guess form + my guesses page)
+    'form.tastingNote':       'Tasting Note',
+    'form.tastingNotePoints': '(0 pt)',
+    'form.tastingNoteHint':   'For your own reference',
+    'mg.tastingNote':         'Tasting Note',
     // Wine form — Flight fields (hostPrepares mode)
     'wine.flight':            'Flight',
     'wine.flightNone':        'No flight (ungrouped)',
@@ -401,6 +406,11 @@ const TRANSLATIONS = {
     'form.priceRange':        '價格範圍',
     'form.selectAbv':         '-- 揀酒精度 --',
     'form.selectPriceRange':  '-- 揀範圍 --',
+    // Tasting note (guess form + my guesses page)
+    'form.tastingNote':       '品酒筆記',
+    'form.tastingNotePoints': '(0 分)',
+    'form.tastingNoteHint':   '純粹係自己睇',
+    'mg.tastingNote':         '品酒筆記',
     // Wine form — Flight fields (hostPrepares mode)
     'wine.flight':            '飛',
     'wine.flightNone':        '唔分飛',

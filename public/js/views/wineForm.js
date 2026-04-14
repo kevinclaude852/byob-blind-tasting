@@ -224,6 +224,12 @@ function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], count
     const abvField = r.abv.enabled ? buildAbvSelect('wineAbv', prefill?.abv, false) : '';
     const priceField = r.price.enabled ? buildPriceRangeSelect('winePriceRange', r.price.currency, r.price.rangeWidth, prefill?.priceRange) : '';
 
+    const tastingNoteField = `
+      <div class="form-group">
+        <label for="tastingNote">${t('form.tastingNote')} <span class="optional">${t('form.tastingNotePoints')}</span></label>
+        <textarea id="tastingNote" rows="3" placeholder="${t('form.tastingNoteHint')}" style="resize:vertical">${escHtml(prefill?.tastingNote || '')}</textarea>
+      </div>`;
+
     return `
       ${grapeField}
       ${oldWorldField}
@@ -232,6 +238,7 @@ function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], count
       ${vintageField}
       ${abvField}
       ${priceField}
+      ${tastingNoteField}
     `;
   }
 
@@ -452,7 +459,9 @@ function collectWineFormData(isGuess = false, rules = null) {
     }
   }
 
-  if (!isGuess) {
+  if (isGuess) {
+    data.tastingNote = document.getElementById('tastingNote')?.value?.trim() || null;
+  } else {
     data.name = document.getElementById('wineName')?.value || '';
     data.emoji = document.getElementById('selectedWineEmoji')?.value || '1️⃣';
     const flightEl = document.getElementById('wineFlight');

@@ -127,6 +127,7 @@ router.put('/guess/:wineId', (req, res) => {
     oldWorld: rules.oldWorld.enabled ? (guessData.oldWorld != null ? guessData.oldWorld : null) : null,
     abv: rules.abv.enabled ? (guessData.abv != null ? Number(guessData.abv) : null) : null,
     priceRange: rules.price.enabled ? (guessData.priceRange || null) : null,
+    tastingNote: guessData.tastingNote ? String(guessData.tastingNote).slice(0, 1000) : null,
     submittedAt: new Date().toISOString()
   };
 
