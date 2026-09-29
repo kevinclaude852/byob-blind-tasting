@@ -140,6 +140,7 @@ router.get('/:lobbyId', (req, res) => {
         varietals:(w.revealed || isSelf) ? w.varietals: null,
         country:  (w.revealed || isSelf) ? w.country  : null,
         region:   (w.revealed || isSelf) ? w.region   : null,
+        subRegion:(w.revealed || isSelf) ? (w.subRegion || null) : null,
         abv:      (w.revealed || isSelf) ? w.abv      : null,
         price:    (w.revealed || isSelf) ? w.price     : null,
       }))

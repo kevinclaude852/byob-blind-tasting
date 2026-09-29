@@ -79,5 +79,6 @@ const API = (() => {
     getGrapes: () => request('GET', '/api/reference/grapes'),
     getCountries: () => request('GET', '/api/reference/countries'),
     getRegions: () => request('GET', '/api/reference/regions'),
+    getSubRegions: () => request('GET', '/api/reference/subregions'),
   };
 })();

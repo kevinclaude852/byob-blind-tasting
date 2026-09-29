@@ -1,0 +1,464 @@
+{
+  "USA": {
+    "Napa Valley": [
+      "Oakville",
+      "Rutherford",
+      "St Helena",
+      "Carneros",
+      "Howell Mountain",
+      "Stags Leap District",
+      "Spring Mountain District",
+      "Calistoga",
+      "Mt. Veeder",
+      "Diamond Mountain",
+      "Coombsville",
+      "Yountville",
+      "Oak Knoll District",
+      "Atlas Peak"
+    ],
+    "Sonoma County": [
+      "Russian River Valley",
+      "Sonoma Coast",
+      "Alexander Valley",
+      "Carneros",
+      "Dry Creek Valley",
+      "Sonoma Valley",
+      "Knights Valley",
+      "Moon Mountain District",
+      "Fort Ross - Seaview"
+    ],
+    "Willamette Valley": [
+      "Dundee Hills",
+      "Eola - Amity Hills",
+      "Yamhill-Carlton",
+      "Ribbon Ridge",
+      "Chehalem Mountains"
+    ],
+    "Central Coast": [
+      "Paso Robles",
+      "Sta. Rita Hills",
+      "Santa Barbara County",
+      "Santa Lucia Highlands",
+      "Santa Ynez Valley",
+      "Santa Maria Valley"
+    ],
+    "Columbia Valley": [
+      "Walla Walla Valley",
+      "Red Mountain",
+      "Yakima Valley",
+      "Horse Heaven Hills"
+    ],
+    "North Coast": [
+      "Anderson Valley",
+      "Mendocino County"
+    ],
+    "Santa Cruz Mountains": [],
+    "Central Valley": [
+      "Lodi",
+      "Clarksburg"
+    ],
+    "Finger Lakes": [],
+    "Sierra Foothills": [],
+    "San Francisco Bay": [],
+    "South Coast": []
+  },
+  "France": {
+    "Bordeaux": [
+      "Saint-Estèphe",
+      "Pauillac",
+      "Saint-Julien",
+      "Margaux",
+      "Listrac/ Moulis",
+      "Haut-Médoc",
+      "Pessac-Léognan",
+      "Sauternes/ Barsac",
+      "Graves",
+      "St-Émilion Grand Cru",
+      "Pomerol",
+      "Lalande de Pomerol",
+      "Côtes de Bordeaux",
+      "Canon/ Fronsac",
+      "Bordaux Régionale"
+    ],
+    "Burgundy": [
+      "Chablis",
+      "Auxerrois Villages",
+      "Marsannay",
+      "Fixin",
+      "Gevrey-Chambertin",
+      "Morey-St-Denis",
+      "Chambolle-Musigny",
+      "Vougeot",
+      "Vosne-Romanée",
+      "Nuits-St-Georges",
+      "Côte de Nuits Villages",
+      "Ladoix",
+      "Aloxe-Corton",
+      "Pernand-Vergelesses",
+      "Beaune",
+      "Côte de Beaune",
+      "Savigny-lès-Beaune",
+      "Chorey-les-Beaune",
+      "Pommard",
+      "Volnay",
+      "Meursault",
+      "Puligny-Montrachet",
+      "Chassagne-Montrachet",
+      "Saint-Aubin",
+      "Blagny",
+      "Saint-Romain",
+      "Auxey-Duresses",
+      "Monthélie",
+      "Santenay",
+      "Maranges",
+      "Côte de Beaune-Villages",
+      "Bouzeron",
+      "Rully",
+      "Mercurey",
+      "Givry",
+      "Montagny",
+      "Pouilly-Fuissé",
+      "Pouilly-Loché",
+      "Pouilly-Vinzelles",
+      "Saint-Véran",
+      "Viré-Clessé",
+      "Mâcon-Villages",
+      "Bourgogne Régionale"
+    ],
+    "Rhône": [
+      "Côte-Rôtie",
+      "Condrieu/ Ch. Grillet",
+      "Saint Joseph",
+      "Hermitage",
+      "Crozes-Hermitage",
+      "Cornas",
+      "Châteauneuf-du-Pape",
+      "Gigondas",
+      "Vacqueyras",
+      "Ventoux",
+      "Lirac",
+      "Rasteau",
+      "Tavel",
+      "Côtes du Rhône"
+    ],
+    "Champagne": [],
+    "Loire Valley": [
+      "Muscadet",
+      "Touraine",
+      "Vouvray",
+      "Montlouis-sur-Loire",
+      "Chinon",
+      "Bourgueil",
+      "Anjou",
+      "Saumur",
+      "Savennières",
+      "Coteaux du Layon",
+      "Saumur-Champigny",
+      "Sancerre",
+      "Pouilly-Fumé",
+      "Menetou-Salon",
+      "Cheverny",
+      "Jasnières",
+      "Côte Roannaise"
+    ],
+    "Languedoc Roussillon": [
+      "Côtes Catalanes",
+      "Corbières",
+      "Côtes du Roussillon",
+      "Coteaux du Languedoc",
+      "Minervois",
+      "Limoux",
+      "Saint-Chinian",
+      "Terrasses du Larzac",
+      "Faugères",
+      "Pic Saint-Loup",
+      "Rivesaltes",
+      "Banyuls"
+    ],
+    "Alsace": [],
+    "Beaujolais": [
+      "Saint-Amour",
+      "Juliénas",
+      "Chénas",
+      "Moulin-à-Vent",
+      "Fleurie",
+      "Chiroubles",
+      "Morgon",
+      "Régnié",
+      "Brouilly",
+      "Côte de Brouilly",
+      "Beaujolais Régionale"
+    ],
+    "Provence": [],
+    "Southwest": [
+      "Cahors",
+      "Madiran",
+      "Monbazillac",
+      "Bergerac",
+      "Jurançon"
+    ],
+    "Jura": [],
+    "Savoie": [],
+    "Corsica": []
+  },
+  "Italy": {
+    "Tuscany": [
+      "Montalcino",
+      "Chianti",
+      "Bolgheri",
+      "Montepulciano",
+      "Morellino di Scansano",
+      "Maremma",
+      "San Gimignano"
+    ],
+    "Piedmont": [
+      "Barolo",
+      "Barbaresco",
+      "Langhe",
+      "Alba",
+      "Roero",
+      "Asti",
+      "Alto Piedmont",
+      "Monferrato"
+    ],
+    "Veneto": [],
+    "Sicily": [],
+    "Puglia": [],
+    "Campania": [
+      "Taurasi",
+      "Irpinia",
+      "Taburno",
+      "Cilento"
+    ],
+    "Trentino-Alto Adige": [],
+    "Umbria": [],
+    "Abruzzo": [],
+    "Friuli-Venezia Giulia": [],
+    "Lombardia": [],
+    "Valle d'Aosta": [],
+    "Marche": [],
+    "Sardinia": [],
+    "Emilia-Romagna": [],
+    "Basilicata": [],
+    "Lazio": [],
+    "Calabria": [],
+    "Liguria": [],
+    "Molise": []
+  },
+  "Australia": {
+    "South Australia": [
+      "Barossa Valley",
+      "McLaren Vale",
+      "Clare Valley",
+      "Coonawarra",
+      "Eden Valley",
+      "Adelaide Hills",
+      "Langhorne Creek",
+      "Limestone Coast"
+    ],
+    "Victoria": [
+      "Yarra Valley",
+      "Mornington Peninsula",
+      "Geelong",
+      "Rutherglen",
+      "Beechworth",
+      "Heathcote",
+      "Gippsland",
+      "Macedon Ranges",
+      "Nagambie Lakes",
+      "King Valley",
+      "Bendigo",
+      "Pyrenees",
+      "Grampians",
+      "Great Western"
+    ],
+    "Western Australia": [
+      "Margaret River",
+      "Frankland River",
+      "Great Southern"
+    ],
+    "New South Wales": [
+      "Hunter Valley",
+      "Canberra District",
+      "Orange",
+      "Mudgee",
+      "Riverina"
+    ],
+    "Tasmania": [
+      "Southern Tasmania",
+      "Northern Tasmania",
+      "Freycinet"
+    ]
+  },
+  "Spain": {
+    "Rioja": [],
+    "Castilla y Leon": [
+      "Ribera del Duero",
+      "Toro",
+      "Bierzo",
+      "Rueda"
+    ],
+    "Catalunya": [
+      "Priorat",
+      "Montsant",
+      "Terra Alta",
+      "Penedès"
+    ],
+    "Aragon": [
+      "Campo de Borja",
+      "Calatayud",
+      "Cariñena",
+      "Somontano"
+    ],
+    "Murcia/ Valencia": [
+      "Jumilla",
+      "Yecla",
+      "Alicante",
+      "Utiel-Requena"
+    ],
+    "Cava": [],
+    "Galicia": [
+      "Rías Baixas",
+      "Ribeira Sacra",
+      "Valdeorras",
+      "Ribeiro"
+    ],
+    "Cebreros/ Madrid": [],
+    "Andalusia": [],
+    "Castilla-La Mancha": [],
+    "Navarra": [],
+    "Canary Islands": [],
+    "Balearic Islands": [],
+    "País Vasco": [],
+    "Extremadura": []
+  },
+  "Germany": {
+    "Mosel": [],
+    "Nahe": [],
+    "Rheinhessen": [],
+    "Pfalz": [],
+    "Rheingau": [],
+    "Baden": [],
+    "Franken": [],
+    "Ahr": [],
+    "Württemberg": []
+  },
+  "Portugal": {
+    "Douro Valley": [],
+    "Vinho Verde": [],
+    "Dão": [],
+    "Alentejo": [],
+    "Bairrada": [],
+    "Madeira": [],
+    "Lisboa": [],
+    "Tejo": []
+  },
+  "Argentina": {
+    "Mendoza": [
+      "Uco Valley",
+      "Lujan de Cuyo",
+      "Maipú",
+      "San Rafael"
+    ],
+    "Salta": [],
+    "Patagonia": [],
+    "San Juan": [],
+    "La Rioja": []
+  },
+  "South Africa": {
+    "Stellenbosch": [],
+    "Paarl": [],
+    "Swartland": [],
+    "Walker Bay": [],
+    "Elgin": [],
+    "Overberg": [],
+    "Franschhoek": [],
+    "Constantia": [],
+    "Wellington": [],
+    "Robertson": [],
+    "Citrusdal Mountain": [],
+    "Tulbagh": []
+  },
+  "New Zealand": {
+    "Marlborough": [],
+    "Central Otago": [],
+    "Hawke's Bay": [],
+    "Auckland": [],
+    "Wairarapa / Martinborough": [],
+    "Nelson": [],
+    "Gisborne": [],
+    "Waipara / Canterbury": []
+  },
+  "Chile": {
+    "Coquimbo Region": [
+      "Limarí Valley",
+      "Elqui Valley",
+      "Choapa Valley"
+    ],
+    "Aconcagua Region": [
+      "Aconcagua Valley",
+      "Casablanca Valley",
+      "San Antonio Valley"
+    ],
+    "Central Valley Region": [
+      "Colchagua Valley",
+      "Cachapoal Valley",
+      "Maipo Valley",
+      "Maule Valley",
+      "Curicó Valley"
+    ],
+    "Southern Region": [
+      "Itata Valley",
+      "Bío Bío Valley",
+      "Malleco Valley"
+    ]
+  },
+  "Austria": {
+    "Niederösterreich": [
+      "Wachau",
+      "Kamptal",
+      "Kremstal",
+      "Weinviertel"
+    ],
+    "Burgenland": [],
+    "Steiermark": []
+  },
+  "Greece": {
+    "Santorini": [],
+    "Naoussa": [],
+    "Nemea": [],
+    "Peloponnese": [],
+    "Amyndaio": [],
+    "Florina": []
+  },
+  "China": {
+    "Ningxia": [],
+    "Xinjiang": [],
+    "Yunnan": [],
+    "Shandong": [],
+    "Hebei": []
+  },
+  "Japan": {
+    "Yamanashi": [],
+    "Hokkaido": [],
+    "Nagano": [],
+    "Yamagata": []
+  },
+  "Switzerland": {
+    "Valais": [],
+    "Vaud": [],
+    "Eastern Switzerland": [],
+    "Ticino": [],
+    "Three Lakes": [],
+    "Genève": []
+  },
+  "Canada": {
+    "Okanagan Valley": [],
+    "Niagara Peninsula": []
+  },
+  "Georgia": {
+    "Kakheti": [],
+    "Kartli": [],
+    "Imereti": []
+  }
+}

@@ -54,6 +54,7 @@ function getDefaultRulesClient() {
     oldWorld: { enabled: false, score: 5  },
     country:  { enabled: true,  score: 5  },
     region:   { enabled: true,  score: 5  },
+    subRegion:{ enabled: false, score: 3  },
     vintage:  { enabled: true,  mode: 'exact', scoreExact: 3, scorePlusOne: 2, scorePlusTwo: 1 },
     abv:      { enabled: false, score: 3  },
     price:    { enabled: false, score: 3, currency: 'HKD', rangeWidth: 100 }
@@ -67,6 +68,7 @@ function normaliseRulesClient(rules) {
   for (const key of Object.keys(def)) {
     out[key] = Object.assign({}, def[key], rules[key] || {});
   }
+  if (!out.region.enabled) out.subRegion.enabled = false;
   return out;
 }
 
@@ -112,6 +114,14 @@ function buildCompareRows(wine, guess, rules) {
       scoreKey: 'region'
     });
   }
+  if (r.subRegion.enabled) {
+    rows.push({
+      label: isHK ? '子產區' : 'Sub Region',
+      guessVal: guess?.subRegion || '—',
+      wineVal: wine?.subRegion || '—',
+      scoreKey: 'subRegion'
+    });
+  }
   if (r.vintage.enabled) {
     rows.push({
       label: isHK ? '年份' : 'Vintage',
@@ -152,6 +162,7 @@ function buildScoreChips(score, rules) {
   if (r.oldWorld.enabled) chips.push({ label: isHK ? '新舊世界' : 'O/N World', val: score?.oldWorld  ?? 0 });
   if (r.country.enabled)  chips.push({ label: isHK ? '國家' : 'Country',    val: score?.country   ?? 0 });
   if (r.region.enabled)   chips.push({ label: isHK ? '產區' : 'Region',     val: score?.region    ?? 0 });
+  if (r.subRegion.enabled) chips.push({ label: isHK ? '子產區' : 'Sub Region', val: score?.subRegion ?? 0 });
   if (r.vintage.enabled)  chips.push({ label: isHK ? '年份' : 'Vintage',    val: score?.vintage   ?? 0 });
   if (r.abv.enabled)      chips.push({ label: isHK ? '酒精度' : 'ABV',        val: score?.abv       ?? 0 });
   if (r.price.enabled)    chips.push({ label: isHK ? '價錢' : 'Price',      val: score?.price     ?? 0 });
@@ -167,6 +178,7 @@ function getMaxScore(rules) {
   if (r.oldWorld.enabled) max += r.oldWorld.score;
   if (r.country.enabled)  max += r.country.score;
   if (r.region.enabled)   max += r.region.score;
+  if (r.subRegion.enabled) max += r.subRegion.score;
   if (r.vintage.enabled)  max += r.vintage.scoreExact;
   if (r.abv.enabled)      max += r.abv.score;
   if (r.price.enabled)    max += r.price.score;
@@ -207,6 +219,13 @@ function buildRuleDisplayRows(rules) {
     rows.push({
       cat: t('rules.region'),
       pts: isHK ? `${r.region.score} 分` : `${r.region.score} pts`,
+      desc: isHK ? '啱晒先計' : 'Exact match'
+    });
+  }
+  if (r.subRegion.enabled) {
+    rows.push({
+      cat: t('rules.subRegion'),
+      pts: isHK ? `${r.subRegion.score} 分` : `${r.subRegion.score} pts`,
       desc: isHK ? '啱晒先計' : 'Exact match'
     });
   }

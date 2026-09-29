@@ -2,13 +2,14 @@ async function renderGuess(lobbyId, wineId) {
   const app = document.getElementById('app');
   app.innerHTML = `<div class="page"><div class="loading-screen"><div class="wine-glass">🍷</div><p>Loading...</p></div></div>`;
 
-  let grapes, countries, regions, lobby, existingGuess;
+  let grapes, countries, regions, subRegions, lobby, existingGuess;
   try {
-    [grapes, countries, regions, lobby, { guess: existingGuess }] = await Promise.all([
-      API.getGrapes(), API.getCountries(), API.getRegions(),
+    [grapes, countries, lobby, { guess: existingGuess }] = await Promise.all([
+      API.getGrapes(), API.getCountries(),
       API.getLobby(lobbyId),
       API.getGuess(lobbyId, wineId)
     ]);
+    ({ regions, subRegions } = await loadRegionData(normaliseRulesClient(lobby.rules)));
   } catch (err) {
     app.innerHTML = `<div class="page"><div class="alert alert-error">${escHtml(err.error || 'Failed to load.')}</div></div>`;
     return;
@@ -36,7 +37,7 @@ async function renderGuess(lobbyId, wineId) {
         </div>
       </div>
 
-      ${isRevealed ? renderRevealedView(wineInfo, existingGuess, lobby, wineId, rules) : renderGuessForm(grapes, countries, regions, existingGuess, rules)}
+      ${isRevealed ? renderRevealedView(wineInfo, existingGuess, lobby, wineId, rules) : renderGuessForm(grapes, countries, regions, subRegions, existingGuess, rules)}
     </div>
   `;
 
@@ -45,7 +46,7 @@ async function renderGuess(lobbyId, wineId) {
   });
 
   if (!isRevealed) {
-    attachWineFormListeners(regions, grapes);
+    attachWineFormListeners(regions, grapes, {}, subRegions);
 
     document.getElementById('guessSubmitBtn').addEventListener('click', async () => {
       const data = collectWineFormData(true, rules);
@@ -69,10 +70,10 @@ async function renderGuess(lobbyId, wineId) {
   }
 }
 
-function renderGuessForm(grapes, countries, regions, prefill, rules) {
+function renderGuessForm(grapes, countries, regions, subRegions, prefill, rules) {
   return `
     <div class="card">
-      ${buildWineFormHTML({ isGuess: true, prefill, grapes, countries, regions, rules })}
+      ${buildWineFormHTML({ isGuess: true, prefill, grapes, countries, regions, subRegions, rules })}
       <div id="guessError"></div>
       <button class="btn btn-primary" id="guessSubmitBtn">${t('guess.saveBtn')}</button>
     </div>
@@ -92,6 +93,7 @@ function renderRevealedView(wineInfo, myGuess, lobby, wineId, rules) {
     r.grape.enabled ? `<div class="wine-detail-row"><span class="wine-detail-label">${t('lb.varietal')}</span><span class="wine-detail-value">${escHtml(formatVarietalClient(wine))}</span></div>` : '',
     wine.country ? `<div class="wine-detail-row"><span class="wine-detail-label">${t('lb.country')}</span><span class="wine-detail-value">${escHtml(wine.country)}</span></div>` : '',
     wine.region  ? `<div class="wine-detail-row"><span class="wine-detail-label">${t('lb.region')}</span><span class="wine-detail-value">${escHtml(wine.region)}</span></div>`  : '',
+    wine.subRegion ? `<div class="wine-detail-row"><span class="wine-detail-label">${t('lb.subRegion')}</span><span class="wine-detail-value">${escHtml(wine.subRegion)}</span></div>` : '',
     r.abv.enabled && wine.abv != null ? `<div class="wine-detail-row"><span class="wine-detail-label">${getLocale() === 'hk' ? '酒精度' : 'ABV'}</span><span class="wine-detail-value">${wine.abv}%</span></div>` : '',
     r.price.enabled && wine.price != null ? `<div class="wine-detail-row"><span class="wine-detail-label">${t('form.price')}</span><span class="wine-detail-value">${formatWinePrice(wine.price, r.price.currency)}</span></div>` : '',
   ].filter(Boolean).join('');

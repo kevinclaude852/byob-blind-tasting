@@ -41,6 +41,7 @@ function buildExportHtml({ lobbyName, sorted, denseRanks, revealOrder, wineMap, 
     if (r.oldWorld.enabled) cols.push(isHK ? '新/舊世界' : 'Old/New World');
     if (r.country.enabled)  cols.push(isHK ? '國家' : 'Country');
     if (r.region.enabled)   cols.push(isHK ? '產區' : 'Region');
+    if (r.subRegion.enabled) cols.push(isHK ? '子產區' : 'Sub Region');
     if (r.vintage.enabled)  cols.push(isHK ? '年份' : 'Vintage');
     if (r.abv.enabled)      cols.push(isHK ? '酒精度' : 'ABV');
     if (r.price.enabled)    cols.push(isHK ? '價錢' : 'Price');
@@ -71,6 +72,9 @@ function buildExportHtml({ lobbyName, sorted, denseRanks, revealOrder, wineMap, 
     if (r.region.enabled) {
       cells.push(`<td class="${scoreClass(scoreObj.region, false)}">${escHtml(guessObj?.region || '—')}</td>`);
     }
+    if (r.subRegion.enabled) {
+      cells.push(`<td class="${scoreClass(scoreObj.subRegion ?? 0, false)}">${escHtml(guessObj?.subRegion || '—')}</td>`);
+    }
     if (r.vintage.enabled) {
       cells.push(`<td class="${scoreClass(scoreObj.vintage, true)}">${escHtml(guessObj?.vintage ? String(guessObj.vintage) : '—')}</td>`);
     }
@@ -100,6 +104,7 @@ function buildExportHtml({ lobbyName, sorted, denseRanks, revealOrder, wineMap, 
       r.grape.enabled ? formatVarietalClient(wine) : null,
       wine.country,
       wine.region,
+      wine.subRegion,
       r.abv.enabled && wine.abv != null ? `${wine.abv}%` : null,
       r.price.enabled && wine.price != null ? formatWinePrice(wine.price, r.price.currency) : null,
     ].filter(Boolean);
