@@ -692,11 +692,11 @@ select {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ===== Share box — Manage Players row ===== */
-.share-manage-row {
-  margin-top: 10px;
-  display: flex;
-  justify-content: flex-end;
-}
+.share-manage-row { margin-top: 10px; }
+.share-manage-row .btn { text-decoration: none; }
+.mp-remove-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.mp-confirm-actions { display: flex; gap: 10px; margin-top: 16px; }
+.mp-confirm-actions .btn { flex: 1; }
 
 /* ===== Two-tap confirm button ===== */
 .btn-confirm-pending {
