@@ -373,8 +373,8 @@ async function renderLobby(lobbyId) {
             </div>
           </div>
           ${qrDataUrl ? `<div class="qr-container" id="qrContainer" style="display:none"><img src="${qrDataUrl}" alt="QR Code"></div>` : ''}
-          <div class="share-manage-row">
-            <a href="#/lobby/${lobbyId}/manage-players" class="btn btn-secondary btn-sm">${t('lobby.managePlayers')}</a>
+          <div class="share-actions share-manage-row">
+            <a href="#/lobby/${lobbyId}/manage-players" class="btn">${t('lobby.managePlayers')}</a>
           </div>
         </div>` : ''}
 
