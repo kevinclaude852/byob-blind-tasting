@@ -80,6 +80,7 @@ async function renderMyGuesses(lobbyId) {
         if (r.oldWorld.enabled) guessFields.push({ label: t('mg.oldWorld'), val: guess.oldWorld != null ? (guess.oldWorld ? t('rules.oldWorldVal') : t('rules.newWorldVal')) : '—' });
         if (r.country.enabled) guessFields.push({ label: t('mg.country'), val: guess.country || '—' });
         if (r.region.enabled) guessFields.push({ label: t('mg.region'), val: guess.region || '—' });
+        if (r.subRegion.enabled) guessFields.push({ label: t('mg.subRegion'), val: guess.subRegion || '—' });
         if (r.vintage.enabled) guessFields.push({ label: t('mg.vintage'), val: guess.vintage ? String(guess.vintage) : '—' });
         if (r.abv.enabled) guessFields.push({ label: t('mg.abv'), val: guess.abv != null ? `${guess.abv}%` : '—' });
         if (r.price.enabled) guessFields.push({ label: t('mg.price'), val: guess.priceRange ? formatPriceBucket(guess.priceRange, r.price.currency) : '—' });

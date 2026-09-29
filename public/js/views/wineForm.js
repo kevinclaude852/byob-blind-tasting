@@ -141,7 +141,7 @@ function buildPriceInput(id, currency, prefillVal, isRequired) {
 }
 
 // ── Shared wine form builder ──────────────────────────────────────────────────
-function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], countries = [], regions = {}, wineIndex = 0, rules = null, showFlight = false, existingFlights = [], flightNames = {} } = {}) {
+function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], countries = [], regions = {}, subRegions = null, wineIndex = 0, rules = null, showFlight = false, existingFlights = [], flightNames = {} } = {}) {
   const r = normaliseRulesClient(rules);
   const currentYear = new Date().getFullYear();
   const opt = `<span class="optional">${t('form.optional')}</span>`;
@@ -192,6 +192,17 @@ function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], count
       </select>
     </div>` : '';
 
+  const prefillSubs = subRegions && prefill?.country && prefill?.region
+    ? ((subRegions[prefill.country] || {})[prefill.region] || []) : [];
+  const subRegionField = r.subRegion.enabled && subRegions ? `
+    <div class="form-group" id="subRegionGroup" style="${prefillSubs.length ? '' : 'display:none'}">
+      <label for="wineSubRegion">${t('lobby.subRegion')} ${opt}</label>
+      <select id="wineSubRegion">
+        <option value="">${t('form.selectSubRegion')}</option>
+        ${prefillSubs.map(s => `<option value="${escHtml(s)}" ${prefill.subRegion === s ? 'selected' : ''}>${escHtml(s)}</option>`).join('')}
+      </select>
+    </div>` : '';
+
   const vintageField = r.vintage.enabled ? `
     <div class="form-group">
       <label for="wineVintage">${t('lobby.vintage')}${isGuess ? ` ${opt}` : ''}</label>
@@ -235,6 +246,7 @@ function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], count
       ${oldWorldField}
       ${countryField}
       ${regionField}
+      ${subRegionField}
       ${vintageField}
       ${abvField}
       ${priceField}
@@ -314,6 +326,7 @@ function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], count
     ${grapeSection}
     ${countryField}
     ${regionField}
+    ${subRegionField}
     ${vintageField}
     ${abvField}
     ${priceField}
@@ -321,7 +334,16 @@ function buildWineFormHTML({ isGuess = false, prefill = null, grapes = [], count
   `;
 }
 
-function attachWineFormListeners(regions, grapes = [], flightNames = {}) {
+// Sub Region lobbies take both Region and Sub Region from the subregions.json hierarchy
+async function loadRegionData(rules) {
+  if (!rules.subRegion.enabled) return { regions: await API.getRegions(), subRegions: null };
+  const subRegions = await API.getSubRegions();
+  const regions = {};
+  for (const [country, regionMap] of Object.entries(subRegions)) regions[country] = Object.keys(regionMap);
+  return { regions, subRegions };
+}
+
+function attachWineFormListeners(regions, grapes = [], flightNames = {}, subRegions = null) {
   attachGrapeAutocomplete(grapes);
 
   document.querySelectorAll('.wine-emoji-picker .emoji-btn').forEach(btn => {
@@ -350,8 +372,16 @@ function attachWineFormListeners(regions, grapes = [], flightNames = {}) {
   if (countrySelect) {
     countrySelect.addEventListener('change', () => {
       updateRegionDropdown(countrySelect.value, regions);
+      updateSubRegionDropdown(subRegions, countrySelect.value, '');
     });
     if (countrySelect.value) updateRegionDropdown(countrySelect.value, regions, document.getElementById('wineRegion')?.value);
+  }
+
+  const regionSelect = document.getElementById('wineRegion');
+  if (regionSelect && subRegions) {
+    regionSelect.addEventListener('change', () => {
+      updateSubRegionDropdown(subRegions, countrySelect?.value, regionSelect.value);
+    });
   }
 
   // Flight select → show/hide name accordion + pre-fill existing name
@@ -396,6 +426,21 @@ function updateRegionDropdown(country, regions, selectedRegion = '') {
     list.map(r => `<option value="${r}" ${r === selectedRegion ? 'selected' : ''}>${r}</option>`).join('');
 }
 
+function updateSubRegionDropdown(subRegions, country, region, selected = '') {
+  const group = document.getElementById('subRegionGroup');
+  const select = document.getElementById('wineSubRegion');
+  if (!group || !select || !subRegions) return;
+  const list = (country && region) ? ((subRegions[country] || {})[region] || []) : [];
+  if (list.length === 0) {
+    group.style.display = 'none';
+    select.innerHTML = `<option value="">${t('form.selectSubRegion')}</option>`;
+    return;
+  }
+  group.style.display = '';
+  select.innerHTML = `<option value="">${t('form.selectSubRegion')}</option>` +
+    list.map(s => `<option value="${escHtml(s)}" ${s === selected ? 'selected' : ''}>${escHtml(s)}</option>`).join('');
+}
+
 function collectWineFormData(isGuess = false, rules = null) {
   const r = normaliseRulesClient(rules);
   const varietals = [];
@@ -431,7 +476,8 @@ function collectWineFormData(isGuess = false, rules = null) {
     type,
     varietals,
     country: document.getElementById('wineCountry')?.value || null,
-    region: document.getElementById('wineRegion')?.value || null
+    region: document.getElementById('wineRegion')?.value || null,
+    subRegion: r.subRegion.enabled ? (document.getElementById('wineSubRegion')?.value || null) : null
   };
 
   if (isGuess && r.oldWorld.enabled) {
@@ -481,11 +527,12 @@ async function renderWineRegistration(lobbyId, wineId = null) {
   const session = API.getSession(lobbyId);
   if (!session) { window.location.hash = `#/lobby/${lobbyId}`; return; }
 
-  let grapes, countries, regions, lobby;
+  let grapes, countries, regions, subRegions, lobby;
   try {
-    [grapes, countries, regions, lobby] = await Promise.all([
-      API.getGrapes(), API.getCountries(), API.getRegions(), API.getLobby(lobbyId)
+    [grapes, countries, lobby] = await Promise.all([
+      API.getGrapes(), API.getCountries(), API.getLobby(lobbyId)
     ]);
+    ({ regions, subRegions } = await loadRegionData(normaliseRulesClient(lobby.rules)));
   } catch {
     app.innerHTML = `<div class="page"><div class="alert alert-error">Failed to load.</div></div>`;
     return;
@@ -515,7 +562,7 @@ async function renderWineRegistration(lobbyId, wineId = null) {
         <p>${isEditing ? t('wine.editSubtitle') : t('wine.pageSubtitle')}</p>
       </div>
       <div class="card">
-        ${buildWineFormHTML({ isGuess: false, prefill, grapes, countries, regions, wineIndex, rules, showFlight, existingFlights, flightNames })}
+        ${buildWineFormHTML({ isGuess: false, prefill, grapes, countries, regions, subRegions, wineIndex, rules, showFlight, existingFlights, flightNames })}
         <div id="wineError"></div>
         <button class="btn btn-primary" id="wineSubmitBtn">${submitLabel}</button>
         ${isEditing ? `
@@ -529,7 +576,7 @@ async function renderWineRegistration(lobbyId, wineId = null) {
     </div>
   `;
 
-  attachWineFormListeners(regions, grapes, flightNames);
+  attachWineFormListeners(regions, grapes, flightNames, subRegions);
 
   async function submitWine(redirectToLobby = true) {
     const data = collectWineFormData(false, rules);

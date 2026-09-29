@@ -30,7 +30,7 @@ const { router: lobbyRouter } = require('./src/routes/lobby');
 const playerRouter = require('./src/routes/player');
 const { router: gameRouter, setIo, rescheduleTimers } = require('./src/routes/game');
 const { router: dummyRouter } = require('./src/routes/dummy');
-const { grapes, countries, regions } = require('./src/utils/validation');
+const { grapes, countries, regions, subregions } = require('./src/utils/validation');
 const { setupSocketHandlers } = require('./src/socket/handler');
 
 setIo(io);
@@ -44,6 +44,7 @@ app.use('/api/dummy', dummyRouter);
 app.get('/api/reference/grapes', (req, res) => res.json(grapes));
 app.get('/api/reference/countries', (req, res) => res.json(countries));
 app.get('/api/reference/regions', (req, res) => res.json(regions));
+app.get('/api/reference/subregions', (req, res) => res.json(subregions));
 
 // QR code generator
 app.get('/api/qr', async (req, res) => {

@@ -53,6 +53,7 @@ router.post('/:playerId/wines', (req, res) => {
       : wine.varietals && wine.varietals[0] ? [{ grape: wine.varietals[0].grape, percentage: 100 }] : [],
     country: wine.country || null,
     region: wine.region || null,
+    subRegion: rules.subRegion.enabled ? (wine.subRegion || null) : null,
     abv: rules.abv.enabled ? (wine.abv != null ? Number(wine.abv) : null) : null,
     price: rules.price.enabled ? (wine.price != null ? Number(wine.price) : null) : null,
     revealed: false,
@@ -103,6 +104,7 @@ router.put('/:playerId/wines/:wineId', (req, res) => {
       : wine.varietals && wine.varietals[0] ? [{ grape: wine.varietals[0].grape, percentage: 100 }] : [],
     country: wine.country || null,
     region: wine.region || null,
+    subRegion: rules.subRegion.enabled ? (wine.subRegion || null) : null,
     abv: rules.abv.enabled ? (wine.abv != null ? Number(wine.abv) : null) : null,
     price: rules.price.enabled ? (wine.price != null ? Number(wine.price) : null) : null,
     flightNumber: flightNumberEdit

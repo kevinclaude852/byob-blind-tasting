@@ -189,6 +189,7 @@ async function renderLobby(lobbyId) {
           lobbyRules.oldWorld.enabled && wine.country ? `<div class="wine-reveal-row"><span>${isHK ? '舊/新' : 'OLD/NEW'}</span><span>${isOldWorld(wine.country) ? (isHK ? '舊世界' : 'Old World') : (isHK ? '新世界' : 'New World')}</span></div>` : '',
           wine.country ? `<div class="wine-reveal-row"><span>${t('lobby.country')}</span><span>${escHtml(wine.country)}</span></div>` : '',
           wine.region  ? `<div class="wine-reveal-row"><span>${t('lobby.region')}</span><span>${escHtml(wine.region)}</span></div>`  : '',
+          wine.subRegion ? `<div class="wine-reveal-row"><span>${t('lobby.subRegion')}</span><span>${escHtml(wine.subRegion)}</span></div>` : '',
           varietalStr  ? `<div class="wine-reveal-row"><span>${t('lobby.variety')}</span><span>${escHtml(varietalStr)}</span></div>`  : '',
           wine.vintage ? `<div class="wine-reveal-row"><span>${t('lobby.vintage')}</span><span>${wine.vintage}</span></div>`          : '',
           lobbyRules.abv.enabled && wine.abv != null ? `<div class="wine-reveal-row"><span>${isHK ? '酒精度' : 'ABV'}</span><span>${wine.abv}%</span></div>` : '',

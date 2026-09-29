@@ -17,6 +17,7 @@ function buildRulesPanel() {
     oldWorld: { score: 5  },
     country:  { score: 5  },
     region:   { score: 5  },
+    subRegion:{ score: 3  },
     vintage:  { mode: 'exact', scoreExact: 3, scorePlusOne: 2, scorePlusTwo: 1 },
     abv:      { score: 3  },
     price:    { score: 3, currency: 'HKD', rangeWidth: 100 }
@@ -127,6 +128,11 @@ function buildRulesPanel() {
             <span class="rule-name">${t('rules.region')}</span>
             <span class="rule-score-wrap">${scoreSelectHtml('regionScore', d.region.score)} ${t('rules.pts')}</span>
           </label>
+          <label class="rule-card-header" id="subRegionRow" style="padding:6px 0 0 24px">
+            <input type="checkbox" id="subRegionCheck" class="rule-check">
+            <span class="rule-name">${t('rules.subRegion')}</span>
+            <span class="rule-score-wrap">${scoreSelectHtml('subRegionScore', d.subRegion.score)} ${t('rules.pts')}</span>
+          </label>
         </div>
       </div>
       ${vintageCard}
@@ -147,6 +153,7 @@ function collectLandingRules() {
     oldWorld: { enabled: !!document.getElementById('oldWorldCheck')?.checked,  score: parseInt(document.getElementById('oldWorldScore')?.value, 10)  || 5  },
     country:  { enabled: !!document.getElementById('countryCheck')?.checked,   score: parseInt(document.getElementById('countryScore')?.value, 10)   || 5  },
     region:   { enabled: !!document.getElementById('regionCheck')?.checked,    score: parseInt(document.getElementById('regionScore')?.value, 10)    || 5  },
+    subRegion:{ enabled: !!document.getElementById('regionCheck')?.checked && !!document.getElementById('subRegionCheck')?.checked, score: parseInt(document.getElementById('subRegionScore')?.value, 10) || 3 },
     vintage:  {
       enabled:       !!document.getElementById('vintageCheck')?.checked,
       mode:          vintageMode,
@@ -289,18 +296,28 @@ function renderLanding() {
     if (opts) opts.style.display = e.target.checked ? '' : 'none';
   });
 
-  // Country ↔ Region dependency
+  // Country → Region → Sub Region dependency
+  function setSubRegionVisible(visible) {
+    const row = document.getElementById('subRegionRow');
+    if (row) row.style.display = visible ? '' : 'none';
+    if (!visible) {
+      const subCheck = document.getElementById('subRegionCheck');
+      if (subCheck) subCheck.checked = false;
+    }
+  }
   document.getElementById('countryCheck')?.addEventListener('change', (e) => {
     const subPanel = document.getElementById('countrySubPanel');
     if (!e.target.checked) {
       const regionCheck = document.getElementById('regionCheck');
       if (regionCheck) regionCheck.checked = false;
+      setSubRegionVisible(false);
       if (subPanel) subPanel.style.display = 'none';
     } else {
       if (subPanel) subPanel.style.display = '';
     }
   });
   document.getElementById('regionCheck')?.addEventListener('change', (e) => {
+    setSubRegionVisible(e.target.checked);
     if (e.target.checked) {
       const countryCheck = document.getElementById('countryCheck');
       if (countryCheck) countryCheck.checked = true;

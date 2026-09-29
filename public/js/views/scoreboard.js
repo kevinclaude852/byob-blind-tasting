@@ -100,6 +100,7 @@ async function renderScoreboard(lobbyId) {
     if (r.oldWorld.enabled) enabledCols.push({ key: 'oldWorld',  label: t('mg.oldWorld') });
     if (r.country.enabled)  enabledCols.push({ key: 'country',  label: t('lb.country') });
     if (r.region.enabled)   enabledCols.push({ key: 'region',   label: t('lb.region') });
+    if (r.subRegion.enabled) enabledCols.push({ key: 'subRegion', label: t('lb.subRegion') });
     if (r.vintage.enabled)  enabledCols.push({ key: 'vintage',  label: t('lb.vintage') });
     if (r.abv.enabled)      enabledCols.push({ key: 'abv',      label: getLocale() === 'hk' ? '酒精度' : 'ABV' });
     if (r.price.enabled)    enabledCols.push({ key: 'price',    label: t('mg.price') });
@@ -111,6 +112,7 @@ async function renderScoreboard(lobbyId) {
       r.oldWorld.enabled && wine.country ? { label: isHK ? '舊/新' : 'Old / New', val: isOldWorld(wine.country) ? (isHK ? '舊世界' : 'Old World') : (isHK ? '新世界' : 'New World') } : null,
       wine.country ? { label: t('lb.country'), val: wine.country } : null,
       wine.region  ? { label: t('lb.region'),  val: wine.region  } : null,
+      wine.subRegion ? { label: t('lb.subRegion'), val: wine.subRegion } : null,
       r.abv.enabled && wine.abv != null ? { label: isHK ? '酒精度' : 'ABV', val: `${wine.abv}%` } : null,
       r.price.enabled && wine.price != null ? { label: t('form.price'), val: formatWinePrice(wine.price, r.price.currency) } : null,
     ].filter(Boolean);

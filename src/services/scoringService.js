@@ -9,13 +9,14 @@ function calculateScore(actual, guess, rules) {
   const r = normaliseRules(rules);
 
   if (!actual || !guess) {
-    return { varietal: 0, oldWorld: 0, country: 0, region: 0, vintage: 0, abv: 0, price: 0, total: 0 };
+    return { varietal: 0, oldWorld: 0, country: 0, region: 0, subRegion: 0, vintage: 0, abv: 0, price: 0, total: 0 };
   }
 
   const varietal = r.grape.enabled    ? scoreVarietal(actual, guess, r)  : 0;
   const oldWorld = r.oldWorld.enabled ? scoreOldWorld(actual, guess, r)  : 0;
   const country  = r.country.enabled  ? scoreCountry(actual, guess, r)   : 0;
   const region   = r.region.enabled   ? scoreRegion(actual, guess, r)    : 0;
+  const subRegion = r.subRegion.enabled ? scoreSubRegion(actual, guess, r) : 0;
   const vintage  = r.vintage.enabled  ? scoreVintage(actual, guess, r)   : 0;
   const abv      = r.abv.enabled      ? scoreAbv(actual, guess, r)       : 0;
   const price    = r.price.enabled    ? scorePrice(actual, guess, r)     : 0;
@@ -25,10 +26,11 @@ function calculateScore(actual, guess, rules) {
     oldWorld,
     country,
     region,
+    subRegion,
     vintage,
     abv,
     price,
-    total: varietal + oldWorld + country + region + vintage + abv + price
+    total: varietal + oldWorld + country + region + subRegion + vintage + abv + price
   };
 }
 
@@ -64,6 +66,12 @@ function scoreCountry(actual, guess, r) {
 function scoreRegion(actual, guess, r) {
   if (!actual.region || !guess.region) return 0;
   return guess.region === actual.region ? r.region.score : 0;
+}
+
+// Matched on name alone: some sub-regions (e.g. Carneros) span two regions
+function scoreSubRegion(actual, guess, r) {
+  if (!actual.subRegion || !guess.subRegion) return 0;
+  return guess.subRegion === actual.subRegion ? r.subRegion.score : 0;
 }
 
 function scoreVintage(actual, guess, r) {

@@ -5,6 +5,29 @@ const { normaliseRules } = require('./rulesNormaliser');
 const grapes = JSON.parse(fs.readFileSync(path.join(__dirname, '../../data/reference/grapes.json'), 'utf8'));
 const countries = JSON.parse(fs.readFileSync(path.join(__dirname, '../../data/reference/countries.json'), 'utf8'));
 const regions = JSON.parse(fs.readFileSync(path.join(__dirname, '../../data/reference/regions.json'), 'utf8'));
+const subregions = JSON.parse(fs.readFileSync(path.join(__dirname, '../../data/reference/subregions.json'), 'utf8'));
+
+// Sub Region lobbies use the subregions.json hierarchy for both Region and Sub Region
+function validateLocation(item, r, errors) {
+  const checkSub = r.subRegion.enabled && item.subRegion;
+  if (!item.region || !item.country) {
+    if (checkSub) errors.push('Sub region requires a region.');
+    return;
+  }
+  const validRegions = r.subRegion.enabled
+    ? Object.keys(subregions[item.country] || {})
+    : (regions[item.country] || []);
+  if (validRegions.length > 0 && !validRegions.includes(item.region)) {
+    errors.push(`Unknown region "${item.region}" for ${item.country}.`);
+    return;
+  }
+  if (checkSub) {
+    const validSubs = (subregions[item.country] || {})[item.region] || [];
+    if (!validSubs.includes(item.subRegion)) {
+      errors.push(`Unknown sub region "${item.subRegion}" for ${item.region}.`);
+    }
+  }
+}
 
 const currentYear = new Date().getFullYear();
 
@@ -69,12 +92,7 @@ function validateWine(wine, rules) {
     errors.push(`Unknown country: ${wine.country}`);
   }
 
-  if (wine.region && wine.country) {
-    const validRegions = regions[wine.country] || [];
-    if (validRegions.length > 0 && !validRegions.includes(wine.region)) {
-      errors.push(`Unknown region "${wine.region}" for ${wine.country}.`);
-    }
-  }
+  validateLocation(wine, r, errors);
 
   // ABV required when that rule is enabled
   if (r.abv.enabled) {
@@ -112,12 +130,7 @@ function validateGuess(guess, targetPlayerId, playerId, rules) {
     errors.push(`Unknown country: ${guess.country}`);
   }
 
-  if (guess.region && guess.country) {
-    const validRegions = regions[guess.country] || [];
-    if (validRegions.length > 0 && !validRegions.includes(guess.region)) {
-      errors.push(`Unknown region "${guess.region}" for ${guess.country}.`);
-    }
-  }
+  validateLocation(guess, r, errors);
 
   if (guess.vintage && guess.vintage !== 'NV') {
     const yr = Number(guess.vintage);
@@ -142,4 +155,4 @@ function validateGuess(guess, targetPlayerId, playerId, rules) {
   return errors;
 }
 
-module.exports = { validateWine, validateGuess, grapes, countries, regions };
+module.exports = { validateWine, validateGuess, grapes, countries, regions, subregions };
