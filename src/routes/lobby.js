@@ -232,4 +232,50 @@ router.post('/:lobbyId/join', (req, res) => {
   res.json({ playerId, sessionToken });
 });
 
+// GET /api/lobby/:lobbyId/players/recovery — host only; returns players with session tokens
+router.get('/:lobbyId/players/recovery', (req, res) => {
+  const game = loadGame(req.params.lobbyId);
+  if (!game) return res.status(404).json({ error: 'Lobby not found.' });
+  if (!authHost(game, getToken(req))) return res.status(403).json({ error: 'Host only.' });
+
+  const players = Object.values(game.players).map(p => ({
+    id: p.id,
+    name: p.name,
+    emoji: p.emoji,
+    participating: p.participating,
+    joinedAt: p.joinedAt,
+    sessionToken: p.sessionToken,
+    wineCount: (p.wines || []).length,
+    hasRevealedWines: (p.wines || []).some(w => w.revealed)
+  }));
+  res.json({ players });
+});
+
+// DELETE /api/lobby/:lobbyId/players/:playerId — host only; remove a player
+router.delete('/:lobbyId/players/:playerId', (req, res) => {
+  const { lobbyId, playerId } = req.params;
+  const game = loadGame(lobbyId);
+  if (!game) return res.status(404).json({ error: 'Lobby not found.' });
+  if (!authHost(game, getToken(req))) return res.status(403).json({ error: 'Host only.' });
+  if (playerId === game.hostPlayerId) return res.status(400).json({ error: 'Cannot remove the host.' });
+
+  const player = game.players[playerId];
+  if (!player) return res.status(404).json({ error: 'Player not found.' });
+  if ((player.wines || []).some(w => w.revealed)) {
+    return res.status(400).json({ error: 'Cannot remove a player with revealed wines.' });
+  }
+
+  const wineIds = (player.wines || []).map(w => w.id);
+  for (const guesserId of Object.keys(game.guesses)) {
+    for (const wineId of wineIds) delete game.guesses[guesserId][wineId];
+  }
+  delete game.guesses[playerId];
+  for (const wineId of Object.keys(game.scores || {})) {
+    if (game.scores[wineId]) delete game.scores[wineId][playerId];
+  }
+  delete game.players[playerId];
+  saveGame(lobbyId, game);
+  res.json({ success: true });
+});
+
 module.exports = { router, authPlayer, authHost, getToken, findWine, getGameMode, getRevealPolicy };
