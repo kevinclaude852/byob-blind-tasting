@@ -179,6 +179,7 @@ function renderLanding() {
       <div class="page-header">
         <h1>${t('app.title')}</h1>
         <p>${t('app.subtitle')}</p>
+        <a class="manual-link" href="/help.html${getLocale() === 'hk' ? '#hk' : ''}" target="_blank" rel="noopener">${t('app.manual')}</a>
       </div>
 
       <div class="card">

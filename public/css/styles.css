@@ -1454,3 +1454,14 @@ select:focus { background-color: white; }
   text-align: center;
   padding: 20px 0;
 }
+
+/* ===== Player guide link ===== */
+.manual-link {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.lobby-manual { text-align: center; margin: 24px 0 8px; }

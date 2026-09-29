@@ -800,3 +800,14 @@ select {
   .page { padding: 32px 24px 60px; }
   .emoji-picker { grid-template-columns: repeat(8, 1fr); }
 }
+
+/* ===== Player guide link ===== */
+.manual-link {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.lobby-manual { text-align: center; margin: 24px 0 8px; }

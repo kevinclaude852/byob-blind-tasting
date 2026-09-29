@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blind Tasting Challenge Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400;1,6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Sans+HK:wght@400;500;700&display=swap">
+<style>
+/* Layout: a single reading column like a tasting sheet, with the scoring card set apart as the one boxed object */
+:root {
+  --paper: #f6f5f1;
+  --ink: #141414;
+  --muted: #5f5b55;
+  --rule: #d9d5cc;
+  --claret: #7b1e35;
+  --card: #ffffff;
+  --display: "Newsreader", Georgia, "Times New Roman", serif;
+  --body: "IBM Plex Sans", "Noto Sans HK", system-ui, -apple-system, sans-serif;
+  --hk: "Noto Sans HK", "PingFang HK", "Microsoft JhengHei", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #161413; --ink: #eeebe5; --muted: #a39d94; --rule: #36322e; --claret: #d9738a; --card: #1f1c1a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #161413; --ink: #eeebe5; --muted: #a39d94; --rule: #36322e; --claret: #d9738a; --card: #1f1c1a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.6; }
+.wrap { max-width: 42rem; margin: 0 auto; padding-inline: 20px; padding-block: 28px 64px; }
+
+.topbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--ink); padding-bottom: 12px; }
+.eyebrow { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600; color: var(--muted); }
+.lang { display: inline-flex; border: 1px solid var(--ink); }
+.lang button { font: inherit; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.06em; padding: 6px 14px; border: 0; background: transparent; color: var(--ink); cursor: pointer; }
+.lang button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.lang button:focus-visible, a:focus-visible { outline: 2px solid var(--claret); outline-offset: 2px; }
+
+h1 { font-family: var(--display); font-style: italic; font-weight: 600; font-size: clamp(2.2rem, 7vw, 3.2rem); line-height: 1.05; margin: 28px 0 10px; text-wrap: balance; letter-spacing: -0.01em; }
+.lede { font-family: var(--display); font-style: italic; font-size: 1.2rem; color: var(--muted); margin: 0 0 8px; max-width: 34rem; }
+
+nav.toc { margin: 24px 0 8px; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.85rem; }
+nav.toc a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule); }
+nav.toc a:hover { border-color: var(--claret); color: var(--claret); }
+
+section { padding-top: 36px; }
+h2 { font-family: var(--display); font-weight: 600; font-size: 1.55rem; margin: 0 0 12px; text-wrap: balance; display: flex; gap: 12px; align-items: baseline; }
+h2 .no { font-family: var(--body); font-size: 0.72rem; letter-spacing: 0.14em; color: var(--claret); font-weight: 600; }
+h3 { font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; margin: 20px 0 6px; }
+p, li { max-width: 65ch; }
+p { margin: 0 0 12px; }
+ul, ol { margin: 0 0 12px; padding-left: 1.25rem; display: grid; gap: 6px; }
+strong { font-weight: 600; }
+.ui { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; border: 1px solid var(--ink); padding: 1px 6px; white-space: nowrap; }
+.ui.hkui { text-transform: none; letter-spacing: 0.02em; }
+
+.modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 12px; margin-top: 8px; }
+.mode { border-top: 3px solid var(--ink); padding-top: 10px; min-width: 0; }
+.mode h3 { margin-top: 0; }
+.mode p { font-size: 0.93rem; margin: 0; }
+
+.scorecard { background: var(--card); border: 1px solid var(--rule); margin-top: 12px; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.92rem; min-width: 30rem; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+td.pts { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+tr.opt td:first-child::after { content: attr(data-tag); margin-left: 8px; font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--claret); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+
+.example { border-left: 3px solid var(--claret); padding: 4px 0 4px 14px; margin: 16px 0; font-size: 0.93rem; }
+.example .eyebrow { color: var(--claret); display: block; margin-bottom: 2px; }
+.tip { font-size: 0.9rem; color: var(--muted); }
+footer { margin-top: 48px; padding-top: 14px; border-top: 1px solid var(--rule); font-size: 0.82rem; color: var(--muted); }
+
+[lang="zh-HK"] { font-family: var(--hk); }
+[lang="zh-HK"] h1, [lang="zh-HK"] .lede { font-family: var(--hk); font-style: normal; font-weight: 700; letter-spacing: 0; }
+[lang="zh-HK"] .lede { font-weight: 400; }
+[lang="zh-HK"] h2 { font-family: var(--hk); font-weight: 700; }
+[lang="zh-HK"] h3, [lang="zh-HK"] th { letter-spacing: 0.04em; }
+
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="topbar">
+    <span class="eyebrow" id="topLabel">Player guide</span>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" id="btnEn" data-lang="en" aria-pressed="true">EN</button>
+      <button type="button" id="btnHk" data-lang="hk" aria-pressed="false">廣東話</button>
+    </div>
+  </div>
+
+  <!-- ===================== ENGLISH ===================== -->
+  <article id="en" lang="en">
+    <h1>Blind Tasting Challenge</h1>
+    <p class="lede">Pour the wine, hide the label, and see who in the room can really name what's in the glass.</p>
+
+    <nav class="toc" aria-label="Contents">
+      <a href="#en-how">How it works</a><a href="#en-modes">Game modes</a><a href="#en-start">Getting started</a>
+      <a href="#en-wine">Registering a wine</a><a href="#en-guess">Guessing</a><a href="#en-reveal">Revealing</a>
+      <a href="#en-score">Scoring</a><a href="#en-results">Results</a><a href="#en-share">Share to social media</a><a href="#en-export">Export results</a><a href="#en-recover">Lost your session?</a>
+    </nav>
+
+    <section id="en-how">
+      <h2><span class="no">01</span>How it works</h2>
+      <p>One person hosts a <strong>lobby</strong> and shares its link. Everyone joins from their phone, no sign-up needed. Wines are added to the lobby with their details kept secret. Players guess each wine's grape, country, region, vintage and so on. When the host reveals a wine, the app compares every guess with the real answer, awards points, and updates the leaderboard.</p>
+    </section>
+
+    <section id="en-modes">
+      <h2><span class="no">02</span>Game modes</h2>
+      <p>The host picks one when creating the lobby.</p>
+      <div class="modes">
+        <div class="mode">
+          <h3>BYOB</h3>
+          <p>Everyone brings a bottle and registers it. You guess everyone else's wines but never your own. The host chooses whether only the host can reveal wines, or whether players can reveal their own.</p>
+        </div>
+        <div class="mode">
+          <h3>Host prepares wines</h3>
+          <p>Only the host adds wines, and can group them into numbered <strong>flights</strong> (e.g. "Chablis vs Côte de Beaune"). Everyone else is a challenger guessing the host's wines. The host doesn't appear on the leaderboard.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="en-start">
+      <h2><span class="no">03</span>Getting started</h2>
+      <h3>If you're hosting</h3>
+      <ol>
+        <li>Enter a lobby name, your name and pick an avatar.</li>
+        <li>Choose the game mode and scoring rules: <span class="ui">Default</span> or <span class="ui">Customise</span>.</li>
+        <li>Tap <span class="ui">Create Lobby</span>, then share the link with <span class="ui">Copy Link</span> or show the <span class="ui">QR Code</span>.</li>
+      </ol>
+      <h3>If you're joining</h3>
+      <ol>
+        <li>Open the link or scan the QR code.</li>
+        <li>Enter your name, pick an avatar and tap <span class="ui">Join Tasting</span>.</li>
+        <li>In BYOB, register your bottle, or tap <span class="ui">I Brought No Wine</span> to go straight to the lobby.</li>
+      </ol>
+    </section>
+
+    <section id="en-wine">
+      <h2><span class="no">04</span>Registering a wine</h2>
+      <p>Fill in what you know about your bottle. Nobody else sees these details until the wine is revealed.</p>
+      <ul>
+        <li><strong>Emoji and name</strong> – the emoji is how everyone refers to your wine during the game.</li>
+        <li><strong>Grape</strong> – a single varietal, or a blend with percentages that add up to 100.</li>
+        <li><strong>Country, region and sub region</strong> – region and sub region lists appear once you pick a country and region.</li>
+        <li><strong>Vintage</strong>, plus <strong>ABV</strong> and <strong>price</strong> if the host turned those rules on.</li>
+      </ul>
+      <p>You can edit or remove your wine from the lobby any time before it's revealed.</p>
+    </section>
+
+    <section id="en-guess">
+      <h2><span class="no">05</span>Guessing</h2>
+      <p>In the lobby, tap <span class="ui">Guess</span> next to a wine. Every field is optional, so guess only what you're confident about, then tap <span class="ui">Save My Guess</span>.</p>
+      <h3>Changing your mind</h3>
+      <p>Your guess isn't final until the wine is revealed. Once you've guessed, the button on that wine becomes <span class="ui">Change My Guess</span>. Tap it to update any answer as many times as you like, including during a reveal countdown. After the reveal, guesses for that wine are locked.</p>
+      <h3>Who has guessed?</h3>
+      <p>Tap any unrevealed wine in the lobby to open its guess list. Everyone can see it: each player is listed with a ✅ once they've submitted a guess. It shows who is still tasting, so the host can tell when a wine is ready to reveal. It never shows what anyone guessed.</p>
+      <p class="tip">If it's your own wine, the list also shows the wine's name at the top so you know which bottle is which. Only you see this.</p>
+      <h3>Tasting note</h3>
+      <p>At the bottom of the guess form there's a <strong>Tasting Note</strong> box. It's worth 0 points and is just for you: jot down aromas and impressions, and read them back later on <span class="ui">My Guesses</span>.</p>
+    </section>
+
+    <section id="en-reveal">
+      <h2><span class="no">06</span>Revealing</h2>
+      <p>In BYOB lobbies, who can reveal depends on the host's setting: only the host, or the host plus each wine's owner. In Host prepares lobbies, only the host reveals.</p>
+      <p>Tap <span class="ui">Reveal</span> on a wine. A window opens with two choices.</p>
+      <ul>
+        <li><span class="ui">Reveal Now</span> – the wine is revealed straight away.</li>
+        <li><strong>Countdown</strong> – pick 3, 5, 10, 15 or 30 minutes. Use this to give slower tasters time to finish their guesses.</li>
+      </ul>
+      <h3>During a countdown</h3>
+      <ul>
+        <li>Everyone in the lobby sees <strong>Reveals in mm:ss</strong> ticking down on that wine.</li>
+        <li>Players can still submit or change guesses until the timer reaches zero.</li>
+        <li>The timer runs on the server, so it still fires if the host locks their phone or closes the app.</li>
+        <li>Anyone allowed to reveal the wine can tap <span class="ui">Stop</span> to cancel. The wine goes back to unrevealed, and everyone sees a message saying so.</li>
+      </ul>
+      <p>When a wine is revealed its details appear for everyone, guesses for it are locked, and points are added to the leaderboard.</p>
+    </section>
+
+    <section id="en-score">
+      <h2><span class="no">07</span>Scoring</h2>
+      <p>The default rules are below. With <span class="ui">Customise</span> the host can change each score and switch optional rules on.</p>
+      <div class="scorecard">
+        <table>
+          <thead><tr><th>Category</th><th>Points</th><th>How it's scored</th></tr></thead>
+          <tbody>
+            <tr><td>Grape variety</td><td class="pts">up to 10</td><td>Proportional to how much of the blend your grape makes up</td></tr>
+            <tr><td>Country</td><td class="pts">5</td><td>Exact match</td></tr>
+            <tr><td>Region</td><td class="pts">5</td><td>Exact match</td></tr>
+            <tr><td>Vintage</td><td class="pts">3</td><td>Exact year. Can be widened to ±1 or ±2 years for fewer points</td></tr>
+            <tr class="opt" data-tag="optional"><td>Sub region</td><td class="pts">3</td><td>Exact match. Needs Region on, and uses a more detailed region list</td></tr>
+            <tr class="opt" data-tag="optional"><td>Old / New World</td><td class="pts">5</td><td>Exact match</td></tr>
+            <tr class="opt" data-tag="optional"><td>ABV</td><td class="pts">3</td><td>Exact match, 5% to 20% in 0.5% steps</td></tr>
+            <tr class="opt" data-tag="optional"><td>Price range</td><td class="pts">3</td><td>The wine's price falls inside your chosen range (HKD, USD, GBP or EUR)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="example">
+        <span class="eyebrow">Example</span>
+        The wine is Cabernet Sauvignon 80% / Merlot 20%. You guess Merlot, so you earn 20% of 10 = <strong>2 points</strong> for grape. Guess Cabernet Sauvignon and you earn <strong>8</strong>.
+      </div>
+      <p class="tip">No guess on a wine scores 0 for that wine. Some regions have no sub regions, so the "maximum per wine" is the most you could score, not something every wine allows.</p>
+    </section>
+
+    <section id="en-results">
+      <h2><span class="no">08</span>Results</h2>
+      <ul>
+        <li><span class="ui">My Guesses</span> – your guess next to the real answer for each wine, your points per category, and your tasting notes.</li>
+        <li><span class="ui">Leaderboard</span> – appears in the lobby after the first reveal. Overall rankings, plus a wine-by-wine breakdown of everyone's guesses and scores.</li>
+      </ul>
+    </section>
+
+    <section id="en-share">
+      <h2><span class="no">09</span>Share to social media</h2>
+      <p>The app makes two kinds of image, sized 1080 × 1920 for Instagram Stories. Both work the same way.</p>
+      <div class="modes">
+        <div class="mode">
+          <h3>Leaderboard</h3>
+          <p>On the <span class="ui">Leaderboard</span> page, tap <span class="ui">📸 Share My Score</span>. The image shows the lobby name and the full rankings with 🥇🥈🥉 medals, and your own row is marked <strong>← YOU</strong>. If the list is long, drag up or down on the image to choose which part shows.</p>
+        </div>
+        <div class="mode">
+          <h3>A single wine</h3>
+          <p>On <span class="ui">My Guesses</span>, tap <span class="ui">↗ Share</span> next to a revealed wine. The image shows whose wine it was, your guess beside the real answer for each category, and the points you scored.</p>
+        </div>
+      </div>
+      <h3>Making and posting the image</h3>
+      <ol>
+        <li>Optional: tap <strong>Take Photo as Background</strong> to use a picture of the bottles or the table. On a phone you can take a new photo or pick one from your gallery.</li>
+        <li>Tap <span class="ui">↗ Share</span> to open your phone's share menu, then choose Instagram, WhatsApp, Messages or save the image to your photos.</li>
+      </ol>
+      <p class="tip">The Share button only appears in browsers that support sharing files, which includes most phone browsers. If you don't see it, open the lobby link in Safari or Chrome on your phone.</p>
+    </section>
+
+    <section id="en-export">
+      <h2><span class="no">10</span>Export results</h2>
+      <p>On the <span class="ui">Leaderboard</span> page, tap <span class="ui">↓ Export Results</span>. The app downloads a single web page file named <strong>blind-tasting-[lobby code].html</strong>.</p>
+      <p>It contains:</p>
+      <ul>
+        <li>the lobby name, number of wines revealed and number of challengers</li>
+        <li>the scoring rules used</li>
+        <li>overall rankings</li>
+        <li>a table for each wine with its full details and every player's guess. Correct answers are shown in green, near-miss vintages in orange, and misses in grey.</li>
+      </ul>
+      <p>The file opens in any browser without an internet connection, so you can keep it, email it or print it after the lobby is gone. It's exported in the language the app is currently set to, and it includes only wines revealed so far, so export after the last reveal.</p>
+    </section>
+
+    <section id="en-recover">
+      <h2><span class="no">11</span>Lost your session?</h2>
+      <p>The app remembers you on the phone and browser you joined with. If you switch browsers, clear your history or open the link in another app, you may be treated as a new player.</p>
+      <p>Don't join again. Ask the host instead. In the lobby's share box the host taps <span class="ui">Manage Players</span>, then sends you your <span class="ui">Copy Recovery Link</span> or shows its QR code. Opening it puts you back in your original seat with your wines and guesses intact.</p>
+      <p>The host can also use <span class="ui">Remove Player</span> to clear accidental duplicate players. Players whose wines have already been revealed can't be removed.</p>
+      <p class="tip">Hosts: copy your own recovery link from Manage Players early in the evening, in case your own phone loses the session.</p>
+    </section>
+
+    <footer>The language switch in the app's bottom-right corner toggles between English and Cantonese.</footer>
+  </article>
+
+  <!-- ===================== CANTONESE ===================== -->
+  <article id="hk" lang="zh-HK" hidden>
+    <h1>Blind Tasting Challenge 盲品挑戰</h1>
+    <p class="lede">倒酒、遮住招紙，睇下邊個真係飲得出杯入面係咩酒。</p>
+
+    <nav class="toc" aria-label="目錄">
+      <a href="#hk-how">點樣玩</a><a href="#hk-modes">遊戲模式</a><a href="#hk-start">開始</a>
+      <a href="#hk-wine">登記支酒</a><a href="#hk-guess">估酒</a><a href="#hk-reveal">開估</a>
+      <a href="#hk-score">計分</a><a href="#hk-results">睇成績</a><a href="#hk-share">分享去社交媒體</a><a href="#hk-export">匯出結果</a><a href="#hk-recover">斷咗線點算？</a>
+    </nav>
+
+    <section id="hk-how">
+      <h2><span class="no">01</span>點樣玩</h2>
+      <p>由一個人做<strong>攪手</strong>開一個<strong>大廳</strong>，再分享條連結。大家用手機入嚟就得，唔使註冊。酒加入大廳之後，資料會收埋唔俾人睇。玩家逐支估提子、國家、產區、年份等等。攪手開估之後，App會自動將每個人嘅答案同真正答案對比、計分，再更新龍虎榜。</p>
+    </section>
+
+    <section id="hk-modes">
+      <h2><span class="no">02</span>遊戲模式</h2>
+      <p>攪手開大廳嗰陣揀一個。</p>
+      <div class="modes">
+        <div class="mode">
+          <h3>BYOB — 大家都攞酒</h3>
+          <p>每人帶一支酒嚟登記。你估其他人嘅酒，但唔可以估自己支。攪手可以揀淨係攪手先可以開估，定係玩家可以開估自己支酒。</p>
+        </div>
+        <div class="mode">
+          <h3>攪手準備酒</h3>
+          <p>只有攪手可以加酒，仲可以將酒分做唔同嘅<strong>飛</strong>（例如「夏布利 vs 布根地」）。其他人全部係挑戰者，估攪手嘅酒。攪手唔會出現喺龍虎榜。</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="hk-start">
+      <h2><span class="no">03</span>開始</h2>
+      <h3>如果你係攪手</h3>
+      <ol>
+        <li>入大廳名、你個名，再揀個嘜頭。</li>
+        <li>揀遊戲模式同計分準則：<span class="ui hkui">預設</span>或者<span class="ui hkui">自訂</span>。</li>
+        <li>撳<span class="ui hkui">建立大廳</span>，然後用<span class="ui hkui">複製連結</span>或者<span class="ui hkui">QR曲</span>分享畀大家。</li>
+      </ol>
+      <h3>如果你係參加者</h3>
+      <ol>
+        <li>打開連結或者掃QR Code。</li>
+        <li>入你個名、揀個嘜頭，撳<span class="ui hkui">進入Tasting</span>。</li>
+        <li>BYOB模式就登記你帶嚟嗰支酒；冇帶酒就撳<span class="ui hkui">我冇帶酒嚟，直入大廳</span>。</li>
+      </ol>
+    </section>
+
+    <section id="hk-wine">
+      <h2><span class="no">04</span>登記支酒</h2>
+      <p>填你知道嘅資料就得。開估之前其他人睇唔到。</p>
+      <ul>
+        <li><strong>Icon同酒名</strong>：玩嘅時候大家會用個icon嚟認你支酒。</li>
+        <li><strong>提子</strong>：單一提子，或者混釀（溝）再填比例，總共要啱啱100%。</li>
+        <li><strong>國家、產區同子產區</strong>：揀咗國家同產區之後就會出返對應嘅選項。</li>
+        <li><strong>年份</strong>；如果攪手開咗嗰啲規則，仲要填<strong>酒精度</strong>同<strong>價錢</strong>。</li>
+      </ul>
+      <p>未開估之前，你隨時可以喺大廳修改或者移除支酒。</p>
+    </section>
+
+    <section id="hk-guess">
+      <h2><span class="no">05</span>估酒</h2>
+      <p>喺大廳撳酒旁邊嘅<span class="ui hkui">估酒</span>。所有欄都可以唔填，有把握先填就得，填完撳<span class="ui hkui">Save低先</span>。</p>
+      <h3>轉軚</h3>
+      <p>未開估之前，答案都未算數。估咗之後，嗰支酒個掣會變做<span class="ui hkui">轉軚</span>，撳咗就可以改答案，改幾多次都得，倒數開估期間都仲可以改。開估之後，嗰支酒嘅答案就鎖死。</p>
+      <h3>邊個估咗？</h3>
+      <p>喺大廳撳一撳未開估嘅酒，就會打開估酒名單。所有人都睇到：每個玩家交咗答案之後，名旁邊會有個✅。咁就知邊個仲試緊酒，攪手亦可以睇到幾時可以開估。名單唔會顯示任何人估咗乜。</p>
+      <p class="tip">如果係你自己支酒，名單頂仲會顯示酒名，方便你認返邊支係邊支。呢個淨係你自己睇到。</p>
+      <h3>品酒筆記</h3>
+      <p>估酒表格最底有個<strong>品酒筆記</strong>欄，0分，純粹自用：記低香氣同感覺，之後喺<span class="ui hkui">我嘅答案</span>度睇返。</p>
+    </section>
+
+    <section id="hk-reveal">
+      <h2><span class="no">06</span>開估</h2>
+      <p>BYOB模式邊個可以開估，要睇攪手點設定：淨係攪手，或者攪手加埋酒主本人。攪手準備酒模式就淨係攪手可以開估。</p>
+      <p>撳支酒嘅<span class="ui hkui">開估</span>，會彈出一個視窗俾你揀：</p>
+      <ul>
+        <li><span class="ui hkui">即刻開估</span>：即時公佈答案。</li>
+        <li><strong>倒數開估</strong>：揀3、5、10、15或30分鐘，等估得慢嘅人有時間估完。</li>
+      </ul>
+      <h3>倒數期間</h3>
+      <ul>
+        <li>大廳入面所有人都會見到嗰支酒顯示<strong>倒數完開估 mm:ss</strong>。</li>
+        <li>倒數未完之前，玩家仍然可以提交或者改答案。</li>
+        <li>計時喺伺服器度行，就算攪手鎖咗機或者閂咗App，時間到都照樣開估。</li>
+        <li>有權開估嗰支酒嘅人可以撳<span class="ui hkui">停止</span>取消倒數，支酒會變返未開估，大家都會收到通知。</li>
+      </ul>
+      <p>開估之後，支酒嘅資料所有人都睇到，嗰支酒唔可以再改答案，分數即刻加入龍虎榜。</p>
+    </section>
+
+    <section id="hk-score">
+      <h2><span class="no">07</span>計分</h2>
+      <p>下面係預設準則。揀<span class="ui hkui">自訂</span>嘅話，攪手可以改每項分數，同開埋其他選項。</p>
+      <div class="scorecard">
+        <table>
+          <thead><tr><th>項目</th><th>分數</th><th>點計</th></tr></thead>
+          <tbody>
+            <tr><td>提子品種</td><td class="pts">最多 10</td><td>按你估中嘅提子喺混釀入面所佔比例計</td></tr>
+            <tr><td>國家</td><td class="pts">5</td><td>啱晒先計</td></tr>
+            <tr><td>產區</td><td class="pts">5</td><td>啱晒先計</td></tr>
+            <tr><td>年份</td><td class="pts">3</td><td>要啱晒年份；可以放寬到±1或±2年，分數會少啲</td></tr>
+            <tr class="opt" data-tag="可選"><td>子產區</td><td class="pts">3</td><td>啱晒先計；要開咗產區先用得，會用更詳細嘅產區清單</td></tr>
+            <tr class="opt" data-tag="可選"><td>新舊世界</td><td class="pts">5</td><td>啱晒先計</td></tr>
+            <tr class="opt" data-tag="可選"><td>酒精度</td><td class="pts">3</td><td>啱晒先計，5%至20%，每格0.5%</td></tr>
+            <tr class="opt" data-tag="可選"><td>價格範圍</td><td class="pts">3</td><td>支酒嘅價錢喺你揀嘅範圍入面（HKD、USD、GBP或EUR）</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="example">
+        <span class="eyebrow">例子</span>
+        支酒係Cabernet Sauvignon 80% / Merlot 20%。你估Merlot，提子就攞10分嘅20% = <strong>2分</strong>；估Cabernet Sauvignon就攞<strong>8分</strong>。
+      </div>
+      <p class="tip">冇估嘅酒嗰支就0分。有啲產區冇子產區，所以「每支酒最多」係最高可能分數，唔係每支酒都攞得到。</p>
+    </section>
+
+    <section id="hk-results">
+      <h2><span class="no">08</span>睇成績</h2>
+      <ul>
+        <li><span class="ui hkui">我嘅答案</span>：每支酒你估咗乜、真正答案、每項攞咗幾多分，同埋你嘅品酒筆記。</li>
+        <li><span class="ui hkui">龍虎榜</span>：第一支酒開估之後喺大廳出現。有總體排名，仲可以逐支酒睇大家估咗乜、攞幾多分。</li>
+      </ul>
+    </section>
+
+    <section id="hk-share">
+      <h2><span class="no">09</span>分享去社交媒體</h2>
+      <p>App可以整兩種圖，尺寸係1080 × 1920，啱晒Instagram故事。兩種用法一樣。</p>
+      <div class="modes">
+        <div class="mode">
+          <h3>龍虎榜</h3>
+          <p>喺<span class="ui hkui">龍虎榜</span>頁撳<span class="ui hkui">📸 分享我嘅成績</span>。張圖有大廳名同完整排名，頭三名有🥇🥈🥉，你自己嗰行會標住<strong>← 你</strong>。人多嘅話，喺張圖度上下拖就可以揀顯示邊一段。</p>
+        </div>
+        <div class="mode">
+          <h3>單支酒</h3>
+          <p>喺<span class="ui hkui">我嘅答案</span>，已開估嘅酒旁邊撳<span class="ui hkui">↗ 分享</span>。張圖會顯示係邊個嘅酒、每一項你估咗乜同真正答案，同埋你攞咗幾多分。</p>
+        </div>
+      </div>
+      <h3>整圖同分享</h3>
+      <ol>
+        <li>可以唔做：撳<strong>影相做背景</strong>，用支酒或者枱面嘅相做背景。手機可以即影，或者喺相簿揀。</li>
+        <li>撳<span class="ui hkui">↗ 分享</span>打開手機嘅分享選單，揀Instagram、WhatsApp、訊息，或者儲存落相簿。</li>
+      </ol>
+      <p class="tip">分享掣只會喺支援分享檔案嘅瀏覽器出現，大部分手機瀏覽器都得。如果見唔到，試下用手機嘅Safari或Chrome打開大廳連結。</p>
+    </section>
+
+    <section id="hk-export">
+      <h2><span class="no">10</span>匯出結果</h2>
+      <p>喺<span class="ui hkui">龍虎榜</span>頁撳<span class="ui hkui">↓ 匯出結果</span>，App會下載一個網頁檔，檔名係<strong>blind-tasting-[大廳編號].html</strong>。</p>
+      <p>入面有：</p>
+      <ul>
+        <li>大廳名、已開估酒數同挑戰者人數</li>
+        <li>今次用嘅計分準則</li>
+        <li>總體排名</li>
+        <li>每支酒一個表，有支酒嘅完整資料同每個人嘅答案。估啱嘅答案係綠色，年份差少少係橙色，估錯就變灰色。</li>
+      </ul>
+      <p>個檔唔使上網都打得開，大廳冇咗之後都可以留低、email或者列印。匯出嘅語言跟App當時嘅設定，而且只包括已經開估嘅酒，所以最好開晒估先匯出。</p>
+    </section>
+
+    <section id="hk-recover">
+      <h2><span class="no">11</span>斷咗線點算？</h2>
+      <p>App會喺你入大廳嗰部手機同瀏覽器記住你。如果你轉咗瀏覽器、清咗記錄，或者喺另一個App打開連結，可能會當你係新玩家。</p>
+      <p>唔好再入多次，搵攪手幫手。攪手喺大廳分享框撳<span class="ui hkui">管理玩家</span>，再用<span class="ui hkui">複製Recovery Link</span>send條連結畀你，或者俾你掃QR Code。打開之後就會返到你原本個身份，你嘅酒同答案全部都喺度。</p>
+      <p>攪手亦可以用<span class="ui hkui">移除玩家</span>清走唔小心重複咗嘅玩家。已經有酒開咗估嘅玩家就移除唔到。</p>
+      <p class="tip">攪手：開場嗰陣最好喺管理玩家度複製定自己條Recovery Link，萬一自己部手機斷線都救得返。</p>
+    </section>
+
+    <footer>App右下角嘅語言掣可以喺英文同廣東話之間轉換。</footer>
+  </article>
+</div>
+
+<script>
+(function () {
+  const labels = { en: 'Player guide', hk: '玩法指南' };
+  function setLang(lang) {
+    document.getElementById('en').hidden = lang !== 'en';
+    document.getElementById('hk').hidden = lang !== 'hk';
+    document.getElementById('btnEn').setAttribute('aria-pressed', String(lang === 'en'));
+    document.getElementById('btnHk').setAttribute('aria-pressed', String(lang === 'hk'));
+    document.getElementById('topLabel').textContent = labels[lang];
+    try { localStorage.setItem('btg-help-lang', lang); } catch (e) {}
+  }
+  document.querySelectorAll('.lang button').forEach(b => b.addEventListener('click', () => setLang(b.dataset.lang)));
+  let initial = 'en';
+  if (location.hash === '#hk' || location.hash.startsWith('#hk-')) initial = 'hk';
+  else { try { initial = localStorage.getItem('btg-help-lang') || 'en'; } catch (e) {} }
+  setLang(initial === 'hk' ? 'hk' : 'en');
+})();
+</script>
+
+</body>
+</html>
