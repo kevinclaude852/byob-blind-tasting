@@ -63,7 +63,7 @@ const TRANSLATIONS = {
     'wine.removeBtn':         'Remove This Wine',
     'wine.saving':            'Saving...',
     'wine.added':             'Wine added!',
-    'wine.removeConfirm':     'Remove this wine? All guesses for it will be lost.',
+    'wine.removeConfirm':     'Tap again to confirm removal',
     'wine.removing':          'Removing...',
     'wine.removed':           'Wine removed.',
     'wine.removeFailed':      'Failed to remove wine.',
@@ -201,6 +201,11 @@ const TRANSLATIONS = {
     'form.priceRange':        'Price Range',
     'form.selectAbv':         '-- Select ABV --',
     'form.selectPriceRange':  '-- Select Range --',
+    // Tasting note (guess form + my guesses page)
+    'form.tastingNote':       'Tasting Note',
+    'form.tastingNotePoints': '(0 pt)',
+    'form.tastingNoteHint':   'For your own reference',
+    'mg.tastingNote':         'Tasting Note',
     // Wine form — Flight fields (hostPrepares mode)
     'wine.flight':            'Flight',
     'wine.flightNone':        'No flight (ungrouped)',
@@ -298,7 +303,7 @@ const TRANSLATIONS = {
     'wine.removeBtn':         '移除支酒',
     'wine.saving':            'Save緊...',
     'wine.added':             '加咗支酒啦',
-    'wine.removeConfirm':     '移除呢支酒？有啲人可能估咗㗎喎',
+    'wine.removeConfirm':     '再撳一次確認移除',
     'wine.removing':          '移除緊...',
     'wine.removed':           '移除咗',
     'wine.removeFailed':      '移除唔到支酒',
@@ -324,7 +329,7 @@ const TRANSLATIONS = {
     'error.chooseAvatar':     '揀返個嘜頭',
     // Shared loading/error
     'app.loading':            'Load緊',
-    'app.failedLoad':         'load唔到',
+    'app.failedLoad':         'Load唔到',
     'lobby.failedLoad':       '搵唔到大廳喎',
     'lobby.noDetails':        '冇資料',
     'lobby.guessMade':        '估咗未',
@@ -362,7 +367,7 @@ const TRANSLATIONS = {
     'lobby.guessBtn':         '估酒',
     'lobby.changeGuessBtn':   '轉軚',
     // Guess page
-    'guess.subtitle':         '估下支酒係乜，冇強迫你估晒㗎',
+    'guess.subtitle':         '估下支酒係乜，唔需要估晒㗎',
     'guess.saveBtn':          'Save低先',
     // Leaderboard page
     'lb.title':               '龍虎榜',
@@ -436,6 +441,11 @@ const TRANSLATIONS = {
     'form.priceRange':        '價格範圍',
     'form.selectAbv':         '-- 揀酒精度 --',
     'form.selectPriceRange':  '-- 揀範圍 --',
+    // Tasting note (guess form + my guesses page)
+    'form.tastingNote':       '品酒筆記',
+    'form.tastingNotePoints': '(0 分)',
+    'form.tastingNoteHint':   '純粹係自己之後睇返',
+    'mg.tastingNote':         '品酒筆記',
     // Wine form — Flight fields (hostPrepares mode)
     'wine.flight':            '批',
     'wine.flightNone':        '唔分批',

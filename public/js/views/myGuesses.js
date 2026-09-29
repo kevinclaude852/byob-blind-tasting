@@ -112,6 +112,13 @@ async function renderMyGuesses(lobbyId) {
         })()
       : '';
 
+    const tastingNoteHtml = guess?.tastingNote
+      ? `<div class="tasting-note-display">
+           <div class="tasting-note-label">${t('mg.tastingNote')}</div>
+           <div class="tasting-note-text">${escHtml(guess.tastingNote)}</div>
+         </div>`
+      : '';
+
     return `
       <div class="card" style="margin-bottom:16px">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
@@ -124,6 +131,7 @@ async function renderMyGuesses(lobbyId) {
         </div>
         ${attributeSection}
         ${scoreBreakdown}
+        ${tastingNoteHtml}
       </div>`;
   }).join('');
 

@@ -359,6 +359,22 @@ select {
   min-width: 0;
 }
 
+/* Wine owner name hint inside unrevealed accordion */
+.wine-owner-name-hint {
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-style: italic;
+  font-family: Georgia, 'Times New Roman', serif;
+  color: var(--text);
+  padding: 5px 4px 6px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2px;
+}
+.wine-owner-vintage {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
 /* Scoreboard swipe */
 .wine-swipe-container {
   display: flex;
@@ -637,6 +653,39 @@ select {
 }
 @keyframes toastIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 @keyframes toastOut { from { opacity:1; } to { opacity:0; } }
+
+/* Remove wine confirm-pending state */
+.btn-confirm-pending {
+  background: var(--error) !important;
+  border-color: var(--error) !important;
+  color: #fff !important;
+  animation: confirmPulse 0.3s ease;
+}
+@keyframes confirmPulse { from { transform: scale(0.96); } to { transform: scale(1); } }
+
+/* ===== Tasting Note (My Guesses page) ===== */
+.tasting-note-display {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.tasting-note-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  font-family: -apple-system, sans-serif;
+  margin-bottom: 4px;
+}
+.tasting-note-text {
+  font-size: 0.85rem;
+  color: var(--text);
+  font-style: italic;
+  font-family: Georgia, 'Times New Roman', serif;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
 
 /* ===== Spin ===== */
 .spin { animation: spin 1s linear infinite; display: inline-block; }
