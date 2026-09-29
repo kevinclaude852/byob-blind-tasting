@@ -204,6 +204,27 @@ const TRANSLATIONS = {
     // Lobby — hostPrepares challengers box
     'lobby.challengers':      'Challengers',
     'lobby.waitingChallengers': '⏳ Waiting for challengers to join...',
+    // Lobby — manage players (host only)
+    'lobby.managePlayers':    '👥 Manage Players',
+    // Manage Players page
+    'mp.title':               'Manage Players',
+    'mp.subtitle':            'Share recovery links if a player lost their session',
+    'mp.hostLabel':           'Host (You)',
+    'mp.yourRecovery':        'Your Recovery Link',
+    'mp.copyLink':            'Copy Link',
+    'mp.showQr':              'QR',
+    'mp.linkCopied':          'Copied!',
+    'mp.wineCount':           'wines',
+    'mp.removeBtn':           'Remove',
+    'mp.removeConfirm':       'Tap again to confirm removal',
+    'mp.removing':            'Removing...',
+    'mp.removed':             'Player removed.',
+    'mp.removeFailed':        'Failed to remove player.',
+    'mp.cannotRemove':        'Cannot remove — has revealed wines.',
+    'mg.tastingNote':         'Tasting Note',
+    'form.tastingNote':       'Tasting Note',
+    'form.tastingNotePoints': '(0 pts)',
+    'form.tastingNoteHint':   'For your own reference',
   },
   hk: {
     // Landing
@@ -409,6 +430,27 @@ const TRANSLATIONS = {
     // Lobby — hostPrepares challengers box
     'lobby.challengers':      '挑戰者',
     'lobby.waitingChallengers': '⏳ 等緊挑戰者入嚟...',
+    // Lobby — manage players (host only)
+    'lobby.managePlayers':    '👥 管理玩家',
+    // Manage Players page
+    'mp.title':               '管理玩家',
+    'mp.subtitle':            '玩家唔見session可以Share個Recovery Link畀佢',
+    'mp.hostLabel':           '攪手（你）',
+    'mp.yourRecovery':        '你嘅Recovery Link',
+    'mp.copyLink':            '複製連結',
+    'mp.showQr':              'QR',
+    'mp.linkCopied':          '複製咗！',
+    'mp.wineCount':           '支酒',
+    'mp.removeBtn':           '移除',
+    'mp.removeConfirm':       '再撳一次確認移除',
+    'mp.removing':            '移除緊...',
+    'mp.removed':             '移除咗',
+    'mp.removeFailed':        '移除唔到',
+    'mp.cannotRemove':        '移唔到 — 支酒已開估',
+    'mg.tastingNote':         '品酒筆記',
+    'form.tastingNote':       '品酒筆記',
+    'form.tastingNotePoints': '（0分）',
+    'form.tastingNoteHint':   '自用，唔計分㗎',
   }
 };
 

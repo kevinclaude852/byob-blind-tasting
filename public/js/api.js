@@ -71,6 +71,10 @@ const API = (() => {
     cancelCountdown: (lobbyId, wineId) => request('DELETE', `/api/lobby/${lobbyId}/reveal/${wineId}`, null, lobbyId),
     getScores: (lobbyId) => request('GET', `/api/lobby/${lobbyId}/scores`, null, lobbyId),
 
+    // Players (host management)
+    getRecoveryLinks: (lobbyId) => request('GET', `/api/lobby/${lobbyId}/players/recovery`, null, lobbyId),
+    removePlayer: (lobbyId, playerId) => request('DELETE', `/api/lobby/${lobbyId}/players/${playerId}`, null, lobbyId),
+
     // Reference
     getGrapes: () => request('GET', '/api/reference/grapes'),
     getCountries: () => request('GET', '/api/reference/countries'),
