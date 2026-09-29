@@ -7,6 +7,7 @@ function renderJoin(lobbyId, lobbyName, gameMode = 'byob') {
       <div class="page-header">
         <h1>${t('app.title')} — ${escHtml(lobbyName)}</h1>
         <p>${t('join.subtitle')}</p>
+        <a class="manual-link" href="/help.html${getLocale() === 'hk' ? '#hk' : ''}" target="_blank" rel="noopener">${t('app.manual')}</a>
       </div>
 
       <div class="card">

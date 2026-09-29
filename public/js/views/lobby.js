@@ -398,6 +398,8 @@ async function renderLobby(lobbyId) {
 
         ${buildScoringRulesHtml(lobby.rules)}
 
+        <div class="lobby-manual"><a class="manual-link" href="/help.html${getLocale() === 'hk' ? '#hk' : ''}" target="_blank" rel="noopener">${t('app.manual')}</a></div>
+
       </div>
     `;
 

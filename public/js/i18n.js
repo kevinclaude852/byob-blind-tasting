@@ -4,6 +4,7 @@ const TRANSLATIONS = {
     // Landing
     'app.title':                    'Blind Tasting Challenge',
     'app.subtitle':                 'Create a lobby and invite your friends',
+    'app.manual':                   'New here? Read the player guide →',
     'landing.lobbyName':            'Lobby Name',
     'landing.lobbyNamePlaceholder': 'e.g. Friday Night Tasting',
     'landing.hostNotParticipating': 'Host is not participating (organizer only)',
@@ -244,6 +245,7 @@ const TRANSLATIONS = {
     // Landing
     'app.title':                    'Blind Tasting Challenge 盲品挑戰',
     'app.subtitle':                 '開個大廳搵埋啲friend',
+    'app.manual':                   '第一次玩？睇下説明書 →',
     'landing.lobbyName':            '大廳叫咩名',
     'landing.lobbyNamePlaceholder': 'e.g. Yellow Tail 垂直品鑑會',
     'landing.hostNotParticipating': '攪手齋攪唔玩',
