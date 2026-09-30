@@ -43,6 +43,10 @@ app.get('/api/qr', async (req, res) => {
   } catch { res.status(500).json({ error: 'QR generation failed' }); }
 });
 
+// Admin
+const adminRouter = require('./src/routes/admin');
+app.use('/admin', adminRouter);
+
 // SPA fallback
 app.get('/{*path}', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
