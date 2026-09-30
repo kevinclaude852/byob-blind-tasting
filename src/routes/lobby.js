@@ -30,13 +30,29 @@ function findWine(game, wineId) {
   return null;
 }
 
+// Derive gameMode / revealPolicy from stored game (backward compat with old hostParticipating flag)
+function getGameMode(game) {
+  return game.gameMode ?? (game.hostParticipating === false ? 'hostPrepares' : 'byob');
+}
+function getRevealPolicy(game) {
+  return game.revealPolicy ?? 'hostOnly';
+}
+
 // POST /api/lobby — create lobby
 router.post('/', (req, res) => {
-  const { hostName, hostEmoji, lobbyName, hostParticipating = true, rules } = req.body;
-  if (hostParticipating) {
-    if (!hostName || !hostName.trim()) return res.status(400).json({ error: 'Host name required.' });
-    if (!hostEmoji) return res.status(400).json({ error: 'Host emoji required.' });
-  }
+  const { hostName, hostEmoji, lobbyName, gameMode: rawGameMode, revealPolicy: rawRevealPolicy, hostParticipating, rules } = req.body;
+
+  // Derive gameMode with legacy compat (old clients may send hostParticipating: false)
+  let gameMode = rawGameMode || (hostParticipating === false ? 'hostPrepares' : 'byob');
+  if (!['byob', 'hostPrepares'].includes(gameMode)) gameMode = 'byob';
+
+  let revealPolicy = rawRevealPolicy || 'hostOnly';
+  if (gameMode === 'hostPrepares') revealPolicy = 'hostOnly'; // not applicable in this mode
+  if (!['hostOnly', 'ownerOrHost'].includes(revealPolicy)) revealPolicy = 'hostOnly';
+
+  // Both modes require a named host
+  if (!hostName || !hostName.trim()) return res.status(400).json({ error: 'Host name required.' });
+  if (!hostEmoji) return res.status(400).json({ error: 'Host emoji required.' });
 
   // Validate and normalise rules
   let normalisedRules;
@@ -58,15 +74,17 @@ router.post('/', (req, res) => {
     lobbyId,
     lobbyName: lobbyName || 'Blind Tasting',
     hostPlayerId,
-    hostParticipating: !!hostParticipating,
+    gameMode,
+    revealPolicy,
     rules: normalisedRules,
     createdAt: new Date().toISOString(),
     players: {
       [hostPlayerId]: {
         id: hostPlayerId,
-        name: hostParticipating ? hostName.trim() : '',
-        emoji: hostParticipating ? hostEmoji : '🎩',
-        participating: !!hostParticipating,
+        name: hostName.trim(),
+        emoji: hostEmoji,
+        // In hostPrepares the host is the wine provider, not a guesser — excluded from leaderboard
+        participating: gameMode !== 'hostPrepares',
         joinedAt: new Date().toISOString(),
         sessionToken,
         wines: []
@@ -74,7 +92,8 @@ router.post('/', (req, res) => {
     },
     guesses: {},
     scores: {},
-    revealOrder: []
+    revealOrder: [],
+    flightNames: {}
   };
 
   saveGame(lobbyId, game, true);
@@ -93,12 +112,16 @@ router.get('/:lobbyId', (req, res) => {
   }
 
   const isHost = currentPlayerId && currentPlayerId === game.hostPlayerId;
+  const gameMode = getGameMode(game);
+  const revealPolicy = getRevealPolicy(game);
 
-  // Build filtered player list — exclude non-participating host from everyone else's view
+  // Build filtered player list.
+  // In hostPrepares mode, the host (participating=false) is included for all players so guests
+  // can see and guess the host's wines. In BYOB mode, non-participating players are excluded.
   const players = {};
   for (const [pid, p] of Object.entries(game.players)) {
     const isSelf = pid === currentPlayerId;
-    if (!p.participating && p.participating !== undefined && !isSelf) continue;
+    if (!p.participating && p.participating !== undefined && !isSelf && gameMode !== 'hostPrepares') continue;
     players[pid] = {
       id: p.id,
       name: p.name,
@@ -110,12 +133,14 @@ router.get('/:lobbyId', (req, res) => {
         emoji: w.emoji,
         revealed: w.revealed,
         revealAt: w.revealAt || null,
+        flightNumber: w.flightNumber ?? null,
         name:     (w.revealed || isSelf) ? w.name     : null,
         vintage:  (w.revealed || isSelf) ? w.vintage  : null,
         type:     (w.revealed || isSelf) ? w.type     : null,
         varietals:(w.revealed || isSelf) ? w.varietals: null,
         country:  (w.revealed || isSelf) ? w.country  : null,
         region:   (w.revealed || isSelf) ? w.region   : null,
+        subRegion:(w.revealed || isSelf) ? (w.subRegion || null) : null,
         abv:      (w.revealed || isSelf) ? w.abv      : null,
         price:    (w.revealed || isSelf) ? w.price     : null,
       }))
@@ -151,7 +176,11 @@ router.get('/:lobbyId', (req, res) => {
     lobbyId: game.lobbyId,
     lobbyName: game.lobbyName,
     hostPlayerId: game.hostPlayerId,
-    hostParticipating: game.hostParticipating !== false,
+    gameMode,
+    revealPolicy,
+    flightNames: game.flightNames || {},
+    // Keep hostParticipating for backward compat with old cached clients
+    hostParticipating: gameMode !== 'hostPrepares',
     rules: normaliseRules(game.rules),
     createdAt: game.createdAt,
     players,
@@ -204,4 +233,50 @@ router.post('/:lobbyId/join', (req, res) => {
   res.json({ playerId, sessionToken });
 });
 
-module.exports = { router, authPlayer, authHost, getToken, findWine };
+// GET /api/lobby/:lobbyId/players/recovery — host only; returns players with session tokens
+router.get('/:lobbyId/players/recovery', (req, res) => {
+  const game = loadGame(req.params.lobbyId);
+  if (!game) return res.status(404).json({ error: 'Lobby not found.' });
+  if (!authHost(game, getToken(req))) return res.status(403).json({ error: 'Host only.' });
+
+  const players = Object.values(game.players).map(p => ({
+    id: p.id,
+    name: p.name,
+    emoji: p.emoji,
+    participating: p.participating,
+    joinedAt: p.joinedAt,
+    sessionToken: p.sessionToken,
+    wineCount: (p.wines || []).length,
+    hasRevealedWines: (p.wines || []).some(w => w.revealed)
+  }));
+  res.json({ players });
+});
+
+// DELETE /api/lobby/:lobbyId/players/:playerId — host only; remove a player
+router.delete('/:lobbyId/players/:playerId', (req, res) => {
+  const { lobbyId, playerId } = req.params;
+  const game = loadGame(lobbyId);
+  if (!game) return res.status(404).json({ error: 'Lobby not found.' });
+  if (!authHost(game, getToken(req))) return res.status(403).json({ error: 'Host only.' });
+  if (playerId === game.hostPlayerId) return res.status(400).json({ error: 'Cannot remove the host.' });
+
+  const player = game.players[playerId];
+  if (!player) return res.status(404).json({ error: 'Player not found.' });
+  if ((player.wines || []).some(w => w.revealed)) {
+    return res.status(400).json({ error: 'Cannot remove a player with revealed wines.' });
+  }
+
+  const wineIds = (player.wines || []).map(w => w.id);
+  for (const guesserId of Object.keys(game.guesses)) {
+    for (const wineId of wineIds) delete game.guesses[guesserId][wineId];
+  }
+  delete game.guesses[playerId];
+  for (const wineId of Object.keys(game.scores || {})) {
+    if (game.scores[wineId]) delete game.scores[wineId][playerId];
+  }
+  delete game.players[playerId];
+  saveGame(lobbyId, game);
+  res.json({ success: true });
+});
+
+module.exports = { router, authPlayer, authHost, getToken, findWine, getGameMode, getRevealPolicy };

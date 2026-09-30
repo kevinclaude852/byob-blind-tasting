@@ -17,6 +17,7 @@ const DEFAULT_RULES_PRESET = {
   oldWorld: { enabled: false, score: 5  },
   country:  { enabled: true,  score: 5  },
   region:   { enabled: true,  score: 5  },
+  subRegion:{ enabled: false, score: 3  },
   vintage:  { enabled: true,  mode: 'exact', scoreExact: 3, scorePlusOne: 2, scorePlusTwo: 1 },
   abv:      { enabled: false, score: 3  },
   price:    { enabled: false, score: 3, currency: 'HKD', rangeWidth: 100 }
@@ -28,6 +29,7 @@ const CUSTOMISE_DEFAULTS = {
   oldWorld: { enabled: false, score: 5  },
   country:  { enabled: true,  score: 5  },
   region:   { enabled: true,  score: 5  },
+  subRegion:{ enabled: false, score: 3  },
   vintage:  { enabled: true,  mode: 'exact', scoreExact: 3, scorePlusOne: 2, scorePlusTwo: 1 },
   abv:      { enabled: false, score: 3  },
   price:    { enabled: false, score: 3, currency: 'HKD', rangeWidth: 100 }

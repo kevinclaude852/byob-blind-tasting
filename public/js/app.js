@@ -85,6 +85,21 @@ async function route() {
     return renderMyGuesses(myGuessesMatch[1]);
   }
 
+  // #/lobby/:id/recover/:playerId/:token — restore session and redirect to lobby
+  const recoverMatch = hash.match(/^#\/lobby\/([a-f0-9]+)\/recover\/(p_[a-z0-9]+)\/([a-f0-9]+)$/);
+  if (recoverMatch) {
+    const [, lobbyId, playerId, sessionToken] = recoverMatch;
+    API.saveSession(lobbyId, { playerId, sessionToken });
+    window.location.hash = `#/lobby/${lobbyId}`;
+    return;
+  }
+
+  // #/lobby/:id/manage-players — host manage players page
+  const managePlayersMatch = hash.match(/^#\/lobby\/([a-f0-9]+)\/manage-players$/);
+  if (managePlayersMatch) {
+    return renderManagePlayers(managePlayersMatch[1]);
+  }
+
   // #/lobby/dummy — UAT test lobby
   if (hash === '#/lobby/dummy' || hash === '#/lobby/dummy/') {
     return renderDummyLobby();
@@ -99,7 +114,7 @@ async function route() {
     if (!session) {
       try {
         const lobby = await API.getLobby(lobbyId);
-        return renderJoin(lobbyId, lobby.lobbyName);
+        return renderJoin(lobbyId, lobby.lobbyName, lobby.gameMode);
       } catch {
         document.getElementById('app').innerHTML = `<div class="page"><div class="alert alert-error">Lobby not found or expired.</div></div>`;
         return;

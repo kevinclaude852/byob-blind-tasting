@@ -17,6 +17,7 @@ function buildRulesPanel() {
     oldWorld: { score: 5  },
     country:  { score: 5  },
     region:   { score: 5  },
+    subRegion:{ score: 3  },
     vintage:  { mode: 'exact', scoreExact: 3, scorePlusOne: 2, scorePlusTwo: 1 },
     abv:      { score: 3  },
     price:    { score: 3, currency: 'HKD', rangeWidth: 100 }
@@ -127,6 +128,11 @@ function buildRulesPanel() {
             <span class="rule-name">${t('rules.region')}</span>
             <span class="rule-score-wrap">${scoreSelectHtml('regionScore', d.region.score)} ${t('rules.pts')}</span>
           </label>
+          <label class="rule-card-header" id="subRegionRow" style="padding:6px 0 0 24px">
+            <input type="checkbox" id="subRegionCheck" class="rule-check">
+            <span class="rule-name">${t('rules.subRegion')}</span>
+            <span class="rule-score-wrap">${scoreSelectHtml('subRegionScore', d.subRegion.score)} ${t('rules.pts')}</span>
+          </label>
         </div>
       </div>
       ${vintageCard}
@@ -147,6 +153,7 @@ function collectLandingRules() {
     oldWorld: { enabled: !!document.getElementById('oldWorldCheck')?.checked,  score: parseInt(document.getElementById('oldWorldScore')?.value, 10)  || 5  },
     country:  { enabled: !!document.getElementById('countryCheck')?.checked,   score: parseInt(document.getElementById('countryScore')?.value, 10)   || 5  },
     region:   { enabled: !!document.getElementById('regionCheck')?.checked,    score: parseInt(document.getElementById('regionScore')?.value, 10)    || 5  },
+    subRegion:{ enabled: !!document.getElementById('regionCheck')?.checked && !!document.getElementById('subRegionCheck')?.checked, score: parseInt(document.getElementById('subRegionScore')?.value, 10) || 3 },
     vintage:  {
       enabled:       !!document.getElementById('vintageCheck')?.checked,
       mode:          vintageMode,
@@ -172,6 +179,7 @@ function renderLanding() {
       <div class="page-header">
         <h1>${t('app.title')}</h1>
         <p>${t('app.subtitle')}</p>
+        <a class="manual-link" href="/help.html${getLocale() === 'hk' ? '#hk' : ''}" target="_blank" rel="noopener">${t('app.manual')}</a>
       </div>
 
       <div class="card">
@@ -180,23 +188,40 @@ function renderLanding() {
           <input type="text" id="lobbyName" placeholder="${t('landing.lobbyNamePlaceholder')}" value="" required>
         </div>
         <div class="form-group">
-          <label class="checkbox-label">
-            <input type="checkbox" id="hostNotParticipating">
-            ${t('landing.hostNotParticipating')}
-          </label>
+          <label for="hostName">${t('landing.yourName')}</label>
+          <input type="text" id="hostName" placeholder="${t('landing.yourNamePlaceholder')}">
         </div>
-        <div id="hostFields">
-          <div class="form-group">
-            <label for="hostName">${t('landing.yourName')}</label>
-            <input type="text" id="hostName" placeholder="${t('landing.yourNamePlaceholder')}">
+        <div class="form-group">
+          <label>${t('landing.yourAvatar')}</label>
+          <div class="emoji-picker" id="emojiPicker">
+            ${AVATARS.map(e => `<button class="emoji-btn" data-emoji="${e}"><span>${e}</span></button>`).join('')}
           </div>
-          <div class="form-group">
-            <label>${t('landing.yourAvatar')}</label>
-            <div class="emoji-picker" id="emojiPicker">
-              ${AVATARS.map(e => `<button class="emoji-btn" data-emoji="${e}"><span>${e}</span></button>`).join('')}
-            </div>
-            <input type="hidden" id="selectedEmoji" value="">
+          <input type="hidden" id="selectedEmoji" value="">
+        </div>
+        <div class="form-group">
+          <label>${t('landing.gameMode')}</label>
+          <div class="rules-mode-group">
+            <label class="rules-mode-opt">
+              <input type="radio" name="gameMode" value="byob" checked>
+              <span>${t('landing.modeByob')}</span>
+            </label>
+            <label class="rules-mode-opt">
+              <input type="radio" name="gameMode" value="hostPrepares">
+              <span>${t('landing.modeHostPrepares')}</span>
+            </label>
           </div>
+          <div id="revealPolicyPanel" style="margin-top:10px;padding:10px 12px;background:var(--bg,#f9f5f0);border-radius:8px;border:1px solid var(--border,#e8e0d5)">
+            <div style="font-size:0.78rem;font-weight:600;color:var(--text-muted,#888);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">${t('landing.revealPolicy')}</div>
+            <label class="rule-vm-opt" style="display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer">
+              <input type="radio" name="revealPolicy" value="hostOnly" checked>
+              <span style="font-size:0.85rem">${t('landing.revealHostOnly')}</span>
+            </label>
+            <label class="rule-vm-opt" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="radio" name="revealPolicy" value="ownerOrHost">
+              <span style="font-size:0.85rem">${t('landing.revealOwnerOrHost')}</span>
+            </label>
+          </div>
+          <div id="hostPreparesDesc" style="display:none;margin-top:8px;font-size:0.82rem;color:var(--text-muted,#888);padding:8px 12px;background:var(--bg,#f9f5f0);border-radius:8px;border:1px solid var(--border,#e8e0d5)">${t('landing.modeHostPreparesDesc')}</div>
         </div>
 
         <div class="form-group">
@@ -225,8 +250,13 @@ function renderLanding() {
 
   let selectedEmoji = '';
 
-  document.getElementById('hostNotParticipating').addEventListener('change', (e) => {
-    document.getElementById('hostFields').style.display = e.target.checked ? 'none' : '';
+  // Game mode toggle — show/hide reveal policy panel and host-prepares description
+  document.querySelectorAll('input[name="gameMode"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      const isByob = radio.value === 'byob';
+      document.getElementById('revealPolicyPanel').style.display = isByob ? '' : 'none';
+      document.getElementById('hostPreparesDesc').style.display = isByob ? 'none' : '';
+    });
   });
 
   document.querySelectorAll('.emoji-btn').forEach(btn => {
@@ -267,18 +297,28 @@ function renderLanding() {
     if (opts) opts.style.display = e.target.checked ? '' : 'none';
   });
 
-  // Country ↔ Region dependency
+  // Country → Region → Sub Region dependency
+  function setSubRegionVisible(visible) {
+    const row = document.getElementById('subRegionRow');
+    if (row) row.style.display = visible ? '' : 'none';
+    if (!visible) {
+      const subCheck = document.getElementById('subRegionCheck');
+      if (subCheck) subCheck.checked = false;
+    }
+  }
   document.getElementById('countryCheck')?.addEventListener('change', (e) => {
     const subPanel = document.getElementById('countrySubPanel');
     if (!e.target.checked) {
       const regionCheck = document.getElementById('regionCheck');
       if (regionCheck) regionCheck.checked = false;
+      setSubRegionVisible(false);
       if (subPanel) subPanel.style.display = 'none';
     } else {
       if (subPanel) subPanel.style.display = '';
     }
   });
   document.getElementById('regionCheck')?.addEventListener('change', (e) => {
+    setSubRegionVisible(e.target.checked);
     if (e.target.checked) {
       const countryCheck = document.getElementById('countryCheck');
       if (countryCheck) countryCheck.checked = true;
@@ -299,15 +339,16 @@ function renderLanding() {
 
   document.getElementById('createBtn').addEventListener('click', async () => {
     const lobbyName = document.getElementById('lobbyName').value.trim();
-    const hostNotParticipating = document.getElementById('hostNotParticipating').checked;
+    const hostName = document.getElementById('hostName').value.trim();
+    const gameMode = document.querySelector('input[name="gameMode"]:checked')?.value || 'byob';
+    const revealPolicy = gameMode === 'byob'
+      ? (document.querySelector('input[name="revealPolicy"]:checked')?.value || 'hostOnly')
+      : 'hostOnly';
     const errorEl = document.getElementById('landingError');
 
     if (!lobbyName) { showError(errorEl, t('error.enterLobbyName')); return; }
-    if (!hostNotParticipating) {
-      const hostName = document.getElementById('hostName').value.trim();
-      if (!hostName) { showError(errorEl, t('error.enterName')); return; }
-      if (!selectedEmoji) { showError(errorEl, t('error.chooseAvatar')); return; }
-    }
+    if (!hostName) { showError(errorEl, t('error.enterName')); return; }
+    if (!selectedEmoji) { showError(errorEl, t('error.chooseAvatar')); return; }
 
     const rules = collectLandingRules();
 
@@ -329,9 +370,7 @@ function renderLanding() {
     errorEl.innerHTML = '';
 
     try {
-      const hostName = hostNotParticipating ? '' : document.getElementById('hostName').value.trim();
-      const hostEmoji = hostNotParticipating ? '🎩' : selectedEmoji;
-      const data = await API.createLobby({ hostName, hostEmoji, lobbyName, hostParticipating: !hostNotParticipating, rules });
+      const data = await API.createLobby({ hostName, hostEmoji: selectedEmoji, lobbyName, gameMode, revealPolicy, rules });
       API.saveSession(data.lobbyId, { playerId: data.hostPlayerId, sessionToken: data.sessionToken });
       window.location.hash = `#/lobby/${data.lobbyId}`;
     } catch (err) {

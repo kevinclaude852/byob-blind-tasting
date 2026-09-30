@@ -1,4 +1,4 @@
-function renderJoin(lobbyId, lobbyName) {
+function renderJoin(lobbyId, lobbyName, gameMode = 'byob') {
   const app = document.getElementById('app');
   const AVATARS = ['⛰️','🌞','🎃','🐦','🏝️','🐔','🎸','👻','🤡','🌸','😼','😈','🐵','🐨','🌻','🍄','🍪','🎩','🍭','💀','🚀','💥','🐑','🌶️','⭐️','🌀','🌈','🌊','🍙','🐳'];
 
@@ -7,6 +7,7 @@ function renderJoin(lobbyId, lobbyName) {
       <div class="page-header">
         <h1>${t('app.title')} — ${escHtml(lobbyName)}</h1>
         <p>${t('join.subtitle')}</p>
+        <a class="manual-link" href="/help.html${getLocale() === 'hk' ? '#hk' : ''}" target="_blank" rel="noopener">${t('app.manual')}</a>
       </div>
 
       <div class="card">
@@ -50,7 +51,13 @@ function renderJoin(lobbyId, lobbyName) {
     try {
       const data = await API.joinLobby(lobbyId, { name, emoji: selectedEmoji });
       API.saveSession(lobbyId, { playerId: data.playerId, sessionToken: data.sessionToken });
-      window.location.hash = `#/lobby/${lobbyId}/wine`;
+      if (gameMode === 'hostPrepares') {
+        // Hash is already #/lobby/:id (the join page URL), so hashchange won't fire.
+        // Call route() directly to re-render as the now-authenticated player.
+        route();
+      } else {
+        window.location.hash = `#/lobby/${lobbyId}/wine`;
+      }
     } catch (err) {
       errorEl.innerHTML = `<div class="alert alert-error">${escHtml(err.error || 'Failed to join.')}</div>`;
       btn.disabled = false;

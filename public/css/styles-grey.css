@@ -359,6 +359,22 @@ select {
   min-width: 0;
 }
 
+/* Wine owner name hint inside unrevealed accordion */
+.wine-owner-name-hint {
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-style: italic;
+  font-family: Georgia, 'Times New Roman', serif;
+  color: var(--text);
+  padding: 5px 4px 6px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2px;
+}
+.wine-owner-vintage {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
 /* Scoreboard swipe */
 .wine-swipe-container {
   display: flex;
@@ -412,6 +428,54 @@ select {
 
 .reveal-btn-wrap {
   margin-top: 10px;
+}
+
+/* ===== Flight Groups (hostPrepares mode) ===== */
+.flight-group {
+  margin-top: 8px;
+}
+.flight-group-header {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  font-family: -apple-system, sans-serif;
+  padding: 6px 4px 4px;
+  border-top: 1px solid var(--border);
+  margin-bottom: 5px;
+}
+.flight-group-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* ===== Challengers Box (hostPrepares mode) ===== */
+.challengers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 6px;
+}
+.challenger-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+.challenger-row:last-child { border-bottom: none; }
+.challenger-emoji { font-size: 1.2rem; flex-shrink: 0; }
+.challenger-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 600;
 }
 
 /* ===== Scoreboard ===== */
@@ -590,12 +654,160 @@ select {
 @keyframes toastIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 @keyframes toastOut { from { opacity:1; } to { opacity:0; } }
 
+/* Remove wine confirm-pending state */
+.btn-confirm-pending {
+  background: var(--error) !important;
+  border-color: var(--error) !important;
+  color: #fff !important;
+  animation: confirmPulse 0.3s ease;
+}
+@keyframes confirmPulse { from { transform: scale(0.96); } to { transform: scale(1); } }
+
+/* ===== Tasting Note (My Guesses page) ===== */
+.tasting-note-display {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.tasting-note-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  font-family: -apple-system, sans-serif;
+  margin-bottom: 4px;
+}
+.tasting-note-text {
+  font-size: 0.85rem;
+  color: var(--text);
+  font-style: italic;
+  font-family: Georgia, 'Times New Roman', serif;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
 /* ===== Spin ===== */
 .spin { animation: spin 1s linear infinite; display: inline-block; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===== Share box — Manage Players row ===== */
+.share-manage-row { margin-top: 10px; }
+.share-manage-row .btn { text-decoration: none; }
+.mp-remove-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.mp-confirm-actions { display: flex; gap: 10px; margin-top: 16px; }
+.mp-confirm-actions .btn { flex: 1; }
+
+/* ===== Two-tap confirm button ===== */
+.btn-confirm-pending {
+  background: #c0392b !important;
+  color: #fff !important;
+  animation: pulse-confirm 0.6s ease-in-out infinite alternate;
+}
+@keyframes pulse-confirm {
+  from { opacity: 1; }
+  to   { opacity: 0.75; }
+}
+
+/* ===== Wine owner name hint (accordion) ===== */
+.wine-owner-name-hint {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  font-style: italic;
+}
+.wine-owner-vintage { font-weight: 400; }
+
+/* ===== Tasting Note ===== */
+.tasting-note-display {
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: var(--bg-secondary);
+  border-left: 3px solid var(--border);
+  border-radius: 4px;
+}
+.tasting-note-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+.tasting-note-text {
+  font-size: 0.875rem;
+  white-space: pre-wrap;
+  color: var(--text-primary);
+}
+
+/* ===== Manage Players page ===== */
+.mp-players-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+.mp-player-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.mp-player-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.mp-player-emoji { font-size: 2rem; line-height: 1; }
+.mp-player-info { display: flex; flex-direction: column; gap: 2px; }
+.mp-player-name { font-weight: 700; font-size: 1rem; }
+.mp-host-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 10px;
+  padding: 1px 7px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.mp-player-meta { font-size: 0.8rem; color: var(--text-secondary); }
+.mp-recovery-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.mp-recovery-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  flex: 1 1 100%;
+  margin-bottom: 4px;
+}
+.mp-recovery-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.mp-qr-container { margin-top: 10px; text-align: center; }
+.mp-qr-img { max-width: 180px; border-radius: 8px; }
+.mp-qr-error { font-size: 0.8rem; color: var(--text-secondary); }
+.mp-empty { color: var(--text-secondary); font-size: 0.9rem; text-align: center; padding: 20px 0; }
 
 /* ===== Responsive adjustments for larger screens ===== */
 @media (min-width: 600px) {
   .page { padding: 32px 24px 60px; }
   .emoji-picker { grid-template-columns: repeat(8, 1fr); }
 }
+
+/* ===== Player guide link ===== */
+.manual-link {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.lobby-manual { text-align: center; margin: 24px 0 8px; }

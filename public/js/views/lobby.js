@@ -112,19 +112,15 @@ async function renderLobby(lobbyId) {
     });
   }
 
-  // ── Wine row builder ────────────────────────────────────────────────────────
-  function buildWineRows(player) {
-    const wines = player.wines || [];
+  // ── Single wine row builder (shared by flat and grouped renderers) ──────────
+  function buildWineRow(player, wine, wineIndex) {
     const currentPlayerId = lobby.currentPlayerId;
     const isHost = lobby.isHost;
-    const isNonParticipatingHost = isHost && lobby.hostParticipating === false;
+    const gameMode = lobby.gameMode || 'byob';
+    const revealPolicy = lobby.revealPolicy || 'hostOnly';
+    const isHostNonGuessing = isHost && gameMode === 'hostPrepares';
     const isSelf = player.id === currentPlayerId;
-
-    if (wines.length === 0) {
-      return `<div class="player-status">${t('lobby.noWinesYet')}</div>`;
-    }
-
-    return wines.map((wine, wineIndex) => {
+    {
       const isRevealed = wine.revealed;
       const isPending = !isRevealed && !!wine.revealAt; // countdown active
       const myGuess = !isSelf ? lobby.myGuesses[wine.id] : null;
@@ -149,29 +145,32 @@ async function renderLobby(lobbyId) {
         : '';
 
       // Countdown display (shown to everyone when a timed reveal is pending)
+      const canStop = isHost || (gameMode === 'byob' && revealPolicy === 'ownerOrHost' && isSelf);
       const countdownHtml = isPending
         ? `<div class="wine-countdown" data-reveal-at="${wine.revealAt}">
              <span class="countdown-label">${t('lobby.revealsIn')}</span>
              <span class="countdown-timer">--:--</span>
-             ${isHost ? `<button class="btn btn-xs btn-danger countdown-stop-btn" data-wine-id="${wine.id}">${t('lobby.stopBtn')}</button>` : ''}
+             ${canStop ? `<button class="btn btn-xs btn-danger countdown-stop-btn" data-wine-id="${wine.id}">${t('lobby.stopBtn')}</button>` : ''}
            </div>`
         : '';
 
       // Action buttons
+      // In ownerOrHost policy, any player can reveal their own wine
+      const canRevealOwn = isHost || (gameMode === 'byob' && revealPolicy === 'ownerOrHost');
       let actionsHtml = '';
       if (isSelf) {
         if (!isRevealed && !isPending) {
-          if (isHost) {
+          if (canRevealOwn) {
             actionsHtml += `<button class="btn btn-xs btn-gold reveal-btn" data-wine-id="${wine.id}">${t('lobby.revealBtn')}</button>`;
           }
           actionsHtml += `<a href="#/lobby/${lobbyId}/wine/${wine.id}" class="btn btn-xs btn-secondary" style="text-decoration:none">${t('lobby.editBtn')}</a>`;
         }
       } else {
         if (!isRevealed) {
-          if (!isNonParticipatingHost) {
+          if (!isHostNonGuessing) {
             actionsHtml += `<button class="btn btn-xs btn-danger guess-btn" data-wine-id="${wine.id}">${hasGuessed ? t('lobby.changeGuessBtn') : t('lobby.guessBtn')}</button>`;
           }
-          // Only show Reveal button if no countdown is already running
+          // Only the host can reveal other players' wines; no countdown already running
           if (isHost && !isPending) {
             actionsHtml += `<button class="btn btn-xs btn-gold reveal-btn" data-wine-id="${wine.id}">${t('lobby.revealBtn')}</button>`;
           }
@@ -190,6 +189,7 @@ async function renderLobby(lobbyId) {
           lobbyRules.oldWorld.enabled && wine.country ? `<div class="wine-reveal-row"><span>${isHK ? '舊/新' : 'OLD/NEW'}</span><span>${isOldWorld(wine.country) ? (isHK ? '舊世界' : 'Old World') : (isHK ? '新世界' : 'New World')}</span></div>` : '',
           wine.country ? `<div class="wine-reveal-row"><span>${t('lobby.country')}</span><span>${escHtml(wine.country)}</span></div>` : '',
           wine.region  ? `<div class="wine-reveal-row"><span>${t('lobby.region')}</span><span>${escHtml(wine.region)}</span></div>`  : '',
+          wine.subRegion ? `<div class="wine-reveal-row"><span>${t('lobby.subRegion')}</span><span>${escHtml(wine.subRegion)}</span></div>` : '',
           varietalStr  ? `<div class="wine-reveal-row"><span>${t('lobby.variety')}</span><span>${escHtml(varietalStr)}</span></div>`  : '',
           wine.vintage ? `<div class="wine-reveal-row"><span>${t('lobby.vintage')}</span><span>${wine.vintage}</span></div>`          : '',
           lobbyRules.abv.enabled && wine.abv != null ? `<div class="wine-reveal-row"><span>${isHK ? '酒精度' : 'ABV'}</span><span>${wine.abv}%</span></div>` : '',
@@ -222,6 +222,10 @@ async function renderLobby(lobbyId) {
           </div>`;
         }).join('');
 
+      const ownerNameHint = isSelf && wine.name
+        ? `<div class="wine-owner-name-hint">${escHtml(wine.name)}${wine.vintage ? `<span class="wine-owner-vintage"> · ${wine.vintage}</span>` : ''}</div>`
+        : '';
+
       return `
         <div class="wine-row-wrap">
           <div class="wine-row wine-row--unrev-expandable" data-wine-guess-accord="${wine.id}">
@@ -233,6 +237,7 @@ async function renderLobby(lobbyId) {
           </div>
           ${countdownHtml}
           <div class="wine-guess-accordion" id="wine-guess-accord-${wine.id}">
+            ${ownerNameHint}
             ${guesserRows
               ? `<div class="wine-guess-row wine-guess-header">
                    <span class="wine-guess-avatar"></span>
@@ -242,7 +247,44 @@ async function renderLobby(lobbyId) {
               : `<div style="font-size:0.78rem;color:var(--text-muted);font-style:italic;padding:4px 0">${t('lobby.noOtherPlayers')}</div>`}
           </div>
         </div>`;
-    }).join('');
+    }
+  }
+
+  // ── Flat wine rows (all wines, no grouping) ─────────────────────────────────
+  function buildWineRows(player) {
+    const wines = player.wines || [];
+    if (wines.length === 0) return `<div class="player-status">${t('lobby.noWinesYet')}</div>`;
+    return wines.map((wine, i) => buildWineRow(player, wine, i)).join('');
+  }
+
+  // ── Flight-grouped wine rows (hostPrepares host card) ───────────────────────
+  function buildFlightGroupedWines(player) {
+    const wines = player.wines || [];
+    if (wines.length === 0) return `<div class="player-status">${t('lobby.noWinesYet')}</div>`;
+    const flightNamesMap = lobby.flightNames || {};
+    const ungrouped = wines.map((w, i) => ({ w, i })).filter(x => x.w.flightNumber == null);
+    const byFlight = new Map();
+    wines.forEach((w, i) => {
+      if (w.flightNumber != null) {
+        const n = Number(w.flightNumber);
+        if (!byFlight.has(n)) byFlight.set(n, []);
+        byFlight.get(n).push({ w, i });
+      }
+    });
+    const flightNums = Array.from(byFlight.keys()).sort((a, b) => a - b);
+    let html = ungrouped.map(({ w, i }) => buildWineRow(player, w, i)).join('');
+    for (const n of flightNums) {
+      const name = flightNamesMap[String(n)] || '';
+      const header = name
+        ? `${t('wine.flight')} ${n} — ${escHtml(name)}`
+        : `${t('wine.flight')} ${n}`;
+      const inner = byFlight.get(n).map(({ w, i }) => buildWineRow(player, w, i)).join('');
+      html += `<div class="flight-group">
+        <div class="flight-group-header">${header}</div>
+        <div class="flight-group-rows">${inner}</div>
+      </div>`;
+    }
+    return html;
   }
 
   // ── Main render ─────────────────────────────────────────────────────────────
@@ -252,24 +294,18 @@ async function renderLobby(lobbyId) {
 
     const currentPlayerId = lobby.currentPlayerId;
     const isHost = lobby.isHost;
+    const gameMode = lobby.gameMode || 'byob';
+    const revealPolicy = lobby.revealPolicy || 'hostOnly';
     const joinUrl = `${location.protocol}//${location.host}/#/lobby/${lobbyId}`;
     const hasReveals = lobby.revealOrder && lobby.revealOrder.length > 0;
+    // Exclude non-participating host from player count (e.g. in hostPrepares mode)
     const playerCount = Object.values(lobby.players).filter(p => p.participating !== false).length;
     const totalWines = Object.values(lobby.players).reduce((sum, p) => sum + (p.wines || []).length, 0);
     const revealedWines = lobby.revealOrder ? lobby.revealOrder.length : 0;
 
-    // Own card always first; hide non-participating host from their own view too
-    const isNonParticipatingHost = isHost && lobby.hostParticipating === false;
-    const sortedPlayers = Object.values(lobby.players)
-      .filter(p => !(p.id === currentPlayerId && isNonParticipatingHost))
-      .sort((a, b) => {
-        if (a.id === currentPlayerId) return -1;
-        if (b.id === currentPlayerId) return 1;
-        return 0;
-      });
-
-    const playerCards = sortedPlayers.map(player => {
+    function renderPlayerCard(player) {
       const isSelf = player.id === currentPlayerId;
+      const useFlights = gameMode === 'hostPrepares' && player.id === lobby.hostPlayerId;
       return `
         <div class="player-card${isSelf ? ' self' : ''}" data-player-id="${player.id}">
           <div class="player-card-header">
@@ -280,11 +316,50 @@ async function renderLobby(lobbyId) {
             </div>
           </div>
           <div class="player-wines-section">
-            ${buildWineRows(player)}
+            ${useFlights ? buildFlightGroupedWines(player) : buildWineRows(player)}
           </div>
-          ${isSelf && !(isHost && lobby.hostParticipating === false) ? `<div style="margin-top:8px"><a href="#/lobby/${lobbyId}/wine" class="btn btn-sm btn-primary" style="width:100%;text-decoration:none;text-align:center;display:block">${t('lobby.addWine')}</a></div>` : ''}
+          ${isSelf && (gameMode !== 'hostPrepares' || isHost) ? `<div style="margin-top:8px"><a href="#/lobby/${lobbyId}/wine" class="btn btn-sm btn-primary" style="width:100%;text-decoration:none;text-align:center;display:block">${t('lobby.addWine')}</a></div>` : ''}
         </div>`;
-    }).join('');
+    }
+
+    let playerCards;
+    if (gameMode === 'hostPrepares') {
+      // Host card always first, then one compact "Challengers" card
+      const hostPlayer = lobby.players[lobby.hostPlayerId];
+      const allPlayers = Object.values(lobby.players);
+      const challengers = allPlayers.filter(p => p.id !== lobby.hostPlayerId);
+
+      const challengerRows = challengers.length
+        ? challengers.map(p => {
+            const isSelf = p.id === currentPlayerId;
+            return `<div class="challenger-row">
+              <span class="challenger-emoji">${p.emoji}</span>
+              <span class="challenger-name">${escHtml(p.name)}</span>
+              ${isSelf ? `<span class="badge badge-you">${t('lobby.you')}</span>` : ''}
+            </div>`;
+          }).join('')
+        : `<div class="player-status">${t('lobby.waitingChallengers')}</div>`;
+
+      const challengersCard = `
+        <div class="player-card">
+          <div class="player-card-header">
+            <div class="player-card-info">
+              <div class="player-name">${t('lobby.challengers')} (${challengers.length})</div>
+            </div>
+          </div>
+          <div class="challengers-list">${challengerRows}</div>
+        </div>`;
+
+      playerCards = (hostPlayer ? renderPlayerCard(hostPlayer) : '') + challengersCard;
+    } else {
+      // BYOB: self first, then others
+      const sorted = Object.values(lobby.players).sort((a, b) => {
+        if (a.id === currentPlayerId) return -1;
+        if (b.id === currentPlayerId) return 1;
+        return 0;
+      });
+      playerCards = sorted.map(renderPlayerCard).join('');
+    }
 
     app.innerHTML = `
       <div class="page wide">
@@ -303,6 +378,9 @@ async function renderLobby(lobbyId) {
             </div>
           </div>
           ${qrDataUrl ? `<div class="qr-container" id="qrContainer" style="display:none"><img src="${qrDataUrl}" alt="QR Code"></div>` : ''}
+          <div class="share-actions share-manage-row">
+            <a href="#/lobby/${lobbyId}/manage-players" class="btn">${t('lobby.managePlayers')}</a>
+          </div>
         </div>` : ''}
 
         <div class="section-header">
@@ -311,7 +389,7 @@ async function renderLobby(lobbyId) {
             <h3 style="margin-top:3px">${t('lobby.wines')} (${revealedWines} / ${totalWines})</h3>
           </div>
           <div style="display:flex;gap:8px">
-            <a href="#/lobby/${lobbyId}/myguesses" class="btn btn-secondary btn-sm" style="width:auto">${t('lobby.myGuesses')}</a>
+            ${!(gameMode === 'hostPrepares' && isHost) ? `<a href="#/lobby/${lobbyId}/myguesses" class="btn btn-secondary btn-sm" style="width:auto">${t('lobby.myGuesses')}</a>` : ''}
             ${hasReveals ? `<a href="#/lobby/${lobbyId}/scores" class="btn btn-secondary btn-sm" style="width:auto">${t('lobby.leaderboard')}</a>` : ''}
           </div>
         </div>
@@ -319,6 +397,8 @@ async function renderLobby(lobbyId) {
         <div class="players-grid" id="playersGrid">${playerCards}</div>
 
         ${buildScoringRulesHtml(lobby.rules)}
+
+        <div class="lobby-manual"><a class="manual-link" href="/help.html${getLocale() === 'hk' ? '#hk' : ''}" target="_blank" rel="noopener">${t('app.manual')}</a></div>
 
       </div>
     `;

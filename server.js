@@ -9,6 +9,18 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+// Redirect old domain to new domain (configure via env vars)
+const OLD_HOST = process.env.OLD_HOST;
+const NEW_HOST = process.env.NEW_HOST;
+if (OLD_HOST && NEW_HOST) {
+  app.use((req, res, next) => {
+    if (req.hostname === OLD_HOST) {
+      return res.redirect(301, `https://${NEW_HOST}${req.originalUrl}`);
+    }
+    next();
+  });
+}
+
 // Middleware
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -18,7 +30,7 @@ const { router: lobbyRouter } = require('./src/routes/lobby');
 const playerRouter = require('./src/routes/player');
 const { router: gameRouter, setIo, rescheduleTimers } = require('./src/routes/game');
 const { router: dummyRouter } = require('./src/routes/dummy');
-const { grapes, countries, regions } = require('./src/utils/validation');
+const { grapes, countries, regions, subregions } = require('./src/utils/validation');
 const { setupSocketHandlers } = require('./src/socket/handler');
 
 setIo(io);
@@ -32,6 +44,7 @@ app.use('/api/dummy', dummyRouter);
 app.get('/api/reference/grapes', (req, res) => res.json(grapes));
 app.get('/api/reference/countries', (req, res) => res.json(countries));
 app.get('/api/reference/regions', (req, res) => res.json(regions));
+app.get('/api/reference/subregions', (req, res) => res.json(subregions));
 
 // QR code generator
 app.get('/api/qr', async (req, res) => {

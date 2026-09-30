@@ -80,6 +80,7 @@ async function renderMyGuesses(lobbyId) {
         if (r.oldWorld.enabled) guessFields.push({ label: t('mg.oldWorld'), val: guess.oldWorld != null ? (guess.oldWorld ? t('rules.oldWorldVal') : t('rules.newWorldVal')) : '—' });
         if (r.country.enabled) guessFields.push({ label: t('mg.country'), val: guess.country || '—' });
         if (r.region.enabled) guessFields.push({ label: t('mg.region'), val: guess.region || '—' });
+        if (r.subRegion.enabled) guessFields.push({ label: t('mg.subRegion'), val: guess.subRegion || '—' });
         if (r.vintage.enabled) guessFields.push({ label: t('mg.vintage'), val: guess.vintage ? String(guess.vintage) : '—' });
         if (r.abv.enabled) guessFields.push({ label: t('mg.abv'), val: guess.abv != null ? `${guess.abv}%` : '—' });
         if (r.price.enabled) guessFields.push({ label: t('mg.price'), val: guess.priceRange ? formatPriceBucket(guess.priceRange, r.price.currency) : '—' });
@@ -111,6 +112,13 @@ async function renderMyGuesses(lobbyId) {
         })()
       : '';
 
+    const tastingNoteHtml = guess?.tastingNote
+      ? `<div class="tasting-note-display">
+           <div class="tasting-note-label">${t('mg.tastingNote')}</div>
+           <div class="tasting-note-text">${escHtml(guess.tastingNote)}</div>
+         </div>`
+      : '';
+
     return `
       <div class="card" style="margin-bottom:16px">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
@@ -123,6 +131,7 @@ async function renderMyGuesses(lobbyId) {
         </div>
         ${attributeSection}
         ${scoreBreakdown}
+        ${tastingNoteHtml}
       </div>`;
   }).join('');
 

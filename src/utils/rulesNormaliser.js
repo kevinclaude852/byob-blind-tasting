@@ -14,6 +14,7 @@ function normaliseRules(rules) {
   for (const key of Object.keys(def)) {
     out[key] = Object.assign({}, def[key], rules[key] || {});
   }
+  if (!out.region.enabled) out.subRegion.enabled = false;
   return out;
 }
 
@@ -22,7 +23,7 @@ function normaliseRules(rules) {
  * All keys are always present so legacy consumers don't break.
  */
 function buildZeroScore() {
-  return { varietal: 0, oldWorld: 0, country: 0, region: 0, vintage: 0, abv: 0, price: 0, total: 0 };
+  return { varietal: 0, oldWorld: 0, country: 0, region: 0, subRegion: 0, vintage: 0, abv: 0, price: 0, total: 0 };
 }
 
 /**
@@ -39,12 +40,13 @@ function validateRules(rules) {
     }
   }
 
-  const { grape, oldWorld, country, region, vintage, abv, price } = rules;
+  const { grape, oldWorld, country, region, subRegion, vintage, abv, price } = rules;
 
   if (grape)    checkScore(grape.score,    'Grape score');
   if (oldWorld) checkScore(oldWorld.score, 'Old World/New World score');
   if (country)  checkScore(country.score,  'Country score');
   if (region)   checkScore(region.score,   'Region score');
+  if (subRegion?.enabled) checkScore(subRegion.score, 'Sub Region score');
 
   if (vintage) {
     const validModes = ['exact', 'plusOne', 'plusTwo'];
