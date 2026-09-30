@@ -180,6 +180,7 @@ function renderLanding() {
         <h1>${t('app.title')}</h1>
         <p>${t('app.subtitle')}</p>
         <a class="manual-link" href="/help.html${getLocale() === 'hk' ? '#hk' : ''}" target="_blank" rel="noopener">${t('app.manual')}</a>
+        <button type="button" class="whats-new-link">${t('wn.link')}</button>
       </div>
 
       <div class="card">

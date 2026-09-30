@@ -18,6 +18,35 @@ function escHtml(str) {
   return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// What's New popup (opened from the landing and join pages)
+function showWhatsNew() {
+  document.querySelector('.wn-overlay')?.remove();
+  const items = ['mode', 'subRegion', 'recovery', 'notes'].map(k => `
+    <li><span class="wn-bullet" aria-hidden="true">✴</span>
+      <span><strong>${t(`wn.${k}Title`)}</strong>${t(`wn.${k}Desc`)}</span></li>`).join('');
+  const overlay = document.createElement('div');
+  overlay.className = 'reveal-modal-overlay wn-overlay';
+  overlay.innerHTML = `
+    <div class="reveal-modal wn-modal" role="dialog" aria-modal="true" aria-labelledby="wnTitle">
+      <button type="button" class="wn-close" aria-label="Close">✕</button>
+      <h3 class="reveal-modal-title" id="wnTitle">${t('wn.title')}</h3>
+      <div class="wn-date">${t('wn.date')}</div>
+      <ul class="wn-list">${items}</ul>
+      <button type="button" class="btn btn-primary wn-ok">${t('wn.close')}</button>
+    </div>`;
+  const close = () => { overlay.remove(); document.removeEventListener('keydown', onKey); };
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay || e.target.closest('.wn-close, .wn-ok')) close();
+  });
+  document.addEventListener('keydown', onKey);
+  document.body.appendChild(overlay);
+  overlay.querySelector('.wn-ok').focus();
+}
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.whats-new-link')) showWhatsNew();
+});
+
 // Dummy lobby setup (UAT testing)
 async function renderDummyLobby() {
   const app = document.getElementById('app');
