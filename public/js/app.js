@@ -79,6 +79,12 @@ async function route() {
   }
 
   // #/lobby/:id/wine — add new wine
+  // #/lobby/:id/add-wine — add another wine from inside the lobby
+  const addWineMatch = hash.match(/^#\/lobby\/([a-f0-9]+)\/add-wine$/);
+  if (addWineMatch) {
+    return renderWineRegistration(addWineMatch[1], null, { fromLobby: true });
+  }
+
   const wineMatch = hash.match(/^#\/lobby\/([a-f0-9]+)\/wine$/);
   if (wineMatch) {
     return renderWineRegistration(wineMatch[1], null);
