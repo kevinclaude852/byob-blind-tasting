@@ -10,10 +10,14 @@ const app = express();
 
 // Set REDIRECT_TO (e.g. https://byob.up.railway.app) on a deployment that should only send
 // visitors to the new address. Leave it unset everywhere else. Browsers keep the #/lobby/... part.
-// Railway's health check needs a 200, so it gets its own path that is never redirected
-app.get('/healthz', (req, res) => res.type('text').send('ok'));
-
 const REDIRECT_TO = (process.env.REDIRECT_TO || '').trim().replace(/\/+$/, '');
+const COMMIT = (process.env.RAILWAY_GIT_COMMIT_SHA || 'unknown').slice(0, 7);
+console.log(`Redirect: ${REDIRECT_TO || 'off'} (commit ${COMMIT})`);
+
+// Railway's health check needs a 200, so it gets its own path that is never redirected.
+// It also reports the redirect setting and commit, to check what a deployment is running.
+app.get('/healthz', (req, res) => res.type('text').send(`ok\nredirect: ${REDIRECT_TO || 'off'}\ncommit: ${COMMIT}\n`));
+
 if (REDIRECT_TO) {
   const targetHost = new URL(REDIRECT_TO).host;
   app.use((req, res, next) => {
