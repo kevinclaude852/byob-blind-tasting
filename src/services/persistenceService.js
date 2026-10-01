@@ -46,8 +46,18 @@ function listGames() {
   return fs.readdirSync(GAMES_DIR)
     .filter(f => f.endsWith('.json'))
     .map(f => {
-      const data = JSON.parse(fs.readFileSync(path.join(GAMES_DIR, f), 'utf8'));
-      return { lobbyId: data.lobbyId, lobbyName: data.lobbyName, createdAt: data.createdAt };
+      // Cache may hold changes not yet flushed to disk by the delayed write
+      const data = cache.get(f.slice(0, -5)) || JSON.parse(fs.readFileSync(path.join(GAMES_DIR, f), 'utf8'));
+      const players = data.players || {};
+      const host = players[data.hostPlayerId];
+      return {
+        lobbyId: data.lobbyId,
+        lobbyName: data.lobbyName,
+        createdAt: data.createdAt,
+        hostName: host ? host.name : null,
+        hostEmoji: host ? host.emoji : null,
+        playerCount: Object.keys(players).length
+      };
     });
 }
 

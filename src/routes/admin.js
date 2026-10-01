@@ -29,6 +29,8 @@ router.get('/', (req, res) => {
     return `
       <tr>
         <td><a href="/#/lobby/${g.lobbyId}/scores">${escHtml(g.lobbyName)}</a></td>
+        <td>${g.hostName ? `${escHtml(g.hostEmoji || '')} ${escHtml(g.hostName)}` : '—'}</td>
+        <td class="num">${g.playerCount}</td>
         <td>${dateStr} ${timeStr}</td>
         <td><code>${g.lobbyId}</code></td>
       </tr>`;
@@ -54,6 +56,7 @@ router.get('/', (req, res) => {
     a { color: #8b0000; text-decoration: none; font-weight: 500; }
     a:hover { text-decoration: underline; }
     code { font-size: 0.8rem; background: #f0f0f0; padding: 2px 6px; border-radius: 4px; color: #555; }
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
     .empty { text-align: center; padding: 48px; color: #999; font-style: italic; }
   </style>
 </head>
@@ -64,12 +67,14 @@ router.get('/', (req, res) => {
     <thead>
       <tr>
         <th>Lobby Name</th>
+        <th>Host</th>
+        <th class="num">Total Players</th>
         <th>Created</th>
         <th>Lobby ID</th>
       </tr>
     </thead>
     <tbody>
-      ${rows || '<tr><td colspan="3" class="empty">No games yet.</td></tr>'}
+      ${rows || '<tr><td colspan="5" class="empty">No games yet.</td></tr>'}
     </tbody>
   </table>
 </body>
