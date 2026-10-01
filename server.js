@@ -12,11 +12,13 @@ const app = express();
 // visitors to the new address. Leave it unset everywhere else. Browsers keep the #/lobby/... part.
 const REDIRECT_TO = (process.env.REDIRECT_TO || '').trim().replace(/\/+$/, '');
 const COMMIT = (process.env.RAILWAY_GIT_COMMIT_SHA || 'unknown').slice(0, 7);
-console.log(`Redirect: ${REDIRECT_TO || 'off'} (commit ${COMMIT})`);
+const ENVIRONMENT = process.env.RAILWAY_ENVIRONMENT_NAME || 'unknown';
+console.log(`Redirect: ${REDIRECT_TO || 'off'} (commit ${COMMIT}, environment ${ENVIRONMENT})`);
 
 // Railway's health check needs a 200, so it gets its own path that is never redirected.
-// It also reports the redirect setting and commit, to check what a deployment is running.
-app.get('/healthz', (req, res) => res.type('text').send(`ok\nredirect: ${REDIRECT_TO || 'off'}\ncommit: ${COMMIT}\n`));
+// It also reports the redirect setting, commit and Railway environment, to check which
+// deployment a domain reaches and what it is running.
+app.get('/healthz', (req, res) => res.type('text').send(`ok\nredirect: ${REDIRECT_TO || 'off'}\ncommit: ${COMMIT}\nenvironment: ${ENVIRONMENT}\n`));
 
 if (REDIRECT_TO) {
   const targetHost = new URL(REDIRECT_TO).host;
