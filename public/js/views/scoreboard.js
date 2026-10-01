@@ -26,6 +26,22 @@ async function renderScoreboard(lobbyId) {
   }
   const rankMedals = { 1: '🥇', 2: '🥈', 3: '🥉' };
 
+  // Score bars: grey = earlier reveals, sand = the latest reveal; full width = max possible so far.
+  // Once every wine is revealed the bar is a single grey total with no +N chip or rank change.
+  const latestWineId = revealOrder[revealOrder.length - 1];
+  const allRevealed = revealOrder.length > 0 && revealOrder.length >= Object.keys(wineMap).length;
+  const showLatest = !allRevealed && !!latestWineId;
+  const fullScore = getMaxScore(rules) * revealOrder.length;
+  const gainOf = s => (showLatest ? (s.breakdown?.[latestWineId]?.total || 0) : 0);
+  const prevRankOf = {};
+  if (showLatest && revealOrder.length > 1) {
+    const before = sorted.map(([pid, s]) => [pid, s.total - gainOf(s)]).sort((a, b) => b[1] - a[1]);
+    before.forEach(([pid, total], i) => {
+      prevRankOf[pid] = i === 0 ? 1 : total === before[i - 1][1] ? prevRankOf[before[i - 1][0]] : prevRankOf[before[i - 1][0]] + 1;
+    });
+  }
+  const pct = v => (fullScore > 0 ? Math.min(100, Math.max(0, v / fullScore * 100)) : 0).toFixed(1) + '%';
+
   // ── Overall Rankings ──────────────────────────────────────────────────────
   const rankingRows = sorted.map(([pid, s], i) => {
     const rank = denseRanks[i];
@@ -63,11 +79,19 @@ async function renderScoreboard(lobbyId) {
           </div>`;
       }).join('');
 
+    const gain = gainOf(s);
+    const prevRank = prevRankOf[pid];
+    const move = prevRank && prevRank !== rank
+      ? `<span class="score-move ${prevRank > rank ? 'up' : 'down'}">${prevRank > rank ? '↑' : '↓'}${Math.abs(prevRank - rank)}</span>`
+      : '';
+
     return `
-      <div class="score-row score-row-expandable" data-pid="${pid}">
+      <div class="score-row score-row-expandable has-bar" data-pid="${pid}">
+        <div class="score-bar" aria-hidden="true"><span class="score-bar-prev" style="width:${pct(s.total - gain)}"></span><span class="score-bar-new" style="width:${pct(gain)}"></span></div>
         <div class="score-rank ${rank===1?'gold':rank===2?'silver':rank===3?'bronze':''}">${rankMedals[rank] || `${rank}.`}</div>
         <div class="score-emoji">${s.emoji}</div>
-        <div class="score-name">${escHtml(s.name)}</div>
+        <div class="score-name">${escHtml(s.name)}${move}</div>
+        ${gain > 0 ? `<span class="score-gain">+${gain}</span>` : ''}
         <div class="score-total">${s.total} ${t('lb.pts')}</div>
         <div class="score-chevron">›</div>
       </div>
