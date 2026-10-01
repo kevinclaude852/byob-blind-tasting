@@ -4,6 +4,7 @@ function setupSocketHandlers(io) {
   io.on('connection', (socket) => {
     socket.on('join-lobby', ({ lobbyId, playerId }) => {
       if (!lobbyId) return;
+      if (socket.data.lobbyId && socket.data.lobbyId !== lobbyId) socket.leave(socket.data.lobbyId);
       socket.join(lobbyId);
       socket.data.lobbyId = lobbyId;
       socket.data.playerId = playerId;

@@ -619,6 +619,12 @@ async function renderLobby(lobbyId) {
     return !!window.location.hash.match(new RegExp(`^#/lobby/${lobbyId}$`));
   }
 
+  let lastResync = 0;
+  listen('resync', async () => {
+    if (!onLobbyPage() || Date.now() - lastResync < 2000) return;
+    lastResync = Date.now();
+    await loadData(); render();
+  });
   listen('player-joined', async () => {
     if (!onLobbyPage()) return;
     await loadData(); render();

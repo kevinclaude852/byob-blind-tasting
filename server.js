@@ -3,6 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const os = require('os');
 const path = require('path');
+const fs = require('fs');
 const QRCode = require('qrcode');
 
 const app = express();
@@ -23,6 +24,16 @@ if (OLD_HOST && NEW_HOST) {
 
 // Middleware
 app.use(express.json());
+// index.html links its scripts and styles with a per-deploy version so phones never run a
+// cached mix of old and new files; the page itself is always re-checked.
+const BUILD_ID = (process.env.RAILWAY_GIT_COMMIT_SHA || String(Date.now())).slice(0, 12);
+const indexHtml = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8')
+  .replace(/(src|href)="(\/(?:js|css)\/[^"?]+)"/g, `$1="$2?v=${BUILD_ID}"`);
+function sendIndex(req, res) {
+  res.set('Cache-Control', 'no-cache');
+  res.type('html').send(indexHtml);
+}
+app.get(['/', '/index.html'], sendIndex);
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Routes
@@ -62,7 +73,7 @@ app.use('/admin', adminRouter);
 
 // SPA fallback
 app.get('/{*path}', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  sendIndex(req, res);
 });
 
 setupSocketHandlers(io);
