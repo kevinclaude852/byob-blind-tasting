@@ -23,6 +23,7 @@ function buildScoringRulesHtml(rules) {
 // close together queue up and appear one at a time as each popup is closed.
 const RevealPopup = (() => {
   const queue = [];
+  const seen = new Set();
   let current = null;
 
   function firework() {
@@ -95,8 +96,19 @@ const RevealPopup = (() => {
   }
 
   window.addEventListener('hashchange', clear);
-  return { enqueue(item) { queue.push(item); showNext(); }, clear };
+  return {
+    enqueue(item) {
+      if (item.wineId && seen.has(item.wineId)) return;
+      if (item.wineId) seen.add(item.wineId);
+      queue.push(item);
+      showNext();
+    },
+    clear,
+  };
 })();
+
+// The lobby re-renders on every visit, so drop the previous visit's socket listeners first
+let lobbySocketUnsubscribes = [];
 
 async function renderLobby(lobbyId) {
   const app = document.getElementById('app');
@@ -598,17 +610,20 @@ async function renderLobby(lobbyId) {
 
   const session = API.getSession(lobbyId);
   SocketManager.connect(lobbyId, session?.playerId);
+  lobbySocketUnsubscribes.forEach(unsubscribe => unsubscribe());
+  lobbySocketUnsubscribes = [];
+  const listen = (event, handler) => lobbySocketUnsubscribes.push(SocketManager.on(event, handler));
 
   // Only re-render if currently on the lobby page — prevents overwriting other pages
   function onLobbyPage() {
     return !!window.location.hash.match(new RegExp(`^#/lobby/${lobbyId}$`));
   }
 
-  SocketManager.on('player-joined', async () => {
+  listen('player-joined', async () => {
     if (!onLobbyPage()) return;
     await loadData(); render();
   });
-  SocketManager.on('wine-revealed', async (data) => {
+  listen('wine-revealed', async (data) => {
     if (!onLobbyPage()) return;
     await loadData(); render();
     const me = lobby.currentPlayerId;
@@ -622,6 +637,7 @@ async function renderLobby(lobbyId) {
       ? `${ownerName}第${wineIndex + 1}支酒`
       : `${ownerName}'s wine ${wineIndex + 1}`)}`;
     RevealPopup.enqueue({
+      wineId: data.wineId,
       wine: data.wine,
       rules: lobby.rules,
       ownerLabel,
@@ -629,7 +645,7 @@ async function renderLobby(lobbyId) {
       score: data.scores?.[me] || null,
     });
   });
-  SocketManager.on('wine-countdown-started', async ({ wineId, revealAt }) => {
+  listen('wine-countdown-started', async ({ wineId, revealAt }) => {
     if (!onLobbyPage()) return;
     await loadData(); render();
     const minutes = Math.round((revealAt - Date.now()) / 60000);
@@ -637,12 +653,12 @@ async function renderLobby(lobbyId) {
       ? `倒數開始，支酒會喺 ${minutes} 分鐘後開估`
       : `Countdown started — wine reveals in ${minutes} min ⏱️`);
   });
-  SocketManager.on('wine-countdown-stopped', async () => {
+  listen('wine-countdown-stopped', async () => {
     if (!onLobbyPage()) return;
     await loadData(); render();
     showToast(t('lobby.countdownStopped'));
   });
-  SocketManager.on('guess-submitted', async () => {
+  listen('guess-submitted', async () => {
     if (!onLobbyPage()) return;
     await loadData(); render();
   });
