@@ -133,6 +133,7 @@ function buildRulesPanel() {
             <span class="rule-name">${t('rules.subRegion')}</span>
             <span class="rule-score-wrap">${scoreSelectHtml('subRegionScore', d.subRegion.score)} ${t('rules.pts')}</span>
           </label>
+          <div id="subRegionHelp" style="margin-left:-24px;padding:6px 0 2px;font-size:0.75rem;line-height:1.45;color:var(--text-muted,#888)">${t('rules.subRegionHelp')}</div>
         </div>
       </div>
       ${vintageCard}
@@ -237,6 +238,7 @@ function renderLanding() {
               <span>${t('rules.customise')}</span>
             </label>
           </div>
+          <div id="defaultRulesDesc" style="margin-top:8px;font-size:0.82rem;color:var(--text-muted,#888);padding:8px 12px;background:var(--bg,#f9f5f0);border-radius:8px;border:1px solid var(--border,#e8e0d5)"><strong style="color:var(--text)">${t('rules.defaultDescTitle')}</strong><br>${t('rules.defaultDescRules')}<br>${t('rules.defaultDescExample')}</div>
         </div>
 
         ${buildRulesPanel()}
@@ -272,6 +274,7 @@ function renderLanding() {
   document.querySelectorAll('input[name="rulesMode"]').forEach(radio => {
     radio.addEventListener('change', () => {
       document.getElementById('rulesPanel').style.display = radio.value === 'customise' ? '' : 'none';
+      document.getElementById('defaultRulesDesc').style.display = radio.value === 'customise' ? 'none' : '';
     });
   });
 
@@ -302,6 +305,8 @@ function renderLanding() {
   function setSubRegionVisible(visible) {
     const row = document.getElementById('subRegionRow');
     if (row) row.style.display = visible ? '' : 'none';
+    const help = document.getElementById('subRegionHelp');
+    if (help) help.style.display = visible ? '' : 'none';
     if (!visible) {
       const subCheck = document.getElementById('subRegionCheck');
       if (subCheck) subCheck.checked = false;

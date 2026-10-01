@@ -2,13 +2,30 @@
 const SocketManager = (() => {
   let socket = null;
   const handlers = {};
+  let target = { lobbyId: null, playerId: null };
+  let joinedLobbyId = null;
+  let hasConnected = false;
 
+  function join() {
+    socket.emit('join-lobby', target);
+    joinedLobbyId = target.lobbyId;
+  }
+
+  // One connection per tab. 'resync' tells views to reload after a reconnect, since
+  // anything broadcast while the connection was down (e.g. phone asleep) was missed.
   function connect(lobbyId, playerId) {
-    if (socket && socket.connected) return;
+    target = { lobbyId, playerId };
+    if (socket) {
+      if (!socket.connected) socket.connect();
+      else if (joinedLobbyId !== lobbyId) join();
+      return;
+    }
     socket = io();
 
     socket.on('connect', () => {
-      socket.emit('join-lobby', { lobbyId, playerId });
+      join();
+      if (hasConnected) emit('resync');
+      hasConnected = true;
     });
 
     socket.on('player-joined', (data) => emit('player-joined', data));
@@ -42,6 +59,12 @@ const SocketManager = (() => {
     if (socket) { socket.disconnect(); socket = null; }
     Object.keys(handlers).forEach(k => delete handlers[k]);
   }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible' || !socket) return;
+    if (!socket.connected) socket.connect();
+    emit('resync');
+  });
 
   return { connect, on, off, disconnect };
 })();

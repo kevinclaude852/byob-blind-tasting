@@ -18,6 +18,98 @@ function buildScoringRulesHtml(rules) {
     </div>`;
 }
 
+// ── Reveal popup ────────────────────────────────────────────────────────────
+// Shown to players who can guess when someone else's wine is revealed. Reveals that arrive
+// close together queue up and appear one at a time as each popup is closed.
+const RevealPopup = (() => {
+  const queue = [];
+  const seen = new Set();
+  let current = null;
+
+  function firework() {
+    const colours = ['#b8860b', '#e2b857', '#9b2140', '#d98a9b', '#2d6a3f'];
+    const burst = (cls, n, dist, delay) => `<div class="rv-fw ${cls}" aria-hidden="true">` +
+      Array.from({ length: n }, (_, i) => {
+        const c = colours[i % colours.length];
+        return `<i style="--r:${i * (360 / n) + (i % 2) * 7}deg;--d:${dist + (i % 3) * 30}px;background:${c};color:${c};animation-delay:${delay + (i % 4) * 0.03}s"></i>`;
+      }).join('') + '</div>';
+    return burst('b1', 26, 90, 0) + burst('b2', 16, 60, 0.28) + burst('b3', 16, 60, 0.5);
+  }
+
+  function detailLines(wine, r) {
+    const join = parts => parts.filter(Boolean).map(p => escHtml(p)).join(' · ');
+    const grapes = (wine.varietals || []).filter(v => v.grape)
+      .map(v => `<span class="rv-nowrap">${escHtml(v.grape)}${wine.type === 'blend' && v.percentage ? ` ${v.percentage}%` : ''}</span>`).join(', ');
+    return [
+      grapes,
+      join([wine.country, wine.region, wine.subRegion]),
+      join([wine.vintage, r.abv.enabled && wine.abv != null ? `${wine.abv}%` : null,
+            r.price.enabled && wine.price != null ? formatWinePrice(wine.price, r.price.currency) : null]),
+    ].filter(Boolean).join('<br>');
+  }
+
+  function build(item) {
+    const r = normaliseRulesClient(item.rules);
+    const chips = buildScoreChips(item.score, r).slice(0, -1);
+    const body = item.guessed && item.score
+      ? `<div class="rv-chips">${chips.map((c, i) => `<span class="rv-chip${c.val ? '' : ' zero'}" style="animation-delay:${0.35 + i * 0.08}s"><b>${escHtml(c.label)}</b><i>${c.val}</i></span>`).join('')}</div>
+         <div class="rv-total" style="animation-delay:${0.4 + chips.length * 0.08}s">${t('reveal.youScored')} <strong>+${item.score.total}</strong> ${t('reveal.pts')}</div>`
+      : `<div class="rv-none">${t('reveal.noGuess')}</div>`;
+    const overlay = document.createElement('div');
+    overlay.className = 'reveal-modal-overlay rv-overlay';
+    overlay.innerHTML = `
+      <div class="reveal-modal rv-modal" role="dialog" aria-modal="true" aria-labelledby="rvName">
+        ${firework()}
+        <div class="rv-kicker">${t('reveal.title')}</div>
+        <div class="rv-owner">${item.ownerLabel}</div>
+        <div class="rv-name" id="rvName">${escHtml(item.wine.name || '')}</div>
+        <div class="rv-meta">${detailLines(item.wine, r)}</div>
+        <div class="rv-divider"></div>
+        ${body}
+        <button type="button" class="btn btn-primary rv-close">${t('reveal.close')}</button>
+      </div>`;
+    overlay.addEventListener('click', e => { if (e.target === overlay || e.target.closest('.rv-close')) close(); });
+    return overlay;
+  }
+
+  function onKey(e) { if (e.key === 'Escape') close(); }
+
+  function showNext() {
+    if (current || !queue.length) return;
+    current = build(queue.shift());
+    document.body.appendChild(current);
+    document.addEventListener('keydown', onKey);
+    current.querySelector('.rv-close').focus();
+  }
+
+  function close() {
+    if (!current) return;
+    current.remove();
+    current = null;
+    document.removeEventListener('keydown', onKey);
+    showNext();
+  }
+
+  function clear() {
+    queue.length = 0;
+    if (current) { current.remove(); current = null; document.removeEventListener('keydown', onKey); }
+  }
+
+  window.addEventListener('hashchange', clear);
+  return {
+    enqueue(item) {
+      if (item.wineId && seen.has(item.wineId)) return;
+      if (item.wineId) seen.add(item.wineId);
+      queue.push(item);
+      showNext();
+    },
+    clear,
+  };
+})();
+
+// The lobby re-renders on every visit, so drop the previous visit's socket listeners first
+let lobbySocketUnsubscribes = [];
+
 async function renderLobby(lobbyId) {
   const app = document.getElementById('app');
   app.innerHTML = `<div class="page"><div class="loading-screen"><div class="wine-glass">🍷</div><p>${t('app.loading')}</p></div></div>`;
@@ -376,6 +468,9 @@ async function renderLobby(lobbyId) {
       <div class="page wide">
         <div class="page-header">
           <h1>${escHtml(lobby.lobbyName)}</h1>
+          <p class="lobby-counts">${getLocale() === 'hk'
+            ? `${playerCount}位參加者 · ${totalWines}支酒開估咗${revealedWines}支`
+            : `${playerCount} player${playerCount !== 1 ? 's' : ''} · ${revealedWines} out of ${totalWines} wine${totalWines !== 1 ? 's' : ''} revealed`}</p>
         </div>
 
         ${isHost ? `
@@ -394,11 +489,7 @@ async function renderLobby(lobbyId) {
           </div>
         </div>` : ''}
 
-        <div class="section-header">
-          <div>
-            <h3>${t('lobby.players')} (${playerCount})</h3>
-            <h3 style="margin-top:3px">${t('lobby.wines')} (${revealedWines} / ${totalWines})</h3>
-          </div>
+        <div class="section-header" style="justify-content:flex-end">
           <div style="display:flex;gap:8px">
             ${!(gameMode === 'hostPrepares' && isHost) ? `<a href="#/lobby/${lobbyId}/myguesses" class="btn btn-secondary btn-sm" style="width:auto">${t('lobby.myGuesses')}</a>` : ''}
             ${hasReveals ? `<a href="#/lobby/${lobbyId}/scores" class="btn btn-secondary btn-sm" style="width:auto">${t('lobby.leaderboard')}</a>` : ''}
@@ -406,6 +497,8 @@ async function renderLobby(lobbyId) {
         </div>
 
         <div class="players-grid" id="playersGrid">${playerCards}</div>
+
+        <div class="section-rule"></div>
 
         ${buildScoringRulesHtml(lobby.rules)}
 
@@ -517,21 +610,48 @@ async function renderLobby(lobbyId) {
 
   const session = API.getSession(lobbyId);
   SocketManager.connect(lobbyId, session?.playerId);
+  lobbySocketUnsubscribes.forEach(unsubscribe => unsubscribe());
+  lobbySocketUnsubscribes = [];
+  const listen = (event, handler) => lobbySocketUnsubscribes.push(SocketManager.on(event, handler));
 
   // Only re-render if currently on the lobby page — prevents overwriting other pages
   function onLobbyPage() {
     return !!window.location.hash.match(new RegExp(`^#/lobby/${lobbyId}$`));
   }
 
-  SocketManager.on('player-joined', async () => {
+  let lastResync = 0;
+  listen('resync', async () => {
+    if (!onLobbyPage() || Date.now() - lastResync < 2000) return;
+    lastResync = Date.now();
+    await loadData(); render();
+  });
+  listen('player-joined', async () => {
     if (!onLobbyPage()) return;
     await loadData(); render();
   });
-  SocketManager.on('wine-revealed', async () => {
+  listen('wine-revealed', async (data) => {
     if (!onLobbyPage()) return;
-    await loadData(); render(); showToast(t('lobby.wineRevealed'));
+    await loadData(); render();
+    const me = lobby.currentPlayerId;
+    const myPlayer = lobby.players[me];
+    const owner = lobby.players[data?.playerId];
+    const canGuess = me && myPlayer && myPlayer.participating !== false && data?.playerId !== me;
+    if (!canGuess || !data?.wine) { showToast(t('lobby.wineRevealed')); return; }
+    const wineIndex = owner ? (owner.wines || []).findIndex(w => w.id === data.wineId) : -1;
+    const ownerName = owner ? owner.name : data.playerName;
+    const ownerLabel = `${owner ? owner.emoji + ' ' : ''}${escHtml(getLocale() === 'hk'
+      ? `${ownerName}第${wineIndex + 1}支酒`
+      : `${ownerName}'s wine ${wineIndex + 1}`)}`;
+    RevealPopup.enqueue({
+      wineId: data.wineId,
+      wine: data.wine,
+      rules: lobby.rules,
+      ownerLabel,
+      guessed: !!lobby.myGuesses?.[data.wineId],
+      score: data.scores?.[me] || null,
+    });
   });
-  SocketManager.on('wine-countdown-started', async ({ wineId, revealAt }) => {
+  listen('wine-countdown-started', async ({ wineId, revealAt }) => {
     if (!onLobbyPage()) return;
     await loadData(); render();
     const minutes = Math.round((revealAt - Date.now()) / 60000);
@@ -539,12 +659,12 @@ async function renderLobby(lobbyId) {
       ? `倒數開始，支酒會喺 ${minutes} 分鐘後開估`
       : `Countdown started — wine reveals in ${minutes} min ⏱️`);
   });
-  SocketManager.on('wine-countdown-stopped', async () => {
+  listen('wine-countdown-stopped', async () => {
     if (!onLobbyPage()) return;
     await loadData(); render();
     showToast(t('lobby.countdownStopped'));
   });
-  SocketManager.on('guess-submitted', async () => {
+  listen('guess-submitted', async () => {
     if (!onLobbyPage()) return;
     await loadData(); render();
   });
