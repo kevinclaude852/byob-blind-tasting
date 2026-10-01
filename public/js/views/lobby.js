@@ -406,6 +406,8 @@ async function renderLobby(lobbyId) {
 
         <div class="players-grid" id="playersGrid">${playerCards}</div>
 
+        <div class="section-rule"></div>
+
         ${buildScoringRulesHtml(lobby.rules)}
 
         <div class="lobby-manual"><a class="manual-link" href="/help.html${getLocale() === 'hk' ? '#hk' : ''}" target="_blank" rel="noopener">${t('app.manual')}</a></div>

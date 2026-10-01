@@ -1529,3 +1529,7 @@ select:focus { background-color: white; }
 .guess-meter-count { font: 700 0.78rem/1 -apple-system, system-ui, sans-serif; font-variant-numeric: tabular-nums; color: var(--text); white-space: nowrap; }
 .guess-meter-count.done { color: var(--success); }
 
+
+/* ===== Rule between player cards and scoring rules (matches the title rule) ===== */
+.section-rule { border-top: 1px solid var(--border-strong); margin-top: 4px; }
+.section-rule + .scoring-rules { margin-top: 24px; }
