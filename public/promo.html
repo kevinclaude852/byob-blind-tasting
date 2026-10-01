@@ -823,8 +823,11 @@ body { margin: 0; background: var(--page); color: var(--page-fg); font-family: v
   replayBtn.addEventListener('click', restart);
   document.querySelectorAll('.lang button').forEach(b => b.addEventListener('click', () => { setLang(b.dataset.lang); restart(); }));
 
+  // ?lang=en / ?lang=hk in the address picks the language; otherwise #hk, then the viewer's last choice
+  const param = (new URLSearchParams(location.search).get('lang') || '').toLowerCase();
   let initial = 'en';
-  if (location.hash === '#hk') initial = 'hk';
+  if (param === 'en' || param === 'hk') initial = param;
+  else if (location.hash === '#hk') initial = 'hk';
   else { try { initial = localStorage.getItem('btg-teaser-lang') || 'en'; } catch (e) {} }
   setLang(initial);
   restart();
