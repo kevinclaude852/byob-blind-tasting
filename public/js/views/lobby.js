@@ -374,8 +374,12 @@ async function renderLobby(lobbyId) {
 
     app.innerHTML = `
       <div class="page wide">
-        <div class="page-header">
+        <div class="page-header lobby-title-row">
           <h1>${escHtml(lobby.lobbyName)}</h1>
+          <div class="lobby-counts">
+            <h3>${t('lobby.players')} (${playerCount})</h3>
+            <h3>${t('lobby.wines')} (${revealedWines} / ${totalWines})</h3>
+          </div>
         </div>
 
         ${isHost ? `
@@ -394,11 +398,7 @@ async function renderLobby(lobbyId) {
           </div>
         </div>` : ''}
 
-        <div class="section-header">
-          <div>
-            <h3>${t('lobby.players')} (${playerCount})</h3>
-            <h3 style="margin-top:3px">${t('lobby.wines')} (${revealedWines} / ${totalWines})</h3>
-          </div>
+        <div class="section-header" style="justify-content:flex-end">
           <div style="display:flex;gap:8px">
             ${!(gameMode === 'hostPrepares' && isHost) ? `<a href="#/lobby/${lobbyId}/myguesses" class="btn btn-secondary btn-sm" style="width:auto">${t('lobby.myGuesses')}</a>` : ''}
             ${hasReveals ? `<a href="#/lobby/${lobbyId}/scores" class="btn btn-secondary btn-sm" style="width:auto">${t('lobby.leaderboard')}</a>` : ''}
