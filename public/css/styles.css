@@ -1529,8 +1529,3 @@ select:focus { background-color: white; }
 .guess-meter-count { font: 700 0.78rem/1 -apple-system, system-ui, sans-serif; font-variant-numeric: tabular-nums; color: var(--text); white-space: nowrap; }
 .guess-meter-count.done { color: var(--success); }
 
-/* ===== Lobby title row: counts on the right ===== */
-.lobby-title-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
-.lobby-title-row h1 { min-width: 0; overflow-wrap: anywhere; }
-.lobby-counts { flex-shrink: 0; text-align: right; display: flex; flex-direction: column; gap: 3px; padding-bottom: 2px; }
-.lobby-counts h3 { font-size: 0.72rem; font-weight: 700; font-variant: small-caps; letter-spacing: 0.14em; color: var(--text-muted); font-family: -apple-system, sans-serif; white-space: nowrap; margin: 0; }

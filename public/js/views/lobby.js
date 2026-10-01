@@ -374,12 +374,11 @@ async function renderLobby(lobbyId) {
 
     app.innerHTML = `
       <div class="page wide">
-        <div class="page-header lobby-title-row">
+        <div class="page-header">
           <h1>${escHtml(lobby.lobbyName)}</h1>
-          <div class="lobby-counts">
-            <h3>${t('lobby.players')} (${playerCount})</h3>
-            <h3>${t('lobby.wines')} (${revealedWines} / ${totalWines})</h3>
-          </div>
+          <p class="lobby-counts">${getLocale() === 'hk'
+            ? `${playerCount}位參加者 · ${totalWines}支酒開估咗${revealedWines}支`
+            : `${playerCount} player${playerCount !== 1 ? 's' : ''} · ${revealedWines} out of ${totalWines} wine${totalWines !== 1 ? 's' : ''} revealed`}</p>
         </div>
 
         ${isHost ? `
