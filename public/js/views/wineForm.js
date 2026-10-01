@@ -520,7 +520,7 @@ function collectWineFormData(isGuess = false, rules = null) {
 }
 
 // ── Wine registration / edit page ─────────────────────────────────────────────
-async function renderWineRegistration(lobbyId, wineId = null) {
+async function renderWineRegistration(lobbyId, wineId = null, { fromLobby = false } = {}) {
   const app = document.getElementById('app');
   app.innerHTML = `<div class="page"><div class="loading-screen"><div class="wine-glass">🍷</div><p>Loading...</p></div></div>`;
 
@@ -553,7 +553,7 @@ async function renderWineRegistration(lobbyId, wineId = null) {
       )].sort((a, b) => a - b)
     : [];
 
-  const submitLabel = isEditing ? t('wine.saveEdit') : t('wine.submitNew');
+  const submitLabel = isEditing ? t('wine.saveEdit') : fromLobby ? t('wine.submitFromLobby') : t('wine.submitNew');
 
   app.innerHTML = `
     <div class="page">
@@ -570,7 +570,7 @@ async function renderWineRegistration(lobbyId, wineId = null) {
           <button class="btn btn-danger" id="removeWineBtn">${t('wine.removeBtn')}</button>
         </div>` : `
         <div style="margin-top:10px">
-          <button class="btn btn-skip" id="skipWineBtn">${t('wine.skip')}</button>
+          <button class="btn btn-skip" id="skipWineBtn">${fromLobby ? t('wine.cancel') : t('wine.skip')}</button>
         </div>`}
       </div>
     </div>
@@ -596,7 +596,7 @@ async function renderWineRegistration(lobbyId, wineId = null) {
         window.location.hash = `#/lobby/${lobbyId}`;
       } else {
         showToast(t('wine.added'));
-        await renderWineRegistration(lobbyId, null);
+        await renderWineRegistration(lobbyId, null, { fromLobby });
       }
     } catch (err) {
       const raw = err.errors ? err.errors : [err.error || 'Failed to save wine.'];

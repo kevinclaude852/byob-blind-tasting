@@ -421,7 +421,7 @@ async function renderLobby(lobbyId) {
           <div class="player-wines-section">
             ${useFlights ? buildFlightGroupedWines(player) : buildWineRows(player)}
           </div>
-          ${isSelf && (gameMode !== 'hostPrepares' || isHost) ? `<div style="margin-top:8px"><a href="#/lobby/${lobbyId}/wine" class="btn btn-sm btn-primary" style="width:100%;text-decoration:none;text-align:center;display:block">${t('lobby.addWine')}</a></div>` : ''}
+          ${isSelf && (gameMode !== 'hostPrepares' || isHost) ? `<div style="margin-top:8px"><a href="#/lobby/${lobbyId}/add-wine" class="btn btn-sm btn-primary" style="width:100%;text-decoration:none;text-align:center;display:block">${t('lobby.addWine')}</a></div>` : ''}
         </div>`;
     }
 
