@@ -14,6 +14,9 @@ const SocketManager = (() => {
     socket.on('player-joined', (data) => emit('player-joined', data));
     socket.on('wine-revealed', (data) => emit('wine-revealed', data));
     socket.on('lobby-updated', (data) => emit('lobby-updated', data));
+    socket.on('guess-submitted', (data) => emit('guess-submitted', data));
+    socket.on('wine-countdown-started', (data) => emit('wine-countdown-started', data));
+    socket.on('wine-countdown-stopped', (data) => emit('wine-countdown-stopped', data));
 
     socket.on('disconnect', () => {
       // Auto-reconnect handled by Socket.IO

@@ -23,7 +23,8 @@ async function renderLobby(lobbyId) {
   app.innerHTML = `<div class="page"><div class="loading-screen"><div class="wine-glass">🍷</div><p>${t('app.loading')}</p></div></div>`;
 
   let lobby, qrDataUrl = null;
-  let countdownInterval = null; // ticks every 500ms to refresh mm:ss displays
+  let countdownInterval = null;
+  const openGuessLists = new Set(); // keeps guess lists open across live re-renders // ticks every 500ms to refresh mm:ss displays
 
   async function loadData() {
     lobby = await API.getLobby(lobbyId);
@@ -211,8 +212,11 @@ async function renderLobby(lobbyId) {
 
       // Unrevealed wine — accordion shows who has/hasn't guessed
       const guessedSet = new Set(lobby.guessStatus?.[wine.id] || []);
-      const guesserRows = Object.values(lobby.players)
-        .filter(p => p.participating !== false && p.id !== player.id)
+      const guessers = Object.values(lobby.players).filter(p => p.participating !== false && p.id !== player.id);
+      const guessedCount = guessers.filter(p => guessedSet.has(p.id)).length;
+      const meterSegments = guessers.map((p, i) => `<i class="${i < guessedCount ? 'on' : ''}"></i>`).join('');
+      const isOpen = openGuessLists.has(wine.id);
+      const guesserRows = guessers
         .map(p => {
           const checked = guessedSet.has(p.id);
           return `<div class="wine-guess-row">
@@ -227,23 +231,30 @@ async function renderLobby(lobbyId) {
         : '';
 
       return `
-        <div class="wine-row-wrap">
+        <div class="wine-row-wrap${isOpen ? ' is-open' : ''}">
           <div class="wine-row wine-row--unrev-expandable" data-wine-guess-accord="${wine.id}">
             <span class="wine-emoji-badge">${wine.emoji}</span>
             <div class="wine-row-status">${statusHtml}</div>
             ${scorePillHtml}
             ${actionsHtml ? `<div class="wine-row-actions">${actionsHtml}</div>` : ''}
-            <span class="wine-guess-chevron">›</span>
+            <span class="wine-guess-chevron"${isOpen ? ' style="transform:rotate(90deg)"' : ''}>›</span>
+            ${guessers.length ? `<div class="wine-row-meter" aria-hidden="true">${meterSegments}</div>` : ''}
           </div>
           ${countdownHtml}
-          <div class="wine-guess-accordion" id="wine-guess-accord-${wine.id}">
+          <div class="wine-guess-accordion${isOpen ? ' open' : ''}" id="wine-guess-accord-${wine.id}">
             ${ownerNameHint}
             ${guesserRows
               ? `<div class="wine-guess-row wine-guess-header">
                    <span class="wine-guess-avatar"></span>
                    <span class="wine-guess-name">${t('lb.player')}</span>
                    <span class="wine-guess-check">${t('lobby.guessMade')}</span>
-                 </div>${guesserRows}`
+                 </div>${guesserRows}
+                 <div class="guess-meter">
+                   <div class="guess-meter-bar" aria-hidden="true">${meterSegments}</div>
+                   <span class="guess-meter-count${guessedCount === guessers.length ? ' done' : ''}">${guessedCount === guessers.length
+                     ? t('lobby.allGuessed').replace('{total}', guessers.length)
+                     : t('lobby.guessedCount').replace('{done}', guessedCount).replace('{total}', guessers.length)}</span>
+                 </div>`
               : `<div style="font-size:0.78rem;color:var(--text-muted);font-style:italic;padding:4px 0">${t('lobby.noOtherPlayers')}</div>`}
           </div>
         </div>`;
@@ -429,9 +440,12 @@ async function renderLobby(lobbyId) {
     // Unrevealed wine guess-status accordion
     document.querySelectorAll('.wine-row--unrev-expandable').forEach(row => {
       row.addEventListener('click', () => {
-        const accordion = document.getElementById(`wine-guess-accord-${row.dataset.wineGuessAccord}`);
+        const wineId = row.dataset.wineGuessAccord;
+        const accordion = document.getElementById(`wine-guess-accord-${wineId}`);
         const chevron = row.querySelector('.wine-guess-chevron');
         const isOpen = accordion.classList.toggle('open');
+        row.parentElement.classList.toggle('is-open', isOpen);
+        if (isOpen) openGuessLists.add(wineId); else openGuessLists.delete(wineId);
         if (chevron) chevron.style.transform = isOpen ? 'rotate(90deg)' : '';
       });
     });
