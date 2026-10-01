@@ -7,6 +7,17 @@ const fs = require('fs');
 const QRCode = require('qrcode');
 
 const app = express();
+
+// Set REDIRECT_TO (e.g. https://byob.up.railway.app) on a deployment that should only send
+// visitors to the new address. Leave it unset everywhere else. Browsers keep the #/lobby/... part.
+const REDIRECT_TO = (process.env.REDIRECT_TO || '').trim().replace(/\/+$/, '');
+if (REDIRECT_TO) {
+  const targetHost = new URL(REDIRECT_TO).host;
+  app.use((req, res, next) => {
+    if (req.get('host') === targetHost) return next();
+    res.redirect(301, REDIRECT_TO + req.originalUrl);
+  });
+}
 const server = http.createServer(app);
 const io = new Server(server);
 
