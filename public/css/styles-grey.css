@@ -908,3 +908,6 @@ select {
   .rv-modal, .rv-chip, .rv-total { animation-duration: .01s !important; }
   .rv-fw { display: none; }
 }
+
+/* second landing link sits right under the intro video link */
+.manual-link.guide-link { display: block; margin-top: 4px; }
